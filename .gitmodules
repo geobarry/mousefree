@@ -1,0 +1,3 @@
+[submodule "eagle_talon"]
+	path = eagle_talon
+	url = https://github.com/geobarry/eagle_talon.git
