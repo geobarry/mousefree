@@ -1,6 +1,6 @@
 os: windows
 -
-
+# This module contains useful commands for generic situations
 # COMMANDS USING DYNAMIC CAPTURES
 ^(element click|click on) {user.dynamic_children}$: user.click_element_by_name(dynamic_children)
 ^[element] hover {user.dynamic_children}$: user.hover_element_by_name(dynamic_children)
