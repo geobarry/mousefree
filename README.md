@@ -1,2 +1,2 @@
-# mouse-free-windows
-Talon commands for navigating windows by voice'  
+# MouseFree for Windows
+Talon commands for navigating windows by voice.
