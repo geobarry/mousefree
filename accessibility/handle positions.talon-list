@@ -1,0 +1,11 @@
+list: user.handle_position
+-
+center
+left
+right
+top
+bottom
+lower left
+upper left
+lower right
+upper right
