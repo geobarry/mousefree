@@ -12,9 +12,9 @@ os: windows
 ^click letter <user.letter>$: user.click_element_by_name(letter,1)
 
 # COMMANDS TO NAVIGATE TO A TARGET USING KEYS
-^{user.nav_key} until <user.text>$:
+^{user.nav_key} until <user.ax_target>$:
 	key("{nav_key}")
-	user.key_to_elem_by_val(nav_key,"{text}.*","name",20)
+	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",20)
 	
 # HIGHLIGHTS
 click focused element: user.click_focused()

@@ -124,6 +124,29 @@ mod = Module()
 mod.list("handle_position","position for grabbing ui elements")    
 mod.list("nav_key","keys commonly used to navigate UI elements")
 
+@mod.capture(rule="<user.any_alphanumeric_key> | <user.text>")
+def ax_target(m) -> str:
+    """A target string to navigate to. Returns a regular expression as a string."""
+    print("Inside ax_target capture...")
+    if hasattr(m, "any_alphanumeric_key"):
+        return m.any_alphanumeric_key
+    t = m.text
+    print(f't: {t}')
+    # include homophones
+    word_list = re.findall(r"\w+",t)
+    word_list = set(word_list)
+    print(f'word_list: {word_list}')
+    for w in word_list:
+        phone_list = actions.user.homophones_get(w)
+        print(f'phone_list: {phone_list}')
+        if phone_list:
+            phone_list = [f"{x}.*" for x in phone_list]
+            t = t.replace(w,"(" + '|'.join(phone_list) + ")")
+            print(f't: {t}')
+    return t
+
+
+
 def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool = False):
     """Returns true if the element matches all of the properties in the property dictionary"""
     # prop_list is either a list of form [(property, trg_val),...]
