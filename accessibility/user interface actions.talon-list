@@ -1,0 +1,9 @@
+list: user.ui_action
+-
+click on: click
+hover
+highlight
+label
+go select:select
+invoke
+

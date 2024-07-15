@@ -1,46 +1,32 @@
 os: windows
 -
-# This module contains useful commands for generic situations
-# COMMANDS USING DYNAMIC CAPTURES
-^(element click|click on) {user.dynamic_children}$: user.click_element_by_name(dynamic_children)
-^[element] hover {user.dynamic_children}$: user.hover_element_by_name(dynamic_children)
-^element select {user.dynamic_children}$: user.select_element_by_name(dynamic_children)
-^[element] highlight {user.dynamic_children}$: user.highlight_elements_by_name(dynamic_children)
+# Useful accessibility commands for generic situations
+# Actions include "click on","hover","highlight","label","go select","invoke"; see <user interface actions.talon-list>
 
-# COMMANDS SEARCHING FOR SPECIFIC WORDS OR LETTERS
-^click word <user.word>$: user.click_element_by_name(word)
-^click letter <user.letter>$: user.click_element_by_name(letter,1)
+# SEARCH FOR UI ELEMENT DYNAMICALLY
+# Searches for a UI element with a name beginning with the spoken form
 
-# COMMANDS TO NAVIGATE TO A TARGET USING KEYS
+^{user.ui_action} {user.dynamic_children}$: user.act_on_named_element(dynamic_children,ui_action)
+
+# NAVIGATE TO A TARGET USING KEYS
+# Presses the designated navigation key until an element beginning with the target name is reached.
+# user.nav_key includes things like tab, arrow keys, f6
+# user.ax_target is just any spoken phrase. It will be translated 
+#  into regex for continuation and catching homophones
+
 ^{user.nav_key} until <user.ax_target>$:
 	key("{nav_key}")
 	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",20)
-	
-# HIGHLIGHTS
-click focused element: user.click_focused()
-hover focused element: user.hover_focused()
-clear highlights: user.clear_highlights()
-highlight focused element: user.highlight_focused()
-^{user.nav_key} highlight$:
+^{user.nav_key} {user.ui_action}$:
 	user.clear_highlights()
 	key("{nav_key}")
-	user.highlight_focused()
+	user.act_on_element(user.focused_element(),ui_action)
+	
+# FOCUSED ELEMENT
 
-# COMMANDS FOR INVESTIGATING ACCESSIBILITY ELEMENTS FOR CREATING MORE COMMANDS
-report mouse location: user.report_mouse_location()
-copy accessible: user.copy_accessible_elements_to_clipboard()
-^copy focused element information$: user.copy_focused_element_to_clipboard()
-^copy focused element with children$: user.copy_focused_element_with_children(1)
-^copy focused element with grandchildren$: user.copy_focused_element_with_children(2)
-^copy focused element with great grandchildren$: user.copy_focused_element_with_children(3)
-^copy focused element with <number> generations$: user.copy_focused_element_with_children(number)
-^copy focused element ancestors$: user.copy_focused_element_ancestors()
-^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(12,true)
-^copy enabled element information$: user.copy_enabled_element_to_clipboard()
-^copy clickable element information$: user.copy_clickable_element_to_clipboard()
-^copy keyboard element information$: user.copy_keyboard_element_to_clipboard()
-^copy all element information$: user.copy_elements_to_clipboard()
-^copy level <number> element information$: user.copy_elements_to_clipboard(number)
-^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
-^copy selected element information$: user.copy_selected_elements_to_clipboard()
-^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
+^{user.ui_action} focused [element]$: user.act_on_element(user.focused_element(),ui_action) 
+
+# MANAGING HIGHLIGHTS LIST
+
+clear (highlights|labels): user.clear_highlights()
+

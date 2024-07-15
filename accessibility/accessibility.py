@@ -123,6 +123,7 @@ mod = Module()
 
 mod.list("handle_position","position for grabbing ui elements")    
 mod.list("nav_key","keys commonly used to navigate UI elements")
+mod.list("ui_action","actions that can be performed on accessibility elements")
 
 @mod.capture(rule="<user.any_alphanumeric_key> | <user.text>")
 def ax_target(m) -> str:
@@ -268,6 +269,7 @@ def dynamic_children(_) -> dict[str,str]:
             if len(singles) > 1:
                 out[" ".join(singles[:2])] = str(el.name)
     return out
+
 
 @mod.action_class
 class Actions:
@@ -415,6 +417,61 @@ class Actions:
             except:
                 pass
         return r  
+    def focused_element():
+        """Returns the currently focused UI element"""
+        return ui.focused_element()
+    def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
+        """Perform action on element. Get actions from {user.ui_action}"""
+        print("Function: act_on_element")
+        if action == "click":
+            loc = actions.user.element_location(el)
+            if loc != None:            
+                mouse_obj = mouse_mover(loc, ms = delay_after_ms)
+            else:
+                print(f"Error in accessibility.py function act_on_element: Element has no location.")
+        elif action == "hover":
+            loc = actions.user.element_location(el)
+            if loc != None:    
+                mouse_obj = mouse_mover(loc, ms = delay_after_ms)
+            else:
+                print(f"Error in accessibility.py function act_on_element: Element has no location.")
+        elif action == "highlight":
+            try:
+                rect = el.rect
+                el_highlights.add_element(rect)
+            except:
+                print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
+        elif action == "label":
+            try:
+                rect = el.rect
+                el_highlights.add_element(rect,el.name)
+            except:
+                print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
+        elif action == "select":
+            if "SelectionItem" in el.patterns:
+                el.selectionitem_pattern.select()
+            elif "LegacyIAccessible" in el.patterns:
+                el.legacyiaccessible_pattern.select(0)
+            else:
+                print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
+        elif action == "invoke":
+            if "Invoke" in el.patterns:
+                el.invoke_pattern.invoke()
+            else:
+                print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
+        actions.sleep(f"{delay_after_ms + 50}ms")
+        if action == "click":
+            ctrl.mouse_click()
+    def act_on_named_element(name: str, action: str, delay_after_ms: int = 0):
+        """Performs action on first element beginning with given name"""
+        print("Function act_on_named_element")
+#        name = f"{name}.*"
+        prop_list = [("name",name)]
+        print(f'prop_list: {prop_list}')
+        elements = actions.user.matching_elements(prop_list)
+        print(f'elements: {elements}')
+        if len(elements) > 0:
+            actions.user.act_on_element(elements[0],action,delay_after_ms)
     def select_element(el: ax.Element):
         """ attempts to select input element"""
         if el:
@@ -453,12 +510,15 @@ class Actions:
             pattern.invoke()
         except Exception as error:
             print(f"Error in invoke_element: {error}")
-    def highlight_elements(elements: list):
+    def highlight_elements(elements: list, include_label: bool = False):
         """Adds all ui elements in the list to the list of elements to be highlighted"""
         for el in elements:
             try:
                 rect = el.rect
-                el_highlights.add_element(rect,el.name)
+                if include_label:
+                    el_highlights.add_element(rect,el.name)
+                else:
+                    el_highlights.add_element(rect)
             except:
                 print('Unable to highlight element: no rectangle found')
     def highlight_element(el: ax.Element):
@@ -473,9 +533,9 @@ class Actions:
     def clear_highlights():
         """Removes all ui elements from the highlight list"""
         el_highlights.clear_elements()
-    def highlight_focused():
+    def highlight_focused(include_label: str = False):
         """Highlights the focused element"""
-        actions.user.highlight_elements([ui.focused_element()])
+        actions.user.highlight_elements([ui.focused_element()],include_label = include_label)
     def peek_next_property_value(property_name: str, key: str="tab", rev_key: str=""):
         """returns the value of the property of the next element and then returns the previous element"""
         reverse_keys = {
@@ -647,12 +707,12 @@ class Actions:
         elements = actions.user.matching_elements([("name",name)])
         if len(elements)  >= 1:
             actions.user.select_element(elements[0])
-    def highlight_elements_by_name(name: str, exact_match: bool = False):
+    def highlight_elements_by_name(name: str, exact_match: bool = False, include_label: bool = False):
         """Highlights all the elements matching the given name"""
         if not exact_match:
             name = f"{name}.*"
         elements = actions.user.matching_elements(name)
-        actions.user.highlight_elements(elements)
+        actions.user.highlight_elements(elements,include_label = include_label)
     def move_mouse_to_focused_element(pos: str="center", x_offset: int=0, y_offset: int=0):
         """moves mouse to left,right or center and top,bottom or center of currently focused element"""
         el = ui.focused_element()
@@ -748,18 +808,6 @@ class Actions:
                     msg += "\n" + actions.user.element_information(el)
                     n += 1                
         msg += f"\n\n {n} elements found"
-        clip.set_text(msg)
-    def copy_accessible_elements_to_clipboard():
-        """Copies focusable elements to the clipboard"""
-        root = ui.active_window().element
-        elements = list(get_every_child(root))
-        id = 0
-        msg = ""
-        
-        for el in elements:
-            id += 1
-            msg += f"\n{id}: {el.name}"
-#            msg += f"\n{id}: {label} enabled: {el.is_enabled} loc: {el.clickable_point}"
         clip.set_text(msg)
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
