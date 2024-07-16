@@ -6,7 +6,7 @@ os: windows
 # SEARCH FOR UI ELEMENT DYNAMICALLY
 # Searches for a UI element with a name beginning with the spoken form
 
-^{user.ui_action} {user.dynamic_children}$: user.act_on_named_element(dynamic_children,ui_action)
+^{user.ui_action} {user.dynamic_element}$: user.act_on_named_element(dynamic_element,ui_action)
 
 # NAVIGATE TO A TARGET USING KEYS
 # Presses the designated navigation key until an element beginning with the target name is reached.
@@ -14,9 +14,11 @@ os: windows
 # user.ax_target is just any spoken phrase. It will be translated 
 #  into regex for continuation and catching homophones
 
-^{user.nav_key} until <user.ax_target>$:
+^{user.nav_key} until [<user.ordinals>] <user.ax_target>$:
 	key("{nav_key}")
-	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",20)
+	x = ordinals or 1
+	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
+	
 ^{user.nav_key} {user.ui_action}$:
 	user.clear_highlights()
 	key("{nav_key}")
