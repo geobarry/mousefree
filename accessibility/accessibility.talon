@@ -23,6 +23,8 @@ os: windows
 	user.clear_highlights()
 	key("{nav_key}")
 	user.act_on_element(user.focused_element(),ui_action)
+
+^cycle {user.nav_key} {user.ui_action}$: user.cycle_key_action(nav_key,ui_action)
 	
 # FOCUSED ELEMENT
 

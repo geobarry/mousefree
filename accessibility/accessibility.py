@@ -263,7 +263,6 @@ def dynamic_element(_) -> dict[str,str]:
                 out[" ".join(singles[:2])] = str(el.name)
     return out
 
-
 @mod.action_class
 class Actions:
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
@@ -275,6 +274,22 @@ class Actions:
         try:
             if prop_name.lower() == "name":
                 return el.name
+            elif prop_name.lower() == "pid":
+                return el.pid
+            elif prop_name.lower() == "control_type":
+                return el.control_type
+            elif prop_name.lower() == "localized_control_type":
+                return el.localized_control_type
+            elif prop_name.lower() == "accelerator_key":
+                return el.accelerator_key
+            elif prop_name.lower() == "access_key":
+                return el.access_key
+            elif prop_name.lower() == "has_keyboard_focus":
+                return el.has_keyboard_focus
+            elif prop_name.lower() == "is_keyboard_focusable":
+                return el.is_keyboard_focusable
+            elif prop_name == "is_enabled":
+                return el.is_enabled
             elif prop_name.lower() == "class_name":
                 return el.class_name
             elif prop_name.lower() == "automation_id":
@@ -307,16 +322,6 @@ class Actions:
                     return f"x: {loc.x}   y: {loc.y}"
                 else:
                     return el.clickable_point
-            elif prop_name.lower() == "pid":
-                return el.pid
-            elif prop_name.lower() == "access_key":
-                return el.access_key
-            elif prop_name.lower() == "has_keyboard_focus":
-                return el.has_keyboard_focus
-            elif prop_name.lower() == "is_keyboard_focusable":
-                return el.is_keyboard_focusable
-            elif prop_name == "is_enabled":
-                return el.is_enabled
             elif prop_name.lower() == "children":
                 if as_text:
                     return str(len(el.children))
@@ -461,105 +466,11 @@ class Actions:
         elements = actions.user.matching_elements(prop_list)
         if len(elements) > 0:
             actions.user.act_on_element(elements[0],action,delay_after_ms)
-    def remove_highlight(el: ax.Element):
-        """Remove element from highlights"""
-        try:
-            el_highlights.remove_element(el.rect)
-        except:
-            print("Unable to remove highlight: Element rectangle does not match any current highlight")
-    def clear_highlights():
-        """Removes all ui elements from the highlight list"""
-        el_highlights.clear_elements()
-    def peek_next_property_value(property_name: str, key: str="tab", rev_key: str=""):
-        """returns the value of the property of the next element and then returns the previous element"""
-        reverse_keys = {
-            "tab": "shift-tab",
-            "right": "left",
-            "down": "up",
-            "f6": "shift-f6"
-        }
-        if rev_key == "":
-            rev_key = reverse_keys[key]
-        actions.key(key)
-        actions.sleep(0.1)
-        val = None
-        try:
-            val = actions.user.element_property_value(property_name)
-        except:
-            pass
-        actions.key(rev_key)
-        return val
-    def toggle_for_next_value(trg: str, toggle_key: str, advance_key: str="tab", property_name: str="name", verbose: bool = False):
-        """Toggles current element until the next elements value meets the target value"""
-        cur_val = actions.user.peek_next_property_value(property_name,advance_key)
-        if verbose:
-            print(f"cur_val: {cur_val}")
-        if cur_val != trg:
-            actions.key(toggle_key)
-    def hover_focused():
-        """Hovers the mouse on the currently focused element"""
-        actions.user.act_on_element(ui.focused_element(),"hover")
-    def mark_focused_element():
-        """records the clickable point of the currently focused item"""
-        global marked_elements
-        el = ui.focused_element()
-        marked_elements.append(el)
-    def select_marked():
-        """selects marked elements and then empties list"""
-        global marked_elements
-        # clear any selection
-        el = ui.focused_element()
-        try:
-            pattern = el.selectionitem_pattern
-            pattern.remove_from_selection()
-        except Exception as error:
-            print(f"Error removing from selection in accessibility.py function select_marked: {error}")        
-        # select all marked elements
-        for el in marked_elements:
-            try:
-                pattern = el.selectionitem_pattern
-                pattern.add_to_selection()
-            except Exception as error:
-                print(f"Error adding to selection in accessibility.py function select_marked: {error}")        
-        # reset list of marked elements
-        marked_elements = []
-    def select_matching_element(prop_list: list):
-        """Attempts to select the first UI element that matches the property list"""
-        # get list of elements
-        elements = actions.user.matching_elements(prop_list)
-        if len(elements)  >= 1:
-            actions.user.act_on_element(elements[0],"select")
-    def invoke_matching_element(prop_list: list, item_num: int = 0, max_level: int = 99):
-        """Attempts to invoke the UI element that matches the property list"""
+    def act_on_matching_element(prop_list: list, action: str, item_num: int = 0, max_level: int = 99):
+        """Perform action on first UI element that matches the property list"""
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
-            actions.user.act_on_element(el,"invoke")
-    def toggle_matching_element(prop_list: list):
-        """Attempts to invoke the UI element that matches the property list"""
-        elements = actions.user.matching_elements(prop_list)
-        if len(elements) == 1:
-            el = elements[0]
-            el.invoke_pattern.invoke()
-    def click_matching_element(prop_list: list, ms: int = None):
-        """clicks on the element that matches property dictionary"""
-        # get list of elements
-        elements = actions.user.matching_elements(prop_list)
-        if len(elements)  >= 1:
-            el = elements[0]
-            try:
-                loc = el.clickable_point
-                mouse_obj = mouse_mover(loc, ms = ms, callback = ctrl.mouse_click)
-            except:
-                # if element doesn't have a clickable point, 
-                # see if it has a rectangle
-                try:
-                    rect = el.rect
-                    x = rect.x + int(rect.width/2)
-                    y = rect.y + int(rect.height/2)
-                    loc = Point2d(x,y)
-                    mouse_obj = mouse_mover(loc, ms = ms, callback = ctrl.mouse_click)
-                except:
-                    pass
+            actions.user.act_on_element(el,action)
     def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=50, escape_key: str=None, delay: float = 0.03, verbose: bool = False):
         """press given key until the first matching element is reached"""
         # if the previous action has not completed an error can occur
@@ -610,6 +521,56 @@ class Actions:
                 return el
             else:
                 return None
+    def cycle_key_action(key: str, action: str, delay_ms: int = 2000, limit: int = 30):
+        """Use key to cycle through elements and perform action on each."""
+        # need to change this to use repeater that can be stopped with "stop it"
+        start_rect = actions.user.el_prop_val(ui.focused_element(),"rect")
+        i = 0
+        while True:
+            actions.user.clear_highlights()
+            actions.user.act_on_element(ui.focused_element(),action,delay_ms)
+            actions.key(key)
+            i += 1
+            if i > limit:
+                break
+            if actions.user.el_prop_val(ui.focused_element(),"rect") == start_rect:
+                break
+    def remove_highlight(el: ax.Element):
+        """Remove element from highlights"""
+        try:
+            el_highlights.remove_element(el.rect)
+        except:
+            print("Unable to remove highlight: Element rectangle does not match any current highlight")
+    def clear_highlights():
+        """Removes all ui elements from the highlight list"""
+        el_highlights.clear_elements()
+    def hover_focused():
+        """Hovers the mouse on the currently focused element"""
+        actions.user.act_on_element(ui.focused_element(),"hover")
+    def mark_focused_element():
+        """records the clickable point of the currently focused item"""
+        global marked_elements
+        el = ui.focused_element()
+        marked_elements.append(el)
+    def select_marked():
+        """selects marked elements and then empties list"""
+        global marked_elements
+        # clear any selection
+        el = ui.focused_element()
+        try:
+            pattern = el.selectionitem_pattern
+            pattern.remove_from_selection()
+        except Exception as error:
+            print(f"Error removing from selection in accessibility.py function select_marked: {error}")        
+        # select all marked elements
+        for el in marked_elements:
+            try:
+                pattern = el.selectionitem_pattern
+                pattern.add_to_selection()
+            except Exception as error:
+                print(f"Error adding to selection in accessibility.py function select_marked: {error}")        
+        # reset list of marked elements
+        marked_elements = []
     def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
@@ -623,7 +584,7 @@ class Actions:
         prop_list = [prop,val]
         el = actions.user.matching_element(prop_list,max_level = max_level)
         actions.user.act_on_element(el,"invoke")
-    def move_mouse_to_focused_element(pos: str="center", x_offset: int=0, y_offset: int=0):
+    def move_mouse_to_handle(pos: str="center", x_offset: int=0, y_offset: int=0):
         """moves mouse to left,right or center and top,bottom or center of currently focused element"""
         el = ui.focused_element()
         try:
@@ -658,7 +619,7 @@ class Actions:
                         "rect.width","rect.height"
                     ]
         other_prop = [
-                    "pid","access_key","has_keyboard_focus",
+                    "window_handle","pid","access_key","has_keyboard_focus",
                     "is_keyboard_focusable","is_enabled",
                     "children","is_control_element","is_content_element",
                     "item_type","item_status","described_by",
@@ -676,10 +637,12 @@ class Actions:
         else:
             # Get property values
             return  "\t".join([str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=50, delay: int = 0.03, verbose: bool = True):
+    def copy_elements_accessible_by_key(key: str, limit: int=100, delay: int = 0.03, verbose: bool = True):
         """Gets information on elements accessible by pressing the input key"""        
         i = 1
         el = ui.focused_element()
+        # This is a klugy way of figuring out whom we get back to the beginning
+        # but for now I can't find anything that works better
         msg = actions.user.element_information(el, verbose = verbose)
         if verbose:
             full_msg = msg
@@ -707,8 +670,10 @@ class Actions:
     def copy_mouse_elements_to_clipboard():
         """Copies elements with rectangle containing current mouse position"""
         pos = ctrl.mouse_pos()
+        # get element designated by windows accessibility
+        el = ui.element_at(pos[0],pos[1])
         root = ui.active_window().element
-        elements = list(get_every_child(root,max_level = 17))
+        elements = [el] + list(get_every_child(root,max_level = 17))
         n = 0
         msg = actions.user.element_information(elements[0],headers = True)
         for el in elements:
@@ -819,7 +784,6 @@ class Actions:
             msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
         msg = "\n".join(msg_list)
         clip.set_text(msg)
-        
     def copy_elements_to_clipboard(max_level: int = 7, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
@@ -852,6 +816,55 @@ class Actions:
         msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
         messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]
         clip.set_text(msg + "\n" + "\n".join(messages))
+    def copy_ribbon_elements_as_talon_list(prefix: str):
+        """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; assumes menu heading is selected"""
+        i = 1
+        el = ui.focused_element()
+        first_name = f"{prefix} {clean(el.name)}"
+        first_access_key = actions.user.el_prop_val(el,"access_key")
+        r = {}
+        r[first_name] = clean(first_access_key)
+        while True:
+            i += 1
+            if i > 100:
+                break
+            actions.key("tab")
+            el = ui.focused_element()
+            name = f"{prefix} {clean(el.name)}"
+            if name == first_name:
+                break
+            else:
+                access_key = actions.user.el_prop_val(el,"access_key")
+                r[name] = clean(access_key)
+        clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
+    def copy_ribbon_headings_as_talon_list():
+        """Copies information on ribbon headings to the clipboard"""
+        actions.key("alt")
+        i = 1
+        el = ui.focused_element()
+        first_name = clean(el.name)
+        first_access_key = actions.user.el_prop_val(el,"access_key")
+        r = {}
+        r[first_name] = clean(first_access_key)
+        while True:
+            i += 1
+            if i > 100:
+                break
+            actions.key("right")
+            el = ui.focused_element()
+            name = clean(el.name)
+            if name == first_name:
+                break
+            else:
+                access_key = actions.user.el_prop_val(el,"access_key")
+                r[name] = clean(access_key)
+        clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
 
-        
-        
+def clean(t):
+    t = t.lower()
+    regex = re.compile('[^a-zA-Z]')
+    #First parameter is the replacement, second parameter is your input string
+    t = re.sub('\.\.\.', ' dialog', t)
+    t = regex.sub(' ', t)
+    t = re.sub(' +', ' ', t)
+    return t
