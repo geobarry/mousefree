@@ -26,9 +26,10 @@ os: windows
 
 ^cycle {user.nav_key} {user.ui_action}$: user.cycle_key_action(nav_key,ui_action)
 	
-# FOCUSED ELEMENT
+# CURRENT ELEMENTS
 
 ^{user.ui_action} focused [element]$: user.act_on_element(user.focused_element(),ui_action) 
+^{user.ui_action} mouse [element]$: user.act_on_element(user.mouse_element(),ui_action) 
 
 # MANAGING HIGHLIGHTS LIST
 

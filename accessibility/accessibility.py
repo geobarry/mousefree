@@ -418,6 +418,10 @@ class Actions:
     def focused_element():
         """Returns the currently focused UI element"""
         return ui.focused_element()
+    def mouse_element():
+        """Returns the UI element at the current mouse position"""
+        pos = ctrl.mouse_pos()
+        return ui.element_at(pos[0],pos[1])
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         print("Function: act_on_element")

@@ -1,0 +1,10 @@
+list: user.fancy_punctuation
+-
+quote: '"'
+inch: '"'
+unquote: '"'
+double quote: '"'
+question: ?
+bang: !
+period: .
+comma: ,
