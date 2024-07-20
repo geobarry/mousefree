@@ -17,7 +17,7 @@ def fancy_unit(m) -> str:
 
 @mod.action_class
 class Actions:
-    def fancy_text(text_list: list, capitalize_first_word: bool = True):
+    def fancy_text(text_list: list, capitalize_first_word: bool = True, capitalize_after_quotes: bool = False):
         """Inserts a combination of text and punctuation"""
         p = ""
         parity = {}
@@ -36,13 +36,15 @@ class Actions:
                     p += t
                 parity[t] = parity[t] - 1
                 parity["caps"] = 1
-            elif t == ",":
+            elif t in [",","..."]:
                 p += t
             elif t in [".", "?", "!"]:
                 p += t
                 parity["caps"] = 1
             elif parity["caps"] == 1:
-                if capitalize_first_word:
+                if capitalize_first_word and i == 0:
+                    p += t[0].upper() + t[1:]
+                elif capitalize_after_quotes and text_list[i-1] in ['"',"'"]:
                     p += t[0].upper() + t[1:]
                 else:
                     p += t

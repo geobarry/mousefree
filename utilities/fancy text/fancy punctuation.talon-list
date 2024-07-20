@@ -3,8 +3,9 @@ list: user.fancy_punctuation
 quote: '"'
 inch: '"'
 unquote: '"'
-double quote: '"'
+dub quote: '"'
 question: ?
 bang: !
 period: .
 comma: ,
+ellipsis: ...
