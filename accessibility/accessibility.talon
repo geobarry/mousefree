@@ -35,3 +35,8 @@ os: windows
 
 clear (highlights|labels): user.clear_highlights()
 
+# SETTINGS
+auto highlight [on]: user.ax_auto_highlight(true)
+auto highlight off: 
+	user.ax_auto_highlight(false)
+	user.clear_highlights()

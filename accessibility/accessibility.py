@@ -1,4 +1,4 @@
-from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen
+from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen, settings
 from talon.windows import ax as ax
 from talon.types import Point2d as Point2d
 from talon.skia import  Paint
@@ -7,6 +7,9 @@ import math
 import re
 from io import StringIO
 from copy import deepcopy
+
+# this should be changed to a setting
+auto_highlight_delay = 1.5
 
 # list for tracking a set of clickable points
 marked_elements = []
@@ -21,7 +24,6 @@ class element_highlights:
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
-        print(f"There are now {len(self.rectangles)} elements in highlight list")
         self.canvas.move(0,0) # this forces canvas redraw
     def remove_element(self,rect):
         try:
@@ -40,9 +42,7 @@ class element_highlights:
         paint = canvas.paint
         paint.color = 'f3f'
         paint.style = paint.Style.STROKE
-        
         if len(self.rectangles) > 0:
-            print(f"attempting to draw {len(self.rectangles)} elements")
             for idx in range(len(self.rectangles)):
                 rect = self.rectangles[idx]
                 paint.stroke_width = 7
@@ -124,6 +124,13 @@ mod = Module()
 mod.list("handle_position","position for grabbing ui elements")    
 mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
+
+mod.setting(
+    "ax_auto_highlight",
+    type = bool,
+    default = False,
+    desc = "If true, each action on an element will highlight the target element."
+)
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
@@ -265,6 +272,9 @@ def dynamic_element(_) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
+    def ax_auto_highlight(value: bool = True):
+        """Toggles the ax_auto_highlight setting on or off"""
+        ctx.settings["user.ax_auto_highlight"] = value
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
@@ -425,6 +435,7 @@ class Actions:
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         print("Function: act_on_element")
+        print(f'type(el): {type(el)}')
         if action == "click":
             loc = actions.user.element_location(el)
             if loc != None:            
@@ -480,6 +491,11 @@ class Actions:
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
         # to avoid this, wrap in try except clause 
+        
+        # remove previous highlights
+        if settings.get("user.ax_auto_highlight"):
+            actions.user.clear_highlights()
+        
         def focused_element():
             n = 0
             while n < 3:
@@ -522,10 +538,13 @@ class Actions:
             except Exception as error:
                 print(error)
             if actions.user.element_match(el,prop_list):
+                if settings.get("user.ax_auto_highlight"):
+                    actions.user.act_on_element(el,"highlight")
+                    actions.sleep(auto_highlight_delay)
                 return el
             else:
                 return None
-    def cycle_key_action(key: str, action: str, delay_ms: int = 2000, limit: int = 30):
+    def cycle_key_action(key: str, action: str, delay_ms: int = 500, limit: int = 30):
         """Use key to cycle through elements and perform action on each."""
         # need to change this to use repeater that can be stopped with "stop it"
         start_rect = actions.user.el_prop_val(ui.focused_element(),"rect")
@@ -533,7 +552,10 @@ class Actions:
         while True:
             actions.user.clear_highlights()
             actions.user.act_on_element(ui.focused_element(),action,delay_ms)
+            print(ui.focused_element())
+            
             actions.key(key)
+            actions.sleep(f"{delay_ms + 50}ms")
             i += 1
             if i > limit:
                 break
@@ -820,14 +842,22 @@ class Actions:
         msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
         messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]
         clip.set_text(msg + "\n" + "\n".join(messages))
-    def copy_ribbon_elements_as_talon_list(prefix: str):
+    def copy_ribbon_elements_as_talon_list(prefix: str = ""):
         """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; assumes menu heading is selected"""
         i = 1
+        # use menu heading name as prefix for every command
+        # if keyboard shortcut was used, focus will be on entire ribbon
+        # in which case there will be no name but pressing escape will place focus on menu headingprevious 
+        if ui.focused_element().name == "":
+            actions.key("esc")
+        prefix = ui.focused_element().name
+        # press tab to get to the first command; note grayed out commands will not be reached
+        actions.key("tab")
         el = ui.focused_element()
         first_name = f"{prefix} {clean(el.name)}"
         first_access_key = actions.user.el_prop_val(el,"access_key")
         r = {}
-        r[first_name] = clean(first_access_key)
+#        r[first_name] = clean(first_access_key)
         while True:
             i += 1
             if i > 100:
