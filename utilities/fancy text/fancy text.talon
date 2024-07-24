@@ -3,7 +3,8 @@ mode: user.fancy_dictation
 ^command mode$:
     mode.disable("user.fancy_dictation")
     mode.enable("command")
-	# change this to match your settings in community or the default value which I think is 0.4
+	# coming back from fancy dictation mode, need to set the time out back to what it is in command mode
+	# change this to match your settings in community or the default value which at the time of this writing is 0.3
 	speech.timeout(1.0)
 
 

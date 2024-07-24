@@ -1,0 +1,8 @@
+list: user.slow_repeater_speed_word
+-
+super slow: 2500
+slow: 1500
+steady: 1000
+fast: 300
+super fast: 200
+lightning: 100

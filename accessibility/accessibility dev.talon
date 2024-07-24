@@ -21,5 +21,6 @@ report mouse location: user.report_mouse_location()
 ^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
 ^copy selected element information$: user.copy_selected_elements_to_clipboard()
 ^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
+
+# results are copied to clipboard for pasting into talon list file
 ^copy ribbon headings$: user.copy_ribbon_headings_as_talon_list()
-^copy ribbon items$: user.copy_ribbon_elements_as_talon_list()

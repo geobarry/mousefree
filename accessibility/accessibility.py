@@ -842,14 +842,11 @@ class Actions:
         msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
         messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]
         clip.set_text(msg + "\n" + "\n".join(messages))
-    def copy_ribbon_elements_as_talon_list(prefix: str = ""):
-        """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; assumes menu heading is selected"""
+    def copy_ribbon_elements_as_talon_list():
+        """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
+            assumes menu heading is selected"""
         i = 1
-        # use menu heading name as prefix for every command
-        # if keyboard shortcut was used, focus will be on entire ribbon
-        # in which case there will be no name but pressing escape will place focus on menu headingprevious 
-        if ui.focused_element().name == "":
-            actions.key("esc")
+        # convention: use menu heading name as prefix for every command
         prefix = ui.focused_element().name
         # press tab to get to the first command; note grayed out commands will not be reached
         actions.key("tab")
@@ -863,17 +860,25 @@ class Actions:
             if i > 100:
                 break
             actions.key("tab")
-            el = ui.focused_element()
-            name = f"{prefix} {clean(el.name)}"
-            if name == first_name:
-                break
-            else:
-                access_key = actions.user.el_prop_val(el,"access_key")
-                r[name] = clean(access_key)
+            actions.sleep(0.05)
+            try:
+                el = ui.focused_element()
+                name = f"{prefix} {clean(el.name)}"
+                if name == first_name:
+                    break
+                else:
+                    try:
+                        access_key = actions.user.el_prop_val(el,"access_key")
+                        r[name] = clean(access_key)
+                    except:
+                        pass
+            except:
+                pass
         clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
     def copy_ribbon_headings_as_talon_list():
         """Copies information on ribbon headings to the clipboard"""
-        actions.key("alt")
+        actions.key("esc:5 alt")
+        actions.sleep(0.2)
         i = 1
         el = ui.focused_element()
         first_name = clean(el.name)
