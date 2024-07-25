@@ -28,8 +28,8 @@ os: windows
 	
 # CURRENT ELEMENTS
 
-^{user.ui_action} focused [element]$: user.act_on_element(user.focused_element(),ui_action) 
-^{user.ui_action} mouse [element]$: user.act_on_element(user.mouse_element(),ui_action) 
+^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 
+^{user.ui_action} mouse [element]$: user.act_on_mouse_element(ui_action) 
 
 # MANAGING HIGHLIGHTS LIST
 

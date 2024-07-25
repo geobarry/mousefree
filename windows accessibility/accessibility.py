@@ -425,13 +425,6 @@ class Actions:
             except:
                 pass
         return r  
-    def focused_element():
-        """Returns the currently focused UI element"""
-        return ui.focused_element()
-    def mouse_element():
-        """Returns the UI element at the current mouse position"""
-        pos = ctrl.mouse_pos()
-        return ui.element_at(pos[0],pos[1])
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         print("Function: act_on_element")
@@ -475,6 +468,15 @@ class Actions:
         actions.sleep(f"{delay_after_ms + 50}ms")
         if action == "click":
             ctrl.mouse_click()
+    def act_on_focused_element(action: str, delay_after_ms: int = 0):
+        """Performs action on currently focused element"""
+        el = ui.focused_element()
+        actions.user.act_on_element(el,action,delay_after_ms)
+    def act_on_mouse_element(action: str, delay_after_ms: int = 0):
+        """Returns the UI element at the current mouse position"""
+        pos = ctrl.mouse_pos()
+        el = ui.element_at(pos[0],pos[1])
+        actions.user.act_on_element(el,action,delay_after_ms)
     def act_on_named_element(name: str, action: str, delay_after_ms: int = 0):
         """Performs action on first element beginning with given name"""
         prop_list = [("name",name)]
@@ -844,17 +846,17 @@ class Actions:
         clip.set_text(msg + "\n" + "\n".join(messages))
     def copy_ribbon_elements_as_talon_list():
         """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
-            assumes menu heading is selected"""
+            assumes menu heading is selected with rectangle around it, and ribbon is expanded"""
         i = 1
+        el = ui.focused_element()
+        heading_access_key = clean(actions.user.el_prop_val(el,"access_key")) 
         # convention: use menu heading name as prefix for every command
-        prefix = ui.focused_element().name
+        prefix = el.name
         # press tab to get to the first command; note grayed out commands will not be reached
         actions.key("tab")
         el = ui.focused_element()
         first_name = f"{prefix} {clean(el.name)}"
-        first_access_key = actions.user.el_prop_val(el,"access_key")
-        r = {}
-#        r[first_name] = clean(first_access_key)
+        r = []
         while True:
             i += 1
             if i > 100:
@@ -867,14 +869,17 @@ class Actions:
                 if name == first_name:
                     break
                 else:
-                    try:
-                        access_key = actions.user.el_prop_val(el,"access_key")
-                        r[name] = clean(access_key)
-                    except:
-                        pass
+                    access_key = clean(actions.user.el_prop_val(el,"access_key"))
+                    print(f'access_key: {access_key}')
+                    
+                    # check that access key begins with first access key
+                    if access_key.startswith(heading_access_key):
+                        r.append((name,access_key))
+                    else:
+                        break
             except:
                 pass
-        clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
+        clip.set_text("\n".join([f"{key}:{val}" for key,val in r]))
     def copy_ribbon_headings_as_talon_list():
         """Copies information on ribbon headings to the clipboard"""
         actions.key("esc:5 alt")
@@ -901,7 +906,7 @@ class Actions:
 
 def clean(t):
     t = t.lower()
-    regex = re.compile('[^a-zA-Z]')
+    regex = re.compile('[^a-zA-Z0-9]')
     #First parameter is the replacement, second parameter is your input string
     t = re.sub('\.\.\.', ' dialog', t)
     t = regex.sub(' ', t)
