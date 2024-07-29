@@ -123,14 +123,30 @@ mod = Module()
 
 mod.list("handle_position","position for grabbing ui elements")    
 mod.list("nav_key","keys commonly used to navigate UI elements")
+mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
-
+mod.tag("ax_auto_highlight","Auto highlight setting is true.")
 mod.setting(
     "ax_auto_highlight",
     type = bool,
     default = False,
     desc = "If true, each action on an element will highlight the target element."
 )
+
+ctx = Context()
+
+def settings_change_handler(*args):
+    cur_tags = [tag for tag in ctx.tags]
+    print(f"Accessibility auto highlight has changed")
+    if settings.get("user.ax_auto_highlight"):
+        print("auto highlight ON")
+        cur_tags.append("user.ax_auto_highlight")
+    else:
+        print("auto highlight OFF")
+        cur_tags.remove("user.ax_auto_highlight")
+    ctx.tags = cur_tags
+    
+settings.register("user.ax_auto_highlight",settings_change_handler)
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
@@ -246,7 +262,7 @@ def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 7):
             for child in el.children:
                 yield from get_every_child(child,cur_level + 1,max_level)
 
-ctx = Context()
+
 
 mod.list("dynamic_element", desc="List of children of the active window")
 
@@ -427,17 +443,28 @@ class Actions:
         return r  
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
-        print("Function: act_on_element")
-        print(f'type(el): {type(el)}')
+        if settings.get("user.ax_auto_highlight"):
+            actions.user.clear_highlights()
+            if action not in ["highlight","label"]:
+#                actions.user.act_on_element(el,"highlight",delay_after_ms)
+                # cannot recursively call action
+                try:
+                    rect = el.rect
+                    el_highlights.add_element(rect)
+                except:
+                    print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
+                delay_after_ms = max(delay_after_ms,1000)
         if action == "click":
             loc = actions.user.element_location(el)
             if loc != None:            
+                print(f"Delay: {delay_after_ms}")
                 mouse_obj = mouse_mover(loc, ms = delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "hover":
             loc = actions.user.element_location(el)
             if loc != None:    
+                print(f"Delay: {delay_after_ms}")
                 mouse_obj = mouse_mover(loc, ms = delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
@@ -468,6 +495,8 @@ class Actions:
         actions.sleep(f"{delay_after_ms + 50}ms")
         if action == "click":
             ctrl.mouse_click()
+            if settings.get("user.ax_auto_highlight"):
+                actions.user.clear_highlights()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = ui.focused_element()
@@ -479,6 +508,7 @@ class Actions:
         actions.user.act_on_element(el,action,delay_after_ms)
     def act_on_named_element(name: str, action: str, delay_after_ms: int = 0):
         """Performs action on first element beginning with given name"""
+        print("FUNCTION actor_named_element")
         prop_list = [("name",name)]
         elements = actions.user.matching_elements(prop_list)
         if len(elements) > 0:
@@ -488,7 +518,7 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=50, escape_key: str=None, delay: float = 0.03, verbose: bool = False):
+    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=50, escape_key: str=None, delay: float = 0.09, verbose: bool = False):
         """press given key until the first matching element is reached"""
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
@@ -856,27 +886,29 @@ class Actions:
         actions.key("tab")
         el = ui.focused_element()
         first_name = f"{prefix} {clean(el.name)}"
+        first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
         r = []
         while True:
             i += 1
-            if i > 100:
+            if i > 60:
+                print("Stopping because exceeded count threshold")
                 break
             actions.key("tab")
             actions.sleep(0.05)
             try:
                 el = ui.focused_element()
                 name = f"{prefix} {clean(el.name)}"
-                if name == first_name:
+                access_key = clean(actions.user.el_prop_val(el,"access_key"))
+                print(f'access_key: {access_key}')
+                # check that we're not back at the first element
+                if name == first_name and access_key == first_access_key:
                     break
+                # check that access key begins with (but is not the same as) first access key
+                elif access_key.startswith(heading_access_key) and not access_key == heading_access_key:
+                    r.append((name,access_key))
                 else:
-                    access_key = clean(actions.user.el_prop_val(el,"access_key"))
-                    print(f'access_key: {access_key}')
-                    
-                    # check that access key begins with first access key
-                    if access_key.startswith(heading_access_key):
-                        r.append((name,access_key))
-                    else:
-                        break
+                    # if access key is the same as first element but name is not, we have a phantom element
+                    pass
             except:
                 pass
         clip.set_text("\n".join([f"{key}:{val}" for key,val in r]))

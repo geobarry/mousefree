@@ -1,10 +1,14 @@
 list: user.nav_key
+# navigation keys
 -
 right
 left
 up
 down
+shift up: shift-up
+shift down: shifted-down
 tab	
-funk six: f6
 shift tab: shift-tab
 sky tab: shift-tab
+funk six: f6
+sky funk six: shift-f6
