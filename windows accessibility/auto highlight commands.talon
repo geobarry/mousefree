@@ -24,3 +24,11 @@ focus$:
 focus last: 
 	user.switcher_focus_last()
 	user.clear_highlights()
+
+# more descriptive versions of common commands
+[go] {user.nav_key} [(down|up|over)] to (the [<user.ordinals>] <user.ax_target> (control|button|textbox|combo box|item|layer|element|folder|command)|<user.ax_target>)$:
+	key("{nav_key}")
+	x = ordinals or 1
+	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
+	user.jiggle(nav_kay)
+type <user.text>: insert(text)

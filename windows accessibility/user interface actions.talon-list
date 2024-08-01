@@ -1,6 +1,7 @@
 list: user.ui_action
 -
 click on: click
+right click: right-click
 hover
 highlight
 label

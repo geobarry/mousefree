@@ -288,9 +288,6 @@ def dynamic_element(_) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
-    def ax_auto_highlight(value: bool = True):
-        """Toggles the ax_auto_highlight setting on or off"""
-        ctx.settings["user.ax_auto_highlight"] = value
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
@@ -405,10 +402,10 @@ class Actions:
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         return match(el,prop_list,conjunction,verbose)
-    def element_exists(prop_list: list):
+    def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
         root = ui.active_window().element
-        elements = list(get_every_child(root))
+        elements = list(get_every_child(root,max_level = max_level))
         for el in elements:
             if actions.user.element_match(el,prop_list):            
                 return True
@@ -454,7 +451,7 @@ class Actions:
                 except:
                     print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
                 delay_after_ms = max(delay_after_ms,1000)
-        if action == "click":
+        if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
                 print(f"Delay: {delay_after_ms}")
@@ -493,8 +490,11 @@ class Actions:
             else:
                 print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
         actions.sleep(f"{delay_after_ms + 50}ms")
-        if action == "click":
-            ctrl.mouse_click()
+        if action == "click" or action == "right-click":
+            if action == "click":
+                ctrl.mouse_click()
+            elif action == "right-click":
+                ctrl.mouse_click(1)
             if settings.get("user.ax_auto_highlight"):
                 actions.user.clear_highlights()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
@@ -593,6 +593,9 @@ class Actions:
                 break
             if actions.user.el_prop_val(ui.focused_element(),"rect") == start_rect:
                 break
+    def ax_auto_highlight(value: bool = True):
+        """Toggles the ax_auto_highlight setting on or off"""
+        ctx.settings["user.ax_auto_highlight"] = value
     def remove_highlight(el: ax.Element):
         """Remove element from highlights"""
         try:
@@ -602,6 +605,17 @@ class Actions:
     def clear_highlights():
         """Removes all ui elements from the highlight list"""
         el_highlights.clear_elements()
+    def key_highlight(keys: str, force: bool = True, delay_before_highlight: float = 0.05, delay_after_highlight: float = 0):
+        """Presses a key sequence and then highlights the focused element. If not forced, only highlights if in auto highlight mode."""
+        actions.key(keys)
+        if force or settings.get("user.ax_auto_highlight"):
+            if delay_before_highlight > 0:
+                actions.sleep(delay_before_highlight)
+            actions.user.clear_highlights()
+            actions.user.act_on_focused_element("highlight")
+        if delay_after_highlight > 0:
+            actions.sleep(delay_after_highlight)
+            #
     def hover_focused():
         """Hovers the mouse on the currently focused element"""
         actions.user.act_on_element(ui.focused_element(),"hover")
@@ -748,59 +762,52 @@ class Actions:
         msg = actions.user.element_information(el, headers = True, verbose = True)
         msg += "\n" + actions.user.element_information(el, verbose = True)
         clip.set_text(msg)
-    def copy_focused_element_with_children(levels: int = 1):
+    def copy_focused_element_descendants(levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
         el = ui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,el)
-    def copy_enabled_element_to_clipboard():
-        """Searches for the first enabled element and copies is information to the clipboard"""
-        root = ui.active_window().element
-        elements = list(get_every_child(root))
-        msg = "ENABLED ELEMENT(S)\n"
-        for element in elements:
-            if element.is_enabled:
-                msg += actions.user.element_information(element) +"\n"
+    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = True, root: ax.Element = None):
+        """Retrieves list of ancestors of currently focused element"""
+        print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
+        # get dictionary on focused element
+        input_el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
+        # get all elements as dictionaries
+        if root == None:
+            root = ui.active_window().element
+        el_tree = get_element_tree(root,max_level = max_level)
+        el_list = []
+        for level,cur_id,parent_id,el in el_tree:
+            el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
+            el_dict["level"] = level
+            el_dict["cur_id"] = cur_id
+            el_dict["parent_id"] = parent_id
+            el_list.append(el_dict)
+        print(f"first element dictionary: {el_list[0]}")
+        # get index of focused element
+        idx = -1
+        for el_dict in el_list:
+            dict_copy = deepcopy(el_dict)
+            cur_id = el_dict["cur_id"]
+            del dict_copy["cur_id"]
+            del dict_copy["parent_id"]
+            del dict_copy["level"]
+            if dict_copy == input_el_dict:
+                idx = cur_id
+        print(f"Index of focused element: {idx}")
+        print(f"{el_list[idx]}")
+        # get ancestors
+        ancestor_list = [el_list[idx]]
+        n = 1
+        while ancestor_list[-1]["parent_id"] > -1 and n < 99:
+            n += 1
+            ancestor_list.append(el_list[ancestor_list[-1]["parent_id"]])
+        headings = ["level","cur_id","parent_id"] + actions.user.element_information(root,headers = True,verbose = verbose).split("\t")
+        msg_list = ["\t".join(headings)]
+        for ancestor in ancestor_list:
+            msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
+        msg = "\n".join(msg_list)
         clip.set_text(msg)
-    def copy_selected_elements_to_clipboard():
-        """Copies selected element information to the clipboard"""
-        root = ui.active_window().element
-        elements = list(get_every_child(root))
-        msg = "SELECTED ELEMENT(S)\n"
-        for el in elements:
-            try:
-                pattern = el.selectionitem_pattern                
-                if pattern.is_selected:
-                    msg += actions.user.element_information(element) +"\n"
-            except:
-                pass
-        clip.set_text(msg)
-    def copy_clickable_element_to_clipboard():
-        """Searches for the first enabled element and copies is information to the clipboard"""
-        root = ui.active_window().element
-        elements = list(get_every_child(root))
-        msg = "ENABLED ELEMENT(S)\n"
-        for element in elements:
-            try:
-                x = element.clickable_point
-                msg += actions.user.element_information(element) +"\n"
-            except:
-                pass 
-        clip.set_text(msg)
-    def copy_keyboard_element_to_clipboard():
-        """Searches for elements that have keyboard focus and are clickable
-        and copies information to clipboard"""
-        root = ui.active_window().element
-        elements = list(get_every_child(root))
-        msg = "ENABLED ELEMENT(S)\n"
-        for element in elements:
-            if element.has_keyboard_focus:
-                try:
-                    x = element.clickable_point
-                    msg += actions.user.element_information(element) +"\n"
-                except:
-                    pass 
-        clip.set_text(msg)
-    def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = False, root: ax.Element = None):
+    def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True, root: ax.Element = None):
         """Retrieves list of ancestors of currently focused element"""
         print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
         # get dictionary on focused element
@@ -835,7 +842,6 @@ class Actions:
         while ancestor_list[-1]["parent_id"] > -1 and n < 99:
             n += 1
             ancestor_list.append(el_list[ancestor_list[-1]["parent_id"]])
-#        headings = ["level","cur_id","parent_id","name","class_name","help_text","automation_id","printout","value","children","patterns","is_offscreen","clickable_point","rect.x","rect.y","rect.width","rect.height"]
         headings = ["level","cur_id","parent_id"] + actions.user.element_information(root,headers = True,verbose = verbose).split("\t")
         msg_list = ["\t".join(headings)]
         for ancestor in ancestor_list:

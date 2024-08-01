@@ -49,7 +49,6 @@ class SlowRepeater:
         self.job = cron.interval('{}ms'.format(check_repeat_time), self.repeat_command)
         x = actions.core.recent_commands()
         self.cmd = x[-1][0]
-
     def disable(self):
         if not self.enabled:
             return
@@ -68,7 +67,6 @@ class SlowRepeater:
         self.cumulative_time = 0
         self.modifier_key = None
         self.enabled = False
-
     def repeat_command(self):
         self.cumulative_time += check_repeat_time
         # time to repeat command if modulus remainder < check_repeat_time
@@ -77,7 +75,6 @@ class SlowRepeater:
                 actions.key(self.key)
             elif self.mode == "command":
                 actions.core.run_command(self.cmd[0],self.cmd[1])
-
 
 repeater_object = SlowRepeater()
 mod = Module()
@@ -125,5 +122,9 @@ class Actions:
     def repeat_slower(ordinal: int = 1):
         """Increase repeat interval"""
         repeater_object.ms = max(repeater_object.ms+speed_change*ordinal,minimum_repeat_interval)
-        
+    def jiggle(key: str): 
+        """Presses a key followed by its opposite."""
+        if key in opposites.keys():
+            actions.user.key_highlight(f"{key} {opposites[key]}")
+
 ctx = Context()
