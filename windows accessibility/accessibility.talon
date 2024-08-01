@@ -24,6 +24,11 @@ os: windows
 	key("{nav_key}")
 	user.act_on_focused_element(ui_action)
 
+next {user.ui_action}$:
+	user.clear_highlights()
+	key(tab)
+	user.act_on_focused_element(ui_action)
+
 ^cycle {user.nav_key} {user.ui_action}$: user.cycle_key_action(nav_key,ui_action)
 	
 # CURRENT ELEMENTS

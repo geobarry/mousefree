@@ -112,6 +112,8 @@ class Actions:
         repeater_object.disable()
         actions.mode.enable("command")
         actions.mode.disable("user.slow_repeating")
+        if settings.get("user.ax_auto_highlight"):
+            actions.user.clear_highlights()
     def hard_stop_repeating():
         """Terminate Immediately"""
         repeater_object.ms = reaction_time + 1
