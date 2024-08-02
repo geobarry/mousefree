@@ -864,7 +864,12 @@ class Actions:
         def el_data(level,cur_id,parent_id,el):
             status = []
             # check to see if this is the focused element
-            el_fingerprint = [actions.user.el_prop_val(el,prop) for prop in prop_list]
+            el_fingerprint = []
+            for prop in prop_list:
+                try:
+                    el_fingerprint.append(actions.user.el_prop_val(el,prop) for prop in prop_list)
+                except:
+                    print(f"EXCEPTION retrieving property {prop}")
             if el_fingerprint == focus_fingerprint:
                 status.append("focused")
             # check to see if mouse is on element

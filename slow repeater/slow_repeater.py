@@ -1,5 +1,5 @@
 from typing import Tuple
-from talon import Context, Module, ctrl, cron, actions, imgui, ui
+from talon import Context, Module, ctrl, cron, actions, imgui, ui, settings
 
 # parameters
 reaction_time = 1500 # set to 0 if you don't want backwards-correction
@@ -112,6 +112,8 @@ class Actions:
         repeater_object.disable()
         actions.mode.enable("command")
         actions.mode.disable("user.slow_repeating")
+        x = settings.get("user.ax_auto_highlight")
+        print(f"Auto Highlight: {x}")
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
     def hard_stop_repeating():
