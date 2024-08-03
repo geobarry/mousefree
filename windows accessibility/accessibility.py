@@ -593,9 +593,9 @@ class Actions:
                 break
             if actions.user.el_prop_val(ui.focused_element(),"rect") == start_rect:
                 break
-    def ax_auto_highlight(value: bool = True):
+    def ax_auto_highlight(val: bool = True):
         """Toggles the ax_auto_highlight setting on or off"""
-        ctx.settings["user.ax_auto_highlight"] = value
+        ctx.settings["user.ax_auto_highlight"] = val        
     def remove_highlight(el: ax.Element):
         """Remove element from highlights"""
         try:
@@ -615,7 +615,6 @@ class Actions:
             actions.user.act_on_focused_element("highlight")
         if delay_after_highlight > 0:
             actions.sleep(delay_after_highlight)
-            #
     def hover_focused():
         """Hovers the mouse on the currently focused element"""
         actions.user.act_on_element(ui.focused_element(),"hover")

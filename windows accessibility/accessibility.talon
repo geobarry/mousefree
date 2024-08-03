@@ -1,4 +1,6 @@
 os: windows
+os: windows
+and mode: user.zen
 -
 # Useful accessibility commands for generic situations
 # Actions include "click on","hover","highlight","label","go select","invoke"; see <user interface actions.talon-list>

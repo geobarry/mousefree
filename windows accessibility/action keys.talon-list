@@ -3,3 +3,7 @@ list: user.action_key
 enter
 escape:esc
 alt down: alt-down
+page down: pagedown
+page up: pageup
+control page down: ctrl-pagedown
+control page up: ctrl-pageup
