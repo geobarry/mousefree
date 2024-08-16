@@ -68,16 +68,12 @@ class mouse_mover:
         dy = self.dest.y - self.orig[1]
         totD = ((dx ** 2) + (dy ** 2)) ** 0.5
         if ms != None:
-            print("milliseconds is it!")
             totT = ms
         else:
-            print("have to calculate milliseconds")
             totT = self.get_move_time(totD)
-        print(f"totD: {totD}  |  totT: {totT}")
         self.num_intervals = max(1,math.ceil(totT / 30))
         self.interval_x = dx / self.num_intervals
         self.interval_y = dy / self.num_intervals
-        print(f"dx: {self.interval_x}  |  dy: {self.interval_y}")
         self.job = cron.interval('30ms', self.move_next)
         self.completed = 0
     def get_move_time(self,d):
@@ -106,11 +102,9 @@ class mouse_mover:
         """Moves mouse by one interval until destination reached"""
         # handle last move
         if self.completed >= self.num_intervals:
-            print(f"moving mouse to x: {self.dest.x}")
             ctrl.mouse_move(self.dest.x,self.dest.y)
             cron.cancel(self.job)
             if self.callback != None:
-                print("calling callback function")
                 self.callback()
         else:
             # handle previous moves
@@ -137,12 +131,9 @@ ctx = Context()
 
 def settings_change_handler(*args):
     cur_tags = [tag for tag in ctx.tags]
-    print(f"Accessibility auto highlight has changed")
     if settings.get("user.ax_auto_highlight"):
-        print("auto highlight ON")
         cur_tags.append("user.ax_auto_highlight")
     else:
-        print("auto highlight OFF")
         cur_tags.remove("user.ax_auto_highlight")
     ctx.tags = cur_tags
     
@@ -226,9 +217,9 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
     if prop_list[0] in ["AND","OR","and","or","And","Or"]:
         r = match(el,prop_list[1],prop_list[0])
     # handle the case that property list is a list of (property, value) tuples
-    elif conjunction == "AND":
+    elif conjunction.upper() == "AND":
         r =  all([eval_cond(prop,val) for prop,val in prop_list])
-    elif conjunction == "OR":
+    elif conjunction.upper() == "OR":
         r = any([eval_cond(prop,val) for prop,val in prop_list])
     # next line as for debugging
     if verbose:
@@ -237,7 +228,6 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
 def get_element_tree(el: ax.Element, max_level: int = 7):
     # do a breadth first search keeping track of levels, ids and parents
     # returns list of (level,cur_id,parent_id,el)
-    print("Getting element tree ...")
     cur_level = 0
     el_id = -1
     parent_id = -1
@@ -261,8 +251,6 @@ def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 7):
             yield el
             for child in el.children:
                 yield from get_every_child(child,cur_level + 1,max_level)
-
-
 
 mod.list("dynamic_element", desc="List of children of the active window")
 
@@ -319,7 +307,6 @@ class Actions:
                 return el.automation_id
             elif prop_name.lower() == "printout":
                 s = StringIO()
-                print(el,file = s)
                 # remove new line at end, as well as <> that break copy/paste into Excel
                 x = s.getvalue().strip().replace("<","").replace(">","") 
                 return x                
@@ -388,13 +375,10 @@ class Actions:
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
         try: # try clickable point property
-            print("accessibility: element_location: trying clickable point")
             return el.clickable_point
         except:
             try: # try rectangle
-                print("accessibility: element_location: trying rectangle center")
                 rect = el.rect
-                print(f'rect: {rect}')
                 return Point2d(rect.x + int(rect.width/2),rect.y + int(rect.height/2))
             except:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
@@ -432,6 +416,7 @@ class Actions:
         elements = list(get_every_child(root,max_level = max_level))
         # search for match
         for el in elements:
+            # print(el.class_name)
             try:
                 if actions.user.element_match(el,prop_list):
                     r.append(el)
@@ -454,18 +439,17 @@ class Actions:
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
-                print(f"Delay: {delay_after_ms}")
                 mouse_obj = mouse_mover(loc, ms = delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "hover":
             loc = actions.user.element_location(el)
             if loc != None:    
-                print(f"Delay: {delay_after_ms}")
                 mouse_obj = mouse_mover(loc, ms = delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "highlight":
+            print("HIGHLIGHTING...")
             try:
                 rect = el.rect
                 el_highlights.add_element(rect)
@@ -508,7 +492,6 @@ class Actions:
         actions.user.act_on_element(el,action,delay_after_ms)
     def act_on_named_element(name: str, action: str, delay_after_ms: int = 0):
         """Performs action on first element beginning with given name"""
-        print("FUNCTION actor_named_element")
         prop_list = [("name",name)]
         elements = actions.user.matching_elements(prop_list)
         if len(elements) > 0:
@@ -544,8 +527,6 @@ class Actions:
         matches = 0
         if actions.user.element_match(el,prop_list,verbose = False):
             matches += 1
-        print(f'matches: {matches}')
-        print(f'ordinal: {ordinal}')
         msg = f"name: {el.name} \tclass_name: {el.class_name} \thelp_text: {el.help_text}"
         if verbose:
             print(f"ELEMENT: {el.name}")
@@ -576,6 +557,15 @@ class Actions:
                 return el
             else:
                 return None
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.09):
+        """press key until element with exact value for one property is reached"""
+        prop_list = [(prop,val)]
+        actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
+    def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=99,delay: float = 0.03):
+        """Press key until element with matching name and classes reached"""
+        prop_list = [("name",name),("class_name",class_name)]
+        actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
+
     def cycle_key_action(key: str, action: str, delay_ms: int = 500, limit: int = 30):
         """Use key to cycle through elements and perform action on each."""
         # need to change this to use repeater that can be stopped with "stop it"
@@ -584,8 +574,6 @@ class Actions:
         while True:
             actions.user.clear_highlights()
             actions.user.act_on_element(ui.focused_element(),action,delay_ms)
-            print(ui.focused_element())
-            
             actions.key(key)
             actions.sleep(f"{delay_ms + 50}ms")
             i += 1
@@ -642,14 +630,6 @@ class Actions:
                 print(f"Error adding to selection in accessibility.py function select_marked: {error}")        
         # reset list of marked elements
         marked_elements = []
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.03):
-        """press key until element with exact value for one property is reached"""
-        prop_list = [(prop,val)]
-        actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
-    def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=99,delay: float = 0.03):
-        """Press key until element with matching name and classes reached"""
-        prop_list = [("name",name),("class_name",class_name)]
-        actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
     def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
         """Searches for first element with given property value and invokes it."""
         prop_list = [prop,val]
@@ -909,7 +889,8 @@ class Actions:
                 el = ui.focused_element()
                 name = f"{prefix} {clean(el.name)}"
                 access_key = clean(actions.user.el_prop_val(el,"access_key"))
-                print(f'access_key: {access_key}')
+                print(f'{i} access_key: {access_key}')
+                print(f'heading_access_key: {heading_access_key}')
                 # check that we're not back at the first element
                 if name == first_name and access_key == first_access_key:
                     break
@@ -921,7 +902,10 @@ class Actions:
                     pass
             except:
                 pass
-        clip.set_text("\n".join([f"{key}:{val}" for key,val in r]))
+        print("Got to the end...")
+        msg = "\n".join([f"{key}:{val}" for key,val in r])
+        print(f'msg: {msg}')
+        clip.set_text(msg)
     def copy_ribbon_headings_as_talon_list():
         """Copies information on ribbon headings to the clipboard"""
         actions.key("esc:5 alt")
