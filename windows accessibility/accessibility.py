@@ -501,7 +501,7 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=50, escape_key: str=None, delay: float = 0.09, verbose: bool = False):
+    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=20, escape_key: str=None, delay: float = 0.09, verbose: bool = False):
         """press given key until the first matching element is reached"""
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
