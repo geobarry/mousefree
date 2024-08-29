@@ -17,7 +17,6 @@ and mode: user.zen
 #  into regex for continuation and catching homophones
 
 ^{user.nav_key} until [<user.ordinals>] <user.ax_target>$:
-	key("{nav_key}")
 	x = ordinals or 1
 	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
 	
