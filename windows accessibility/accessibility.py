@@ -267,6 +267,15 @@ def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 7):
             yield el
             for child in el.children:
                 yield from get_every_child(child,cur_level + 1,max_level)
+def identity(el: ax.Element):
+    r = []
+    prop = ["name","class_name","automation_id"]
+    for p in prop:
+        val = actions.user.el_prop_val(el,p)
+        if val != '':
+            r.append(f"{p}: {val}")
+    r = ";".join(r)
+    return r
 
 mod.list("dynamic_element", desc="List of children of the active window")
 
@@ -517,7 +526,13 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=20, escape_key: str=None, delay: float = 0.09, verbose: bool = False):
+    def key_to_matching_element(key: str, 
+                                prop_list: list, 
+                                ordinal: int=1, 
+                                limit: int=20, 
+                                escape_key: str=None, 
+                                delay: float = 0.09, 
+                                verbose: bool = False):
         """press given key until the first matching element is reached"""
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
@@ -526,7 +541,7 @@ class Actions:
         # remove previous highlights
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
-        
+        # Function to get next element, sometimes need to be persisted
         def focused_element():
             n = 0
             while n < 3:
@@ -536,32 +551,35 @@ class Actions:
                     n += 1
                     actions.sleep(delay)
             return None
-        
+        # initialize
         el = focused_element()
         last_el = el
         i = 1
         matches = 0
-        if actions.user.element_match(el,prop_list,verbose = False):
-            matches += 1
-        msg = f"name: {el.name} \tclass_name: {el.class_name} \thelp_text: {el.help_text}"
-        if verbose:
-            print(f"ELEMENT: {el.name}")
         if el:
             try:
-                while (matches < ordinal) and (i < limit):            
+                first_el_id = identity(el)
+                print(first_el_id)
+                while True:
                     actions.key(key)
                     if delay > 0:
                         actions.sleep(delay)
-                    el = ui.focused_element()
+                    el = focused_element()
                     if el:
                         if actions.user.element_match(el,prop_list,verbose = False):
                             matches += 1
                         if verbose:
                             print(f"ELEMENT: {el.name}")      
-                        if (last_el == ui.focused_element()) and (escape_key != None):
+                        if (last_el == el) and (escape_key != None):
                             actions.key(escape_key)
                         last_el = el
                         i += 1
+                        if matches == ordinal:
+                            break
+                        if i == limit:
+                            break
+                        if identity(el) == first_el_id:
+                            break
                     else:
                         break
             except Exception as error:
@@ -581,7 +599,6 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
-
     def cycle_key_action(key: str, action: str, delay_ms: int = 500, limit: int = 30):
         """Use key to cycle through elements and perform action on each."""
         # need to change this to use repeater that can be stopped with "stop it"
