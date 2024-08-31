@@ -225,7 +225,7 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
     if verbose:
         print(f"{r} | element: {el.name[:25]} | rule: {prop_list}")
     return r
-def get_element_tree(el: ax.Element, max_level: int = 7):
+def breadth_first_tree(el: ax.Element, max_level: int = 7):
     # do a breadth first search keeping track of levels, ids and parents
     # returns list of (level,cur_id,parent_id,el)
     cur_level = 0
@@ -240,9 +240,25 @@ def get_element_tree(el: ax.Element, max_level: int = 7):
             el_id += 1
             r.append((cur_level,el_id,parent_id,el))
             for child in el.children:
-                Q.append((cur_level+1,el_id,child))
-        
+                Q.append((cur_level+1,el_id,child))        
     return r
+def depth_first_tree(el: ax.Element, max_level: int = 7):
+    # do a breadth first search keeping track of levels, ids and parents
+    # returns list of (level,cur_id,parent_id,el)
+    el_id = 0
+    r = [(0,el_id,-1,el)]
+    def get_children(el, el_id, level, max_level):
+        r = []
+        if level < max_level:
+            parent_id = el_id
+            for el in el.children:
+                el_id += 1
+                r.append((level + 1,el_id,parent_id,el))
+                r = r + get_children(el,el_id,level + 1, max_level)
+        return r
+    r = r + get_children(el,el_id,0,max_level)
+    return r
+            
 def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 7):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
@@ -745,15 +761,14 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = ui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,el)
-    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = True, root: ax.Element = None):
+    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
         print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
+        root = el
         # get dictionary on focused element
-        input_el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
+        input_el_dict = actions.user.element_information(root,as_dict = True,verbose = verbose)
         # get all elements as dictionaries
-        if root == None:
-            root = ui.active_window().element
-        el_tree = get_element_tree(root,max_level = max_level)
+        el_tree = breadth_first_tree(root,max_level = max_level)
         el_list = []
         for level,cur_id,parent_id,el in el_tree:
             el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
@@ -786,15 +801,17 @@ class Actions:
             msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
         msg = "\n".join(msg_list)
         clip.set_text(msg)
-    def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True, root: ax.Element = None):
+    def copy_mouse_element_ancestors(max_level: int = 12, verbose: bool = True):
+        """Retrieves list of ancestors of current mouse element"""
+        pos = ctrl.mouse_pos()        
+        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),max_level,verbose)
+    def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
         print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
         # get dictionary on focused element
         focused_el_dict = actions.user.element_information(ui.focused_element(),as_dict = True,verbose = verbose)
         # get all elements as dictionaries
-        if root == None:
-            root = ui.active_window().element
-        el_tree = get_element_tree(root,max_level = max_level)
+        el_tree = breadth_first_tree(ui.focused_element(),max_level = max_level)
         el_list = []
         for level,cur_id,parent_id,el in el_tree:
             el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
@@ -827,7 +844,7 @@ class Actions:
             msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
         msg = "\n".join(msg_list)
         clip.set_text(msg)
-    def copy_elements_to_clipboard(max_level: int = 7, root: ax.Element = None):
+    def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
         if root == None:
@@ -859,7 +876,10 @@ class Actions:
             status = "|".join(status)
             r = f"{status}\t{level}\t{cur_id}\t{parent_id}\t" + re.sub(r"\r?\n","<<new line>>",actions.user.element_information(el)) 
             return r
-        el_info = get_element_tree(root,max_level = max_level)
+        if breadth_first:
+            el_info = breadth_first_tree(root,max_level = max_level)
+        else:
+            el_info = depth_first_tree(root,max_level = max_level)
         print(f"{len(el_info)} elements in tree...")
         msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
         messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]

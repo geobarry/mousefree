@@ -9,9 +9,12 @@ report mouse location: user.report_mouse_location()
 ^copy focused element information$: user.copy_focused_element_to_clipboard()
 ^copy focused element descendants$: user.copy_focused_element_descendants()
 ^copy focused element ancestors$: user.copy_focused_element_ancestors()
+^copy mouse element ancestors$: user.copy_mouse_element_ancestors()
 ^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(12,true)
 ^copy all element information$: user.copy_elements_to_clipboard()
 ^copy level <number> element information$: user.copy_elements_to_clipboard(number)
+^copy level <number> element deep information:
+	user.copy_elements_to_clipboard(number,false)
 ^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
 ^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
 
