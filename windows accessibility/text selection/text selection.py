@@ -7,6 +7,8 @@ ax_unit_options = ["Character","Format","Word","Line","Paragraph","Page","Docume
 
 mod = Module()
 
+mod.list("text_search_direction","directions from cursor in which text can be searched")
+
 @mod.action_class
 class Actions:
     def find_target(target_regex: str, 
