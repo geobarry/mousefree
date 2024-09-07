@@ -1,0 +1,5 @@
+list: user.text_search_direction
+-
+FORWARD
+BACKWARD
+BOTH
