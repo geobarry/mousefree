@@ -1,5 +1,6 @@
 list: user.text_search_direction
 -
-FORWARD
-BACKWARD
-BOTH
+next:DOWN
+previous:UP
+UP
+DOWN
