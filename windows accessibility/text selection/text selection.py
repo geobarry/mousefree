@@ -22,8 +22,10 @@ def precise_target_and_position(target: re.Pattern,
 
     # find all instances of the target within the text range text
     t = text_range.text
+    print(f"target: {target}")
     m = re.findall(target,t)
     if m and len(m) >= ordinal:
+        print(f'm: {m}')
         # determine precise target and loop parameters to iterate through preceding matches
         if search_dir.upper() == "UP":
             precise_trg = m[-ordinal]
@@ -37,6 +39,7 @@ def precise_target_and_position(target: re.Pattern,
         for i in range(start,stop,step):
             if m[i] == precise_trg:
                 precise_ordinal += 1
+        print(f'precise_trg: {precise_trg}')
         return (precise_trg,precise_ordinal)
     else:
         return (None,None)
@@ -86,7 +89,10 @@ def get_scope(scope_dir: str = "DOWN",
         print("Error in function get_scope: focused element does not have text pattern")
         return 
     # Get scope as a text range
-    cur_range = el.text_pattern.selection[0].clone()
+    if "Text2" in el.patterns:
+        cur_range = el.text_pattern2.selection[0].clone()
+    else:
+        cur_range = el.text_pattern.selection[0].clone()
     # avoid selecting anything in current selection
     if scope_dir.upper() == "UP":
         cur_range.move_endpoint_by_range("End","Start",target = cur_range.clone())
@@ -105,9 +111,12 @@ class Actions:
         print(f'scope_dir: {scope_dir}')
         el = ui.focused_element()
         if "Text" in el.patterns:
-            r = find_target(target,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-            if r != None:
-                r.select()
+            try:
+                r = find_target(target,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                if r != None:
+                    r.select()
+            except:
+                actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
 
@@ -115,12 +124,15 @@ class Actions:
         """Navigates to text using windows accessibility pattern if possible"""
         el = ui.focused_element()
         if "Text" in el.patterns:
-            r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-            if r != None:
-                src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
-                trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
-                r.select()
+            try:
+                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                if r != None:
+                    src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
+                    trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
+                    r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
+                    r.select()
+            except:
+                actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
 
@@ -131,13 +143,16 @@ class Actions:
         """Extend currently selected text using windows accessibility pattern if possible"""
         el = ui.focused_element()
         if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0].clone()
-            r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-            if r != None:
-                src_pos = "Start" if scope_dir.upper() == "UP" else "End"
-                trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
-                cur_range.select()
+            try:
+                cur_range = el.text_pattern.selection[0].clone()
+                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                if r != None:
+                    src_pos = "Start" if scope_dir.upper() == "UP" else "End"
+                    trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
+                    cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
+                    cur_range.select()
+            except:
+                actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
 
