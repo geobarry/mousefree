@@ -239,8 +239,11 @@ def breadth_first_tree(el: ax.Element, max_level: int = 7):
         if cur_level <= max_level:
             el_id += 1
             r.append((cur_level,el_id,parent_id,el))
-            for child in el.children:
-                Q.append((cur_level+1,el_id,child))        
+            try:
+                for child in el.children:
+                    Q.append((cur_level+1,el_id,child))        
+            except:
+                pass
     return r
 def depth_first_tree(el: ax.Element, max_level: int = 7):
     # do a breadth first search keeping track of levels, ids and parents
@@ -790,14 +793,16 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = ui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,el)
-    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = True):
+    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = False):
         """Retrieves list of ancestors of currently focused element"""
         print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
         root = el
         # get dictionary on focused element
         input_el_dict = actions.user.element_information(root,as_dict = True,verbose = verbose)
         # get all elements as dictionaries
+        root = ui.active_window().element
         el_tree = breadth_first_tree(root,max_level = max_level)
+        print(f"tree length: {len(el_tree)}")
         el_list = []
         for level,cur_id,parent_id,el in el_tree:
             el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
@@ -836,43 +841,8 @@ class Actions:
         actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),max_level,verbose)
     def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
-        print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
-        # get dictionary on focused element
-        focused_el_dict = actions.user.element_information(ui.focused_element(),as_dict = True,verbose = verbose)
-        # get all elements as dictionaries
-        el_tree = breadth_first_tree(ui.focused_element(),max_level = max_level)
-        el_list = []
-        for level,cur_id,parent_id,el in el_tree:
-            el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
-            el_dict["level"] = level
-            el_dict["cur_id"] = cur_id
-            el_dict["parent_id"] = parent_id
-            el_list.append(el_dict)
-        print(f"first element dictionary: {el_list[0]}")
-        # get index of focused element
-        idx = -1
-        for el_dict in el_list:
-            dict_copy = deepcopy(el_dict)
-            cur_id = el_dict["cur_id"]
-            del dict_copy["cur_id"]
-            del dict_copy["parent_id"]
-            del dict_copy["level"]
-            if dict_copy == focused_el_dict:
-                idx = cur_id
-        print(f"Index of focused element: {idx}")
-        print(f"{el_list[idx]}")
-        # get ancestors
-        ancestor_list = [el_list[idx]]
-        n = 1
-        while ancestor_list[-1]["parent_id"] > -1 and n < 99:
-            n += 1
-            ancestor_list.append(el_list[ancestor_list[-1]["parent_id"]])
-        headings = ["level","cur_id","parent_id"] + actions.user.element_information(root,headers = True,verbose = verbose).split("\t")
-        msg_list = ["\t".join(headings)]
-        for ancestor in ancestor_list:
-            msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
-        msg = "\n".join(msg_list)
-        clip.set_text(msg)
+        actions.user.copy_element_ancestors(ui.focused_element(),max_level,verbose)
+        
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
