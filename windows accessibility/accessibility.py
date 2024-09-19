@@ -392,6 +392,16 @@ class Actions:
                 return el.legacyiaccessible_pattern.value
             elif prop_name.lower() == "legacy.selection":
                 return el.legacyiaccessible_pattern.selection
+            elif prop_name.lower() == "text":
+                if "Text" in el.patterns:
+                    text_range = el.text_pattern.selection[0]
+                    return text_range.text
+                else:
+                    if as_text:
+                        return ''
+                    else:
+                        return None
+                    
         except:
             if as_text:
                 return ''
@@ -696,7 +706,7 @@ class Actions:
         msg = ""
         prop_list = ["name","class_name",
                         "help_text","automation_id",
-                        "printout","value",
+                        "printout",
                         "children","patterns",
                         "is_offscreen",
                         "clickable_point",
@@ -710,7 +720,8 @@ class Actions:
                     "item_type","item_status","described_by",
                     "flows_to","provider_description",
                     "value.is_read_only",
-                    "legacy.value","legacy.selection"
+                    "legacy.value","legacy.selection",
+                    "value","text"
                 ]
         if verbose:
             prop_list += other_prop

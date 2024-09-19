@@ -78,7 +78,7 @@ def find_target(trg: re.Pattern,
 
 def get_scope(scope_dir: str = "DOWN",
                 scope_unit: str = "Line",
-                scope_unit_count: int = 7):
+                scope_unit_count: int = 15):
     """Returns a text range corresponding to the search scope"""
     # Error Checking
     if scope_unit not in ax_units:
