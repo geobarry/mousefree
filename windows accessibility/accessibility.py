@@ -461,6 +461,33 @@ class Actions:
             except:
                 pass
         return r  
+    def count_matching_children(el: ax.Element,prop_list: list):
+        """Returns the number of children matching the property list conditions"""
+        n = 0
+        for child in el.children:
+            if actions.user.element_match(child,prop_list):
+                n += 1
+        return n
+    def matching_child(el: ax.Element,prop_list: list):
+        """Returns the child of the input element that matches the property list"""
+        for child in el.children:
+            if actions.user.element_match(child,prop_list):
+                return child
+        return None
+    def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
+        """Finds element by working down from root"""
+        if root == None:
+            root = ui.active_window().element
+        el = root
+        for prop_list in prop_seq:
+            n = actions.user.count_matching_children(el,prop_list)
+            if verbose:
+                print(f"{prop_list[0][1]}: {n} matching children")
+            el = actions.user.matching_child(el,prop_list)            
+            if el == None:
+                break
+        return el
+#
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         print("FUNCTION: acton_element")
@@ -551,7 +578,7 @@ class Actions:
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
         # to avoid this, wrap in try except clause 
-        
+        print("FUNCTION: key_to_matching_element")
         # remove previous highlights
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
@@ -567,13 +594,14 @@ class Actions:
             return None
         # initialize
         el = focused_element()
+        print(f'el: {el}')
         last_el = el
         i = 1
         matches = 0
         if el:
             try:
                 first_el_id = identity(el)
-                print(first_el_id)
+                print(f"1st element: {first_el_id}")
                 while True:
                     actions.key(key)
                     if delay > 0:
