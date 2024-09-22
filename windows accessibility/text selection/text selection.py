@@ -167,7 +167,22 @@ class Actions:
             cur_range.select()
             cur_range.scroll_into_view(True)
             
-
+    def extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
+        """Extends the selection to the end/beginning of next unit"""
+        el = ui.focused_element()
+        if "Text" in el.patterns:
+            print(f"Selection Ranges: {len(el.text_pattern.selection)}")
+            cur_range = el.text_pattern.selection[0].clone()
+            ext_range = el.text_pattern.selection[0].clone()
+            ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
+            pos = "Start" if scope_dir.upper() == "UP" else "End"
+            src_pos = "End" if pos == "Start" else "Start"
+            ext_range.move_endpoint_by_range(src_pos,pos,target = ext_range)
+            ext_range.move(unit,ordinal)
+            cur_range.move_endpoint_by_range(pos,pos,target = ext_range)
+            cur_range.select()            
+            cur_range.scroll_into_view(True)
+                    
     def select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = ui.focused_element() 
@@ -177,6 +192,8 @@ class Actions:
             cur_range.select()
         else:
             actions.user.edit_command("select", unit)
+
+    
                 
     def test_backward_search():
         """for debugging"""

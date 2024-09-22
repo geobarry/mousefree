@@ -487,7 +487,6 @@ class Actions:
             if el == None:
                 break
         return el
-#
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         print("FUNCTION: acton_element")

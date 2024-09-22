@@ -30,3 +30,5 @@ go {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <user.n
 	user.move_by_unit(text_search_unit,text_search_direction,number_small)
 
 #select {user.text_search_unit}$: user.select_unit(text_search_unit)
+extend {user.text_search_direction} <number_small> {user.text_search_unit}$:
+	user.extend_by_unit(text_search_unit,text_search_direction,number_small)
