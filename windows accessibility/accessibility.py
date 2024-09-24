@@ -474,15 +474,31 @@ class Actions:
             if actions.user.element_match(child,prop_list):
                 return child
         return None
+    def matching_descendant(el: ax.Element, prop_list: list, generation: int):
+        """Returns the descendant of the input element that matches the property list"""
+        def get_descendants(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
+            if cur_gen == trg_gen:
+                for child in el.children:
+                    if actions.user.element_match(child,prop_list):
+                        return child
+                return None
+            else:
+                for child in el.children:
+                    el = get_descendants(child,prop_list,cur_gen + 1,trg_gen)
+                    if el:
+                        return el
+                return None
+        el = get_descendants(el,prop_list,1,generation)
+        return el
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
         if root == None:
             root = ui.active_window().element
         el = root
         for prop_list in prop_seq:
-            n = actions.user.count_matching_children(el,prop_list)
             if verbose:
-                print(f"{prop_list[0][1]}: {n} matching children")
+                n = actions.user.count_matching_children(el,prop_list)
+                print(f"{prop_list}: {n} matching children")
             el = actions.user.matching_child(el,prop_list)            
             if el == None:
                 break

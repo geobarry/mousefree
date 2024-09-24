@@ -1,4 +1,5 @@
 os: windows
+mode: command
 mode: user.compass
 -
 mouse to screen {user.handle_position}: user.mouse_to_screen_edge(handle_position)

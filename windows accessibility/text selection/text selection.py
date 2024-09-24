@@ -114,6 +114,7 @@ class Actions:
             try:
                 r = find_target(target,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
+                
                     r.select()
             except:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
@@ -161,9 +162,12 @@ class Actions:
         el = ui.focused_element()
         if "Text" in el.patterns:
             cur_range = el.text_pattern.selection[0].clone()
-            ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
+            if scope_dir.upper() == "UP":
+                ordinal = -ordinal
+                cur_range.move_endpoint_by_range("End","Start",target = cur_range.clone())
+            else:
+                cur_range.move_endpoint_by_range("Start","End",target = cur_range.clone())
             cur_range.move(unit,ordinal)
-            
             cur_range.select()
             cur_range.scroll_into_view(True)
             
@@ -172,6 +176,8 @@ class Actions:
         el = ui.focused_element()
         if "Text" in el.patterns:
             print(f"Selection Ranges: {len(el.text_pattern.selection)}")
+            print(f"Visible Ranges: {len(el.text_pattern.visible_ranges)}")
+            print(f"First Visible Range: {el.text_pattern.visible_ranges[0]}")
             cur_range = el.text_pattern.selection[0].clone()
             ext_range = el.text_pattern.selection[0].clone()
             ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
