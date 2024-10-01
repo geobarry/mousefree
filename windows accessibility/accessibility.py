@@ -304,10 +304,10 @@ def dynamic_element(_) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
-    def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
-        """moves the mouse slowly towards the target"""
-        loc = Point2d(x,y)
-        mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
+#    def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
+#        """moves the mouse slowly towards the target"""
+#        loc = Point2d(x,y)
+#        mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
         try:
