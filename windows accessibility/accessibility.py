@@ -1,5 +1,5 @@
 from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen, settings
-from talon.windows import ax as ax
+from talon.windows import ax as ax, ui as winui
 from talon.types import Point2d as Point2d
 from talon.skia import  Paint
 import inspect
@@ -474,9 +474,21 @@ class Actions:
             if actions.user.element_match(child,prop_list):
                 return child
         return None
+    def matching_descendants(el: ax.Element, prop_list: list, generation: int):
+        """Returns the descendants of the input element """
+        r = []
+        def get_descendants(el: ax.Element, prop_list, cur_gen: int, trg_gen: int, r):
+            if cur_gen == trg_gen:
+                return [child for child in el.children if actions.user.element_match(child,prop_list)]
+            else:
+                for child in el.children:
+                    r += get_descendants(child, prop_list,cur_gen + 1,trg_gen,r)
+                return r
+        r = get_descendants(el, prop_list,1,generation,r)
+        return r
     def matching_descendant(el: ax.Element, prop_list: list, generation: int):
         """Returns the descendant of the input element that matches the property list"""
-        def get_descendants(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
+        def get_descendant(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
             if cur_gen == trg_gen:
                 for child in el.children:
                     if actions.user.element_match(child,prop_list):
@@ -484,11 +496,11 @@ class Actions:
                 return None
             else:
                 for child in el.children:
-                    el = get_descendants(child,prop_list,cur_gen + 1,trg_gen)
+                    el = get_descendant(child,prop_list,cur_gen + 1,trg_gen)
                     if el:
                         return el
                 return None
-        el = get_descendants(el,prop_list,1,generation)
+        el = get_descendant(el,prop_list,1,generation)
         return el
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
@@ -505,7 +517,6 @@ class Actions:
         return el
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
-        print("FUNCTION: acton_element")
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
             if action not in ["highlight","label"]:
@@ -554,6 +565,9 @@ class Actions:
                 el.invoke_pattern.invoke()
             else:
                 print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
+        elif action == "toggle":
+            if "Toggle" in el.patterns:
+                el.toggle_pattern.toggle()
         actions.sleep(f"{delay_after_ms + 50}ms")
         if action == "click" or action == "right-click":
             if action == "click":
@@ -842,8 +856,57 @@ class Actions:
         root = el
         # get dictionary on focused element
         input_el_dict = actions.user.element_information(root,as_dict = True,verbose = verbose)
-        # get all elements as dictionaries
+
+        # EXPERIMENTATION
+        # because when window is expanded stupid applications have a different window active
+        # so how do you navigate down to the control that is literally in focus?
+        try:
+            el = el.labeled_by
+            print(f'el: {el}')
+            print(f"name: {el.name}")
+            print(f"classname: {el.class_name}")
+            root = winui.root_element()
+            print(f'root: {root}')
+            print(f"name: {root.name}")
+            print(f"class_name: {root.class_name}")
+
+            root = winui.active_window().element
+            print(f'root: {root}')
+            print(f"name: {root.name}")
+            print(f"class_name: {root.class_name}")
+
+            app = winui.active_app()
+            print(f"app name: {app.name}")
+            root = app.active_window.element
+            print(f'root: {root}')
+            print(f"name: {root.name}")
+            print(f"class_name: {root.class_name}")
+            
+            wins = app.windows()
+            print(f'type(wins): {type(wins)}')
+
+            area = 0
+            root = None
+            for w in wins:
+                if w.title != "":
+                    if w.title != "" and w.rect.width * w.rect.height > area:
+                        area = w.rect.width * w.rect.height
+                    root = w.element
+                    print(f"title: {w.title} \t area: {w.rect.width * w.rect.height} \t class_name: {root.class_name} \t children: {len(root.children)}")
+
+
+    #        w = wins[0]
+    #        root = w.element
+            print(f'root: {root}')
+            print(f"name: {root.name}")
+            print(f"class_name: {root.class_name}")
+        except Exception as error:
+            print(f'error: {error}')
+        
+
+#        # get all elements as dictionaries
         root = ui.active_window().element
+        
         el_tree = breadth_first_tree(root,max_level = max_level)
         print(f"tree length: {len(el_tree)}")
         el_list = []
@@ -853,7 +916,7 @@ class Actions:
             el_dict["cur_id"] = cur_id
             el_dict["parent_id"] = parent_id
             el_list.append(el_dict)
-        print(f"first element dictionary: {el_list[0]}")
+#        print(f"first element dictionary: {el_list[0]}")
         # get index of focused element
         idx = -1
         for el_dict in el_list:
@@ -865,7 +928,7 @@ class Actions:
             if dict_copy == input_el_dict:
                 idx = cur_id
         print(f"Index of focused element: {idx}")
-        print(f"{el_list[idx]}")
+#        print(f"{el_list[idx]}")
         # get ancestors
         ancestor_list = [el_list[idx]]
         n = 1
