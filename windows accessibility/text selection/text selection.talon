@@ -5,6 +5,9 @@ test forward search: user.test_forward_search()
 
 # SELECTION
 
+select {user.dynamic_text_selection}:
+	user.select_text(dynamic_text_selection,"both",1)
+
 select [<user.ordinals>] {user.text_search_direction} <user.navigation_target>$: user.select_text(navigation_target,text_search_direction,ordinals or 1)
 	# example spoken forms:
 	#   select next hippopotamus

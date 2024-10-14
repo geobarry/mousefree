@@ -78,7 +78,7 @@ def find_target(trg: re.Pattern,
 
 def get_scope(scope_dir: str = "DOWN",
                 scope_unit: str = "Line",
-                scope_unit_count: int = 25):
+                scope_unit_count: int = 100):
     """Returns a text range corresponding to the search scope"""
     # Error Checking
     if scope_unit not in ax_units:
@@ -102,7 +102,22 @@ def get_scope(scope_dir: str = "DOWN",
         cur_range.move_endpoint_by_unit("End",scope_unit,scope_unit_count)
     if scope_dir.upper() != "DOWN":
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*scope_unit_count)
+    print(f"FUNCTION: get_scope")
+    print(f"cur_range: {cur_range.text}")
     return cur_range
+
+ctx = Context()
+
+mod.list("dynamic_text_selection")
+
+@ctx.dynamic_list("user.dynamic_text_selection")
+def dynamic(_) -> str:
+    # Any function that returns a dictionary can be used here
+    cur_range = get_scope("both","Line",15)
+    print(cur_range.text)
+    return f"""
+    {cur_range.text}
+    """
 
 @mod.action_class
 class Actions:
@@ -120,18 +135,38 @@ class Actions:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
-
     def go_text(trg: re.Pattern, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         el = ui.focused_element()
+        # for automatic scrolling; should be moved to separate function for other operations
+
         if "Text" in el.patterns:
+            print("Text pattern present")
             try:
+                cur_range = el.text_pattern.selection[0].clone()
+                init_rect = cur_range.bounding_rectangles[0]
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
+                    trg_rect = r.bounding_rectangles[0]
                     src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
                     trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
                     r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
                     r.select()
+                    # Attempt to scroll into view
+                    el = r.enclosing_element
+                    actions.user.act_on_element(el,"hover")
+                    if trg_rect.y == -0.0:
+                        # target selection is offscreen
+                        r.scroll_into_view(align_to_top = True)
+                        actions.mouse_scroll(y=-100)
+                    else:
+                        # try to scroll so that selected texas in the same position as previous cursor location
+                        # but this won't work consistently because of dpi scaling
+                        # better if scale_factor is too high than too low
+                        scale_factor = 2
+                        dy = int((trg_rect.y - init_rect.y) / scale_factor)
+                        actions.mouse_scroll(y=dy)
+
             except:
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:

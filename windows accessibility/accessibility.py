@@ -6,6 +6,8 @@ import inspect
 import math
 import re
 from io import StringIO
+from contextlib import redirect_stdout
+import io
 from copy import deepcopy
 
 # this should be changed to a setting
@@ -284,7 +286,7 @@ mod.list("dynamic_element", desc="List of children of the active window")
 
 @ctx.dynamic_list("user.dynamic_element")
 def dynamic_element(_) -> dict[str,str]:
-    root = ui.active_window().element
+    root = winui.active_window().element
     elements = list(get_every_child(root))
     out = {}
     for el in elements:
@@ -334,8 +336,9 @@ class Actions:
             elif prop_name.lower() == "automation_id":
                 return el.automation_id
             elif prop_name.lower() == "printout":
-                s = StringIO()
-                # remove new line at end, as well as <> that break copy/paste into Excel
+                s = StringIO()               
+                with redirect_stdout(s):
+                    print(el)
                 x = s.getvalue().strip().replace("<","").replace(">","") 
                 return x                
             elif prop_name.lower() == "help_text":
@@ -426,7 +429,7 @@ class Actions:
         return match(el,prop_list,conjunction,verbose)
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
-        root = ui.active_window().element
+        root = winui.active_window().element
         elements = list(get_every_child(root,max_level = max_level))
         for el in elements:
             if actions.user.element_match(el,prop_list):            
@@ -434,12 +437,12 @@ class Actions:
         return False
     def element_list():
         """returns_a_list_of_all_elements"""
-        root = ui.active_window().element
+        root = winui.active_window().element
         return list(get_every_child(root))
     def matching_element(prop_list: list, item_num: int = 0, max_level: int = 12,root: ax.Element = None):
         """returns the zero based nth item matching the property list, or None"""
         if root == None:
-            root = ui.active_window().element
+            root = winui.active_window().element
         matches = actions.user.matching_elements(prop_list,max_level = max_level,root = root)
         if len(matches) > item_num:
             return matches[item_num]
@@ -450,7 +453,7 @@ class Actions:
         r = []
         # get list of elements
         if root == None:
-            root = ui.active_window().element
+            root = winui.active_window().element
         elements = list(get_every_child(root,max_level = max_level))
         # search for match
         for el in elements:
@@ -505,7 +508,7 @@ class Actions:
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
         if root == None:
-            root = ui.active_window().element
+            root = winui.active_window().element
         el = root
         for prop_list in prop_seq:
             if verbose:
@@ -578,7 +581,7 @@ class Actions:
                 actions.user.clear_highlights()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         actions.user.act_on_element(el,action,delay_after_ms)
     def act_on_mouse_element(action: str, delay_after_ms: int = 0):
         """Returns the UI element at the current mouse position"""
@@ -616,7 +619,7 @@ class Actions:
             n = 0
             while n < 3:
                 try:
-                    return ui.focused_element()
+                    return winui.focused_element()
                 except:
                     n += 1
                     actions.sleep(delay)
@@ -673,17 +676,17 @@ class Actions:
     def cycle_key_action(key: str, action: str, delay_ms: int = 500, limit: int = 30):
         """Use key to cycle through elements and perform action on each."""
         # need to change this to use repeater that can be stopped with "stop it"
-        start_rect = actions.user.el_prop_val(ui.focused_element(),"rect")
+        start_rect = actions.user.el_prop_val(winui.focused_element(),"rect")
         i = 0
         while True:
             actions.user.clear_highlights()
-            actions.user.act_on_element(ui.focused_element(),action,delay_ms)
+            actions.user.act_on_element(winui.focused_element(),action,delay_ms)
             actions.key(key)
             actions.sleep(f"{delay_ms + 50}ms")
             i += 1
             if i > limit:
                 break
-            if actions.user.el_prop_val(ui.focused_element(),"rect") == start_rect:
+            if actions.user.el_prop_val(winui.focused_element(),"rect") == start_rect:
                 break
     def ax_auto_highlight(val: bool = True):
         """Toggles the ax_auto_highlight setting on or off"""
@@ -709,17 +712,17 @@ class Actions:
             actions.sleep(delay_after_highlight)
     def hover_focused():
         """Hovers the mouse on the currently focused element"""
-        actions.user.act_on_element(ui.focused_element(),"hover")
+        actions.user.act_on_element(winui.focused_element(),"hover")
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
         global marked_elements
-        el = ui.focused_element()
+        el = winui.focused_element()
         marked_elements.append(el)
     def select_marked():
         """selects marked elements and then empties list"""
         global marked_elements
         # clear any selection
-        el = ui.focused_element()
+        el = winui.focused_element()
         try:
             pattern = el.selectionitem_pattern
             pattern.remove_from_selection()
@@ -741,7 +744,7 @@ class Actions:
         actions.user.act_on_element(el,"invoke")
     def move_mouse_to_handle(pos: str="center", x_offset: int=0, y_offset: int=0):
         """moves mouse to left,right or center and top,bottom or center of currently focused element"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         try:
             rect = el.rect
             if "left" in pos:
@@ -796,7 +799,7 @@ class Actions:
     def copy_elements_accessible_by_key(key: str, limit: int=100, delay: int = 0.03, verbose: bool = True):
         """Gets information on elements accessible by pressing the input key"""        
         i = 1
-        el = ui.focused_element()
+        el = winui.focused_element()
         # This is a klugy way of figuring out whom we get back to the beginning
         # but for now I can't find anything that works better
         msg = actions.user.element_information(el, verbose = verbose)
@@ -812,10 +815,10 @@ class Actions:
             actions.sleep(delay)
             actions.key(key)
             try:
-                el = ui.focused_element()
+                el = winui.focused_element()
             except:
                 print("Could not obtain next element, try increasing delay.")
-            el = ui.focused_element()
+            el = winui.focused_element()
             msg = actions.user.element_information(el, verbose = verbose)    
             if verbose:
                 full_msg = msg
@@ -828,7 +831,7 @@ class Actions:
         pos = ctrl.mouse_pos()
         # get element designated by windows accessibility
         el = ui.element_at(pos[0],pos[1])
-        root = ui.active_window().element
+        root = winui.active_window().element
         elements = [el] + list(get_every_child(root,max_level = 17))
         n = 0
         msg = actions.user.element_information(elements[0],headers = True)
@@ -842,13 +845,13 @@ class Actions:
         clip.set_text(msg)
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         msg = actions.user.element_information(el, headers = True, verbose = True)
         msg += "\n" + actions.user.element_information(el, verbose = True)
         clip.set_text(msg)
     def copy_focused_element_descendants(levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,el)
     def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = False):
         """Retrieves list of ancestors of currently focused element"""
@@ -870,7 +873,7 @@ class Actions:
             print(f"name: {root.name}")
             print(f"class_name: {root.class_name}")
 
-            root = winui.active_window().element
+            root = winwinui.active_window().element
             print(f'root: {root}')
             print(f"name: {root.name}")
             print(f"class_name: {root.class_name}")
@@ -905,7 +908,7 @@ class Actions:
         
 
 #        # get all elements as dictionaries
-        root = ui.active_window().element
+        root = winui.active_window().element
         
         el_tree = breadth_first_tree(root,max_level = max_level)
         print(f"tree length: {len(el_tree)}")
@@ -947,16 +950,16 @@ class Actions:
         actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),max_level,verbose)
     def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
-        actions.user.copy_element_ancestors(ui.focused_element(),max_level,verbose)
+        actions.user.copy_element_ancestors(winui.focused_element(),max_level,verbose)
         
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
         if root == None:
-            root = ui.active_window().element
+            root = winui.active_window().element
         # mark elements with special status
         # focused element
-        focused_el = ui.focused_element()
+        focused_el = winui.focused_element()
         prop_list = ["name","class_name","automation_id","printout"]
         focus_fingerprint = [actions.user.el_prop_val(focused_el,prop) for prop in prop_list]
         # mouse elements
@@ -993,13 +996,13 @@ class Actions:
         """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
             assumes menu heading is selected with rectangle around it, and ribbon is expanded"""
         i = 1
-        el = ui.focused_element()
+        el = winui.focused_element()
         heading_access_key = clean(actions.user.el_prop_val(el,"access_key")) 
         # convention: use menu heading name as prefix for every command
         prefix = el.name
         # press tab to get to the first command; note grayed out commands will not be reached
         actions.key("tab")
-        el = ui.focused_element()
+        el = winui.focused_element()
         first_name = f"{prefix} {clean(el.name)}"
         first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
         r = []
@@ -1011,7 +1014,7 @@ class Actions:
             actions.key("tab")
             actions.sleep(0.05)
             try:
-                el = ui.focused_element()
+                el = winui.focused_element()
                 name = f"{prefix} {clean(el.name)}"
                 access_key = clean(actions.user.el_prop_val(el,"access_key"))
                 print(f'{i} access_key: {access_key}')
@@ -1036,7 +1039,7 @@ class Actions:
         actions.key("esc:5 alt")
         actions.sleep(0.2)
         i = 1
-        el = ui.focused_element()
+        el = winui.focused_element()
         first_name = clean(el.name)
         first_access_key = actions.user.el_prop_val(el,"access_key")
         r = {}
@@ -1046,7 +1049,7 @@ class Actions:
             if i > 100:
                 break
             actions.key("right")
-            el = ui.focused_element()
+            el = winui.focused_element()
             name = clean(el.name)
             if name == first_name:
                 break
