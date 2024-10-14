@@ -135,6 +135,10 @@ class Actions:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
+    def select_dynamic_text(text: str):
+        """Performs selection on a text object"""
+        target = re.compile(text, re.IGNORECASE)
+        actions.user.select_text(target,"both",1)
     def go_text(trg: re.Pattern, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         el = ui.focused_element()
