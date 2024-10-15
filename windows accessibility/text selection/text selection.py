@@ -142,43 +142,45 @@ class Actions:
     def go_text(trg: re.Pattern, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         el = ui.focused_element()
-        # for automatic scrolling; should be moved to separate function for other operations
-
         if "Text" in el.patterns:
-            print("Text pattern present")
             try:
                 cur_range = el.text_pattern.selection[0].clone()
-                init_rect = cur_range.bounding_rectangles[0]
+                # for automatic scrolling; should be moved to separate function for other operations
+                init_rect = None
+                trg_rect = None
+                try:
+                    init_rect = cur_range.bounding_rectangles[0]
+                except Exception as error:
+                    pass # some apps or windows versions don't have bounding rectangles yet?
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
-                    trg_rect = r.bounding_rectangles[0]
+                    try:
+                        trg_rect = r.bounding_rectangles[0]
+                    except Exception as error:
+                        pass # some apps or windows versions don't have bounding rectangles yet?
                     src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
                     trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
                     r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
                     r.select()
                     # Attempt to scroll into view
-                    
-                    print(f'init_rect: {init_rect.y}')
-                    print(f'trg_rect: {trg_rect.y}')
-                    if trg_rect.y <= -0.0:
-                        # target selection is offscreen
-                        r.scroll_into_view(align_to_top = True)
-                        #actions.user.act_on_element(el,"hover")
-#                        actions.sleep(0.5)
-                        print("Scrolling extra...")
-                        # does not work if mouse is not on scrolling element
-                        actions.user.mouse_scroll_up(0.5)
+                    if trg_rect:
+                        if trg_rect.y <= -0.0:
+                            # target selection is offscreen
+                            r.scroll_into_view(align_to_top = True)
+                            # does not work if mouse is not on scrolling element
+                            actions.user.mouse_scroll_up(0.5)
+                        else:
+                            # try to scroll so that selected texas in the same position as previous cursor location
+                            # but this won't work consistently because of dpi scaling
+                            # better if scale_factor is too high than too low
+                            scale_factor = 2
+                            dy = int((trg_rect.y - init_rect.y) / scale_factor)
+                            actions.mouse_scroll(y=dy)
                     else:
-                        # try to scroll so that selected texas in the same position as previous cursor location
-                        # but this won't work consistently because of dpi scaling
-                        # better if scale_factor is too high than too low
-                        scale_factor = 2
-                        dy = int((trg_rect.y - init_rect.y) / scale_factor)
-                        print(f'dy: {dy}')
-                        actions.mouse_scroll(y=dy)
-
+                        r.scroll_into_view(align_to_top = True)
             except:
-                actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+                print("unhandled exception in windows accessibility text selection; reverting to old method")
+                actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
     def extend_selection(trg: re.Pattern,
