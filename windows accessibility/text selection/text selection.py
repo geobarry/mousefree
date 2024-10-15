@@ -157,25 +157,30 @@ class Actions:
                     r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
                     r.select()
                     # Attempt to scroll into view
-                    el = r.enclosing_element
-                    actions.user.act_on_element(el,"hover")
-                    if trg_rect.y == -0.0:
+                    
+                    print(f'init_rect: {init_rect.y}')
+                    print(f'trg_rect: {trg_rect.y}')
+                    if trg_rect.y <= -0.0:
                         # target selection is offscreen
                         r.scroll_into_view(align_to_top = True)
-                        actions.mouse_scroll(y=-100)
+                        #actions.user.act_on_element(el,"hover")
+#                        actions.sleep(0.5)
+                        print("Scrolling extra...")
+                        # does not work if mouse is not on scrolling element
+                        actions.user.mouse_scroll_up(0.5)
                     else:
                         # try to scroll so that selected texas in the same position as previous cursor location
                         # but this won't work consistently because of dpi scaling
                         # better if scale_factor is too high than too low
                         scale_factor = 2
                         dy = int((trg_rect.y - init_rect.y) / scale_factor)
+                        print(f'dy: {dy}')
                         actions.mouse_scroll(y=dy)
 
             except:
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-
     def extend_selection(trg: re.Pattern,
                         scope_dir: str,
                         before_or_after: str,
@@ -195,7 +200,6 @@ class Actions:
                 actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-
     def move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = ui.focused_element()
@@ -209,7 +213,6 @@ class Actions:
             cur_range.move(unit,ordinal)
             cur_range.select()
             cur_range.scroll_into_view(True)
-            
     def extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
         el = ui.focused_element()
@@ -227,7 +230,6 @@ class Actions:
             cur_range.move_endpoint_by_range(pos,pos,target = ext_range)
             cur_range.select()            
             cur_range.scroll_into_view(True)
-                    
     def select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = ui.focused_element() 
