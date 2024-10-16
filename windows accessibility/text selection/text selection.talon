@@ -17,6 +17,11 @@ select [<user.ordinals>] {user.text_search_direction} {user.win_dynamic_nav_targ
 	#   select next hippopotamus
 	#   select third previous brief exponent
 
+phones [<user.ordinals>] {user.text_search_direction} <user.win_nav_target>$:
+	user.phones_text(win_nav_target,text_search_direction,ordinals or 1)
+phones [<user.ordinals>] {user.text_search_direction} {user.win_dynamic_nav_target}$:
+	user.phones_text(win_dynamic_nav_target,text_search_direction,ordinals or 1)
+
 select from <user.ordinals> {user.text_search_direction} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
 	user.select_text(win_nav_target,text_search_direction,ordinals)
 	user.extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals_2 or 1)	

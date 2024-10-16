@@ -176,10 +176,27 @@ class Actions:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
-    def select_dynamic_text(text: str):
-        """Performs selection on a text object"""
-        target = re.compile(text, re.IGNORECASE)
-        actions.user.select_text(target,"both",1)
+    def phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        """Performs homophone conversion on a text object"""
+        # get textRange so we can return cursor to original position
+        el = ui.focused_element()
+        init_range = None
+        if "Text2" in el.patterns:
+            init_range = el.text_pattern2.selection[0].clone()
+        if "Text" in el.patterns:
+            init_range = el.text_pattern.selection[0].clone()
+        # find target
+        actions.user.select_text(trg,scope_dir,ordinal)
+        # perform homophones operation
+        cur_word = actions.edit.selected_text()
+        options = actions.user.homophones_get(cur_word)
+        i = options.index(cur_word)
+        i = (i + 1) % len(options)
+        actions.insert(options[i])
+        # return to original selection
+        if init_range != None:
+            actions.sleep(0.2)
+            init_range.select()
     def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
