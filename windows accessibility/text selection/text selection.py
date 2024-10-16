@@ -110,6 +110,7 @@ ctx = Context()
 
 mod.list("win_dynamic_nav_target")
 
+# Need to make directional lists to match directional searches
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
     cur_range = get_scope("both","Line",15)
