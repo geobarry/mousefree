@@ -108,22 +108,63 @@ def get_scope(scope_dir: str = "DOWN",
 
 ctx = Context()
 
-mod.list("dynamic_text_selection")
+mod.list("win_dynamic_nav_target")
 
-@ctx.dynamic_list("user.dynamic_text_selection")
-def dynamic(_) -> str:
-    # Any function that returns a dictionary can be used here
+@ctx.dynamic_list("user.win_dynamic_nav_target")
+def win_dynamic_nav_target(_) -> str:
     cur_range = get_scope("both","Line",15)
     print(cur_range.text)
     return f"""
     {cur_range.text}
     """
 
+# Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
+@mod.capture(
+    rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | variable {user.variable_list} | function {user.function_list} | number <user.real_number> | word <user.word> | phrase <user.text>"
+)
+def win_nav_target(m) -> str:
+    """A target to navigate to. Returns a regular expression."""
+    include_homophones = False
+    if hasattr(m, "any_alphanumeric_key"):
+        return re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
+    if hasattr(m, "navigation_target_name"):
+        return re.compile(m.navigation_target_name).pattern
+    if hasattr(m,"abbreviation"):
+        t = m.abbreviation
+    if hasattr(m,"variable_list"):
+        t = m.variable_list
+    if hasattr(m,"function_list"):
+        t = m.function_list
+    if hasattr(m,"real_number"):
+        x = int(m.real_number)
+        y = float(m.real_number)
+        t = str(x) if x == y else str(y)
+    if hasattr(m,"word"):
+        t = m.word
+        include_homophones = True
+    if hasattr(m,"text"):
+        t = m.text
+        include_homophones = True
+    if include_homophones:
+        # include homophones
+        word_list = re.findall(r"\w+",t)
+        word_list = set(word_list)
+        for w in word_list:
+            phone_list = actions.user.homophones_get(w)
+            if phone_list:
+                t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
+        # accommodate formatting by allowing non-letter characters between words
+        t = t.replace(" ","[^a-z|A-Z]*")
+    return t
+
+
+
 @mod.action_class
 class Actions:
-    def select_text(target: re.Pattern, scope_dir: str = "DOWN", ordinal: int = 1):
+    def select_text(target: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
         print(f'scope_dir: {scope_dir}')
+        target = re.compile(target, re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
@@ -139,8 +180,9 @@ class Actions:
         """Performs selection on a text object"""
         target = re.compile(text, re.IGNORECASE)
         actions.user.select_text(target,"both",1)
-    def go_text(trg: re.Pattern, scope_dir: str, before_or_after: str, ordinal: int = 1):
+    def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
+        trg = re.compile(trg, re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
@@ -183,11 +225,12 @@ class Actions:
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-    def extend_selection(trg: re.Pattern,
+    def extend_selection(trg: str,
                         scope_dir: str,
                         before_or_after: str,
                         ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
+        trg = re.compile(trg, re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
