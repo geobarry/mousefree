@@ -1,11 +1,14 @@
 from talon.windows import ax as ax,ui as winui
-from talon import app, Context,Module,actions, ctrl,ui
+from talon import app, Context,Module,actions, ctrl,ui,settings
 import re
 import itertools
 
 ax_units = ["Character","Format","Word","Line","Paragraph","Page","Document"]
 
 mod = Module()
+
+mod.setting("win_selection_distance",type = int,default = 100,
+            desc = "Number of lines to search forward or backwards")
 
 mod.list("text_search_direction","directions from cursor in which text can be searched")
 mod.list("text_search_unit","units of text that can be searched for in windows accessibility")
@@ -109,8 +112,6 @@ def get_scope(scope_dir: str = "DOWN",
 ctx = Context()
 
 mod.list("win_dynamic_nav_target")
-
-# Need to make directional lists to match directional searches
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
     cur_range = get_scope("both","Line",15)
@@ -118,6 +119,27 @@ def win_dynamic_nav_target(_) -> str:
     return f"""
     {cur_range.text}
     """
+mod.list("win_fwd_dyn_nav_trg")
+@ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
+def win_fwd_dyn_nav_trg(_) -> str:
+    cur_range = get_scope("DOWN","Line",settings.get("user.win_selection_distance"))
+    t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
+    print(cur_range.text)
+    print(f't: {t}')
+    return f"""
+    {t}
+    """
+mod.list("win_bkwd_dyn_nav_trg")
+@ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
+def win_bkwd_dyn_nav_trg(_) -> str:
+    cur_range = get_scope("UP","Line",settings.get("user.win_selection_distance"))
+    t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
+    print(cur_range.text)
+    print(f't: {t}')
+    return f"""
+    {t}
+    """
+
 
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
 @mod.capture(
