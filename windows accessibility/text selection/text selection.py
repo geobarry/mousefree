@@ -1,5 +1,5 @@
 from talon.windows import ax as ax,ui as winui
-from talon import app, Context,Module,actions, ctrl,ui,settings
+from talon import app, Context,Module,actions,ctrl,ui,settings,clip
 import re
 import itertools
 
@@ -51,14 +51,14 @@ def find_target(trg: re.Pattern,
                 text_range: ax.TextRange = None,
                 search_dir: str = "DOWN",
                 ordinal: int = 1) -> ax.TextRange:
-    """Searches for the target and return a ax.TextRange word object or None"""
+    """Searches for the target and return a ax.TextRange object or None"""
     # Handle case of no TextRange input
     if text_range is None:
         el = ui.focused_element()
         if "Text" not in el.patterns:
             print("Error in function find_target: focused element does not have text pattern")
             return None
-        text_range = el.text_pattern.selection[0].clone()
+        text_range = el.text_pattern.selection[0]
     # Use regex to find exact match text and its position
     precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
     if precise_trg != None:
@@ -69,9 +69,9 @@ def find_target(trg: re.Pattern,
             actions.sleep(0.05)
             precise_ordinal -= 1
             if search_dir.upper() == "UP":
-                text_range.move_endpoint_by_range("End","Start",target = r.clone())
+                text_range.move_endpoint_by_range("End","Start",target = r)
             else:
-                text_range.move_endpoint_by_range("Start","End",target = r.clone())
+                text_range.move_endpoint_by_range("Start","End",target = r)
             r = text_range.find_text(precise_trg,backward = back)            
             r.select()
         return r
@@ -92,50 +92,65 @@ def get_scope(scope_dir: str = "DOWN",
         print("Error in function get_scope: focused element does not have text pattern")
         return 
     # Get scope as a text range
-    if "Text2" in el.patterns:
-        cur_range = el.text_pattern2.selection[0].clone()
-    else:
-        cur_range = el.text_pattern.selection[0].clone()
-    # avoid selecting anything in current selection
+    cur_range = el.text_pattern.selection[0]
+    # avoid selecting anything in current selection#
     if scope_dir.upper() == "UP":
-        cur_range.move_endpoint_by_range("End","Start",target = cur_range.clone())
+        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
     if scope_dir.upper() == "DOWN":
-        cur_range.move_endpoint_by_range("Start","End",target = cur_range.clone())
+        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
     if scope_dir.upper() != "UP":
         cur_range.move_endpoint_by_unit("End",scope_unit,scope_unit_count)
     if scope_dir.upper() != "DOWN":
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*scope_unit_count)
     print(f"FUNCTION: get_scope")
-    print(f"cur_range: {cur_range.text}")
+    print(f'scope_dir: {scope_dir}')
+    print(f"contains Saharan: {'Saharan' in cur_range.text}")
+#    print(f"cur_range: {cur_range.text}")
     return cur_range
+
+def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    """Performs function on selected text and then returns cursor to original position"""
+    # get textRange so we can return cursor to original position
+    el = ui.focused_element()
+    init_range = None
+    if "Text2" in el.patterns:
+        init_range = el.text_pattern2.selection[0]
+    if "Text" in el.patterns:
+        init_range = el.text_pattern.selection[0]
+    # find target
+    actions.user.select_text(trg,scope_dir,ordinal)
+    # perform processing function
+    processing_function()
+    # return to original selection
+    if init_range != None:
+        actions.sleep(0.2)
+        init_range.select()
 
 ctx = Context()
 
 mod.list("win_dynamic_nav_target")
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
+    print("FUNCTION: win_dynamic_nav_target")
     cur_range = get_scope("both","Line",15)
-    print(cur_range.text)
     return f"""
     {cur_range.text}
     """
 mod.list("win_fwd_dyn_nav_trg")
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
+    print("FUNCTION: win_fwd_dyn_nav_trg")
     cur_range = get_scope("DOWN","Line",settings.get("user.win_selection_distance"))
     t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
-    print(cur_range.text)
-    print(f't: {t}')
     return f"""
     {t}
     """
 mod.list("win_bkwd_dyn_nav_trg")
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
+    print("FUNCTION: win_bkwd_dyn_nav_trg")
     cur_range = get_scope("UP","Line",settings.get("user.win_selection_distance"))
     t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
-    print(cur_range.text)
-    print(f't: {t}')
     return f"""
     {t}
     """
@@ -180,14 +195,12 @@ def win_nav_target(m) -> str:
         t = t.replace(" ","[^a-z|A-Z]*")
     return t
 
-
-
 @mod.action_class
 class Actions:
     def select_text(target: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
-        print(f'scope_dir: {scope_dir}')
-        target = re.compile(target, re.IGNORECASE)
+        print(f'select_text: scope_dir: {scope_dir}')
+        target = re.compile(target.replace(" ",".{,3}"), re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
@@ -199,34 +212,52 @@ class Actions:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
+    def replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        """Replaces target with the new text"""
+        def replace_process():
+            with clip.revert():
+                clip.set_text(new_text)
+                actions.edit.paste()
+                actions.sleep(0.15)
+        process_selection(replace_process,trg,scope_dir,ordinal)
+    def format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        """Applies formatter to targeted text"""
+        def format_process():
+            t = actions.edit.selected_text()
+            t = actions.user.formatted_text(t,fmt)
+            with clip.revert():
+                clip.set_text(t)
+                actions.edit.paste()
+                actions.sleep(0.15)
+        process_selection(format_process,trg,scope_dir,ordinal)
     def phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
-        """Performs homophone conversion on a text object"""
-        # get textRange so we can return cursor to original position
-        el = ui.focused_element()
-        init_range = None
-        if "Text2" in el.patterns:
-            init_range = el.text_pattern2.selection[0].clone()
-        if "Text" in el.patterns:
-            init_range = el.text_pattern.selection[0].clone()
-        # find target
-        actions.user.select_text(trg,scope_dir,ordinal)
-        # perform homophones operation
-        cur_word = actions.edit.selected_text()
-        options = actions.user.homophones_get(cur_word)
-        i = options.index(cur_word)
-        i = (i + 1) % len(options)
-        actions.insert(options[i])
-        # return to original selection
-        if init_range != None:
-            actions.sleep(0.2)
-            init_range.select()
+        """Performs homophone conversion on targeted text"""
+        def phones_process():
+            # perform homophones operation
+            w = actions.edit.selected_text()
+            options = actions.user.homophones_get(w)
+            lower_options = [x.lower() for x in options]
+            print(f'options: {options}')
+            i = lower_options.index(w.lower())
+            
+            i = (i + 1) % len(options)
+            x = options[i]
+            print(f'i: {i}')
+            print(f'x: {x}')
+            # would be nice to match case with the original selected text here
+            with clip.revert():
+                clip.set_text(x)
+                actions.edit.paste()
+                actions.sleep(0.15)
+  
+        process_selection(phones_process,trg,scope_dir,ordinal)
     def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
-                cur_range = el.text_pattern.selection[0].clone()
+                cur_range = el.text_pattern.selection[0]
                 # for automatic scrolling; should be moved to separate function for other operations
                 init_rect = None
                 trg_rect = None
@@ -242,7 +273,7 @@ class Actions:
                         pass # some apps or windows versions don't have bounding rectangles yet?
                     src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
                     trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                    r.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
+                    r.move_endpoint_by_range(src_pos,trg_pos,target = r)
                     r.select()
                     # Attempt to scroll into view
                     if trg_rect:
@@ -274,12 +305,12 @@ class Actions:
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
-                cur_range = el.text_pattern.selection[0].clone()
+                cur_range = el.text_pattern.selection[0]
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
                     src_pos = "Start" if scope_dir.upper() == "UP" else "End"
                     trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                    cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r.clone())
+                    cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r)
                     cur_range.select()
             except:
                 actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
@@ -289,12 +320,12 @@ class Actions:
         """Moves the cursor by the selected number of units"""
         el = ui.focused_element()
         if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0].clone()
+            cur_range = el.text_pattern.selection[0]
             if scope_dir.upper() == "UP":
                 ordinal = -ordinal
-                cur_range.move_endpoint_by_range("End","Start",target = cur_range.clone())
+                cur_range.move_endpoint_by_range("End","Start",target = cur_range)
             else:
-                cur_range.move_endpoint_by_range("Start","End",target = cur_range.clone())
+                cur_range.move_endpoint_by_range("Start","End",target = cur_range)
             cur_range.move(unit,ordinal)
             cur_range.select()
             cur_range.scroll_into_view(True)
@@ -305,8 +336,8 @@ class Actions:
             print(f"Selection Ranges: {len(el.text_pattern.selection)}")
             print(f"Visible Ranges: {len(el.text_pattern.visible_ranges)}")
             print(f"First Visible Range: {el.text_pattern.visible_ranges[0]}")
-            cur_range = el.text_pattern.selection[0].clone()
-            ext_range = el.text_pattern.selection[0].clone()
+            cur_range = el.text_pattern.selection[0]
+            ext_range = el.text_pattern.selection[0]
             ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
             pos = "Start" if scope_dir.upper() == "UP" else "End"
             src_pos = "End" if pos == "Start" else "Start"
@@ -319,7 +350,7 @@ class Actions:
         """Selects the enclosing unit around the current cursor position"""
         el = ui.focused_element() 
         if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0].clone()
+            cur_range = el.text_pattern.selection[0]
             cur_range.expand_to_enclosing_unit(unit)
             cur_range.select()
         else:
@@ -330,12 +361,12 @@ class Actions:
     def test_backward_search():
         """for debugging"""
         el = ui.focused_element()
-        cur_range = el.text_pattern.selection[0].clone()
+        cur_range = el.text_pattern.selection[0]
         r = cur_range.find_text("distance",backward = True)
         r.select()
     def test_forward_search():
         """for debugging"""
         el = ui.focused_element()
-        cur_range = el.text_pattern.selection[0].clone()
+        cur_range = el.text_pattern.selection[0]
         r = cur_range.find_text("distance",backward = False)
         r.select()

@@ -1,7 +1,5 @@
 os: windows
 -
-# COMMANDS FOR INVESTIGATING ACCESSIBILITY ELEMENTS FOR CREATING MORE COMMANDS
-
 # results are reported in talon log
 report mouse location: user.report_mouse_location()
 
@@ -10,7 +8,8 @@ report mouse location: user.report_mouse_location()
 ^copy focused element descendants$: user.copy_focused_element_descendants()
 ^copy focused element ancestors$: user.copy_focused_element_ancestors()
 ^copy mouse element ancestors$: user.copy_mouse_element_ancestors()
-^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(12,true)
+^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(true)
+^copy verbose mouse element ancestors$: user.copy_mouse_element_ancestors(true)
 ^copy all element information$: user.copy_elements_to_clipboard()
 ^copy level <number> element information$: user.copy_elements_to_clipboard(number)
 ^copy level <number> element deep information:

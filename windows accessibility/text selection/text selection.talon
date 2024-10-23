@@ -24,12 +24,12 @@ go {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <user.w
 	#	select previous letter cap
 	#	select next bang
 	#   select third previous brief exponent
-	#	select paragraph
+	#	select unit paragraph
 select [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.select_text(win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
 select [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.select_text(win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
 select [<user.ordinals>] next <user.win_nav_target>$: user.select_text(win_nav_target,"DOWN",ordinals or 1)
 select [<user.ordinals>] previous <user.win_nav_target>$: user.select_text(win_nav_target,"UP",ordinals or 1)
-select {user.text_search_unit}$: user.select_unit(text_search_unit)
+select unit {user.text_search_unit}$: user.select_unit(text_search_unit)
 
 # HOMOPHONE CORRECTION
 	# example spoken forms:
@@ -39,6 +39,19 @@ phones [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.phones_text(win_
 phones [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.phones_text(win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
 phones [<user.ordinals>] next <user.win_nav_target>$: user.phones_text(win_nav_target,"DOWN",ordinals or 1)
 phones [<user.ordinals>] previous <user.win_nav_target>$: user.phones_text(win_nav_target,"UP",ordinals or 1)
+
+# FORMATTING CORRECTION
+[format] <user.formatters> [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.format_text(user.formatters, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+[format] <user.formatters> [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.format_text(user.formatters, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+[format] <user.formatters> [<user.ordinals>] next <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"DOWN",ordinals or 1)
+[format] <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"UP",ordinals or 1)
+
+# TEXT REPLACEMENT
+replace [<user.ordinals>] next {user.win_fwd_dyn_nav_trg} with <user.prose>$: user.replace_text(prose, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+replace [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg} with <user.prose>$: user.replace_text(prose, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+replace [<user.ordinals>] next <user.win_nav_target> with <user.prose>$: user.replace_text(prose, win_nav_target,"DOWN",ordinals or 1)
+replace [<user.ordinals>] previous <user.win_nav_target> with <user.prose>$: user.replace_text(prose, win_nav_target,"UP",ordinals or 1)
+
 
 # EXTEND CURRENT SELECTION
 	# examples spoken forms:
@@ -64,19 +77,20 @@ extend {user.text_search_direction} <number_small> {user.text_search_unit}$:
 	#   select from previous word rhinoceros to phrase charging at me
 	#	select from next phrase the movie was very to period
 
-select from <user.ordinals> {user.text_search_direction} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
-	user.select_text(win_nav_target,text_search_direction,ordinals)
-	user.extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals_2 or 1)	
-select from {user.text_search_direction} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
-	user.select_text(win_nav_target,text_search_direction,1)
-	user.extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals or 1)	
-
-select from <user.ordinals> {user.text_search_direction} {user.win_dynamic_nav_target} to [<user.ordinals>] <user.win_nav_target>$:
-	user.select_text(win_dynamic_nav_target,text_search_direction,ordinals)
-	user.extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
-select from {user.text_search_direction} {user.win_dynamic_nav_target} to [<user.ordinals>] <user.win_nav_target>$:
-	user.select_text(win_dynamic_nav_target,text_search_direction,1)
+select from previous {user.win_bkwd_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
+	user.select_text(win_bkwd_dyn_nav_trg,"UP",1)
 	user.extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
+select from <user.ordinals> previous {user.win_bkwd_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
+	user.select_text(win_bkwd_dyn_nav_trg,"UP",ordinals)
+	user.extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
+
+select from next {user.win_fwd_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
+	user.select_text(win_fwd_dyn_nav_trg,"DOWN",1)
+	user.extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
+select from <user.ordinals> next {user.win_fwd_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
+	user.select_text(win_fwd_dyn_nav_trg,"DOWN",ordinals)
+	user.extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
+
 
 select from <user.ordinals> {user.text_search_direction} <user.win_nav_target> to [<user.ordinals>] {user.win_dynamic_nav_target}$:
 	user.select_text(win_nav_target,text_search_direction,ordinals)
@@ -85,10 +99,4 @@ select from {user.text_search_direction} <user.win_nav_target> to [<user.ordinal
 	user.select_text(win_nav_target,text_search_direction,1)
 	user.extend_selection(win_dynamic_nav_target,"DOWN","AFTER",ordinals or 1)	
 
-select from <user.ordinals> {user.text_search_direction} {user.win_dynamic_nav_target} to [<user.ordinals>] {user.win_dynamic_nav_target}$:
-	user.select_text(win_dynamic_nav_target,text_search_direction,ordinals)
-	user.extend_selection(win_dynamic_nav_target_2,"DOWN","AFTER",ordinals_2 or 1)	
-select from {user.text_search_direction} {user.win_dynamic_nav_target} to [<user.ordinals>] {user.win_dynamic_nav_target}$:
-	user.select_text(win_dynamic_nav_target,text_search_direction,1)
-	user.extend_selection(win_dynamic_nav_target_2,"DOWN","AFTER",ordinals or 1)	
 

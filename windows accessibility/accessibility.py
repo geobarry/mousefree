@@ -306,10 +306,6 @@ def dynamic_element(_) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
-#    def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
-#        """moves the mouse slowly towards the target"""
-#        loc = Point2d(x,y)
-#        mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
         try:
@@ -796,34 +792,22 @@ class Actions:
         else:
             # Get property values
             return  "\t".join([str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=100, delay: int = 0.03, verbose: bool = True):
-        """Gets information on elements accessible by pressing the input key"""        
+    def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = True):
+        """Gets information on elements accessible by pressing input key"""        
         i = 1
         el = winui.focused_element()
-        # This is a klugy way of figuring out whom we get back to the beginning
-        # but for now I can't find anything that works better
+        orig_el = el
         msg = actions.user.element_information(el, verbose = verbose)
-        if verbose:
-            full_msg = msg
-        else:
-            full_msg = actions.user.element_information(el,verbose = True)
-        messages = [actions.user.element_information(el,verbose = verbose,headers = True)]
-        full_msgs = []
-        while (not full_msg in full_msgs) and (i < limit):
+        messages = []
+        while True:
+            print(f"*******\nELEMENT NUMBER: {i}\n*******")
             messages.append(msg)
-            full_msgs.append(full_msg)
             actions.sleep(delay)
             actions.key(key)
-            try:
-                el = winui.focused_element()
-            except:
-                print("Could not obtain next element, try increasing delay.")
             el = winui.focused_element()
             msg = actions.user.element_information(el, verbose = verbose)    
-            if verbose:
-                full_msg = msg
-            else:
-                full_msg = actions.user.element_information(el,verbose = True)
+            if i > limit or el.__eq__(orig_el):
+                break
             i += 1
         clip.set_text("\n".join(messages))
     def copy_mouse_elements_to_clipboard():
@@ -853,104 +837,29 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = winui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,el)
-    def copy_element_ancestors(el: ax.Element, max_level: int = 12, verbose: bool = False):
-        """Retrieves list of ancestors of currently focused element"""
-        print(f"FOCUSED ELEMENT ANCESTORS: verbose = {verbose}")
-        root = el
-        # get dictionary on focused element
-        input_el_dict = actions.user.element_information(root,as_dict = True,verbose = verbose)
-
-        # EXPERIMENTATION
-        # because when window is expanded stupid applications have a different window active
-        # so how do you navigate down to the control that is literally in focus?
-        try:
-            el = el.labeled_by
-            print(f'el: {el}')
-            print(f"name: {el.name}")
-            print(f"classname: {el.class_name}")
-            root = winui.root_element()
-            print(f'root: {root}')
-            print(f"name: {root.name}")
-            print(f"class_name: {root.class_name}")
-
-            root = winwinui.active_window().element
-            print(f'root: {root}')
-            print(f"name: {root.name}")
-            print(f"class_name: {root.class_name}")
-
-            app = winui.active_app()
-            print(f"app name: {app.name}")
-            root = app.active_window.element
-            print(f'root: {root}')
-            print(f"name: {root.name}")
-            print(f"class_name: {root.class_name}")
-            
-            wins = app.windows()
-            print(f'type(wins): {type(wins)}')
-
-            area = 0
-            root = None
-            for w in wins:
-                if w.title != "":
-                    if w.title != "" and w.rect.width * w.rect.height > area:
-                        area = w.rect.width * w.rect.height
-                    root = w.element
-                    print(f"title: {w.title} \t area: {w.rect.width * w.rect.height} \t class_name: {root.class_name} \t children: {len(root.children)}")
-
-
-    #        w = wins[0]
-    #        root = w.element
-            print(f'root: {root}')
-            print(f"name: {root.name}")
-            print(f"class_name: {root.class_name}")
-        except Exception as error:
-            print(f'error: {error}')
-        
-
-#        # get all elements as dictionaries
-        root = winui.active_window().element
-        
-        el_tree = breadth_first_tree(root,max_level = max_level)
-        print(f"tree length: {len(el_tree)}")
-        el_list = []
-        for level,cur_id,parent_id,el in el_tree:
-            el_dict = actions.user.element_information(el,as_dict = True,verbose = verbose)
-            el_dict["level"] = level
-            el_dict["cur_id"] = cur_id
-            el_dict["parent_id"] = parent_id
-            el_list.append(el_dict)
-#        print(f"first element dictionary: {el_list[0]}")
-        # get index of focused element
-        idx = -1
-        for el_dict in el_list:
-            dict_copy = deepcopy(el_dict)
-            cur_id = el_dict["cur_id"]
-            del dict_copy["cur_id"]
-            del dict_copy["parent_id"]
-            del dict_copy["level"]
-            if dict_copy == input_el_dict:
-                idx = cur_id
-        print(f"Index of focused element: {idx}")
-#        print(f"{el_list[idx]}")
-        # get ancestors
-        ancestor_list = [el_list[idx]]
-        n = 1
-        while ancestor_list[-1]["parent_id"] > -1 and n < 99:
-            n += 1
-            ancestor_list.append(el_list[ancestor_list[-1]["parent_id"]])
-        headings = ["level","cur_id","parent_id"] + actions.user.element_information(root,headers = True,verbose = verbose).split("\t")
-        msg_list = ["\t".join(headings)]
-        for ancestor in ancestor_list:
-            msg_list.append("\t".join([str(ancestor[prop]) for prop in headings]))
-        msg = "\n".join(msg_list)
+    def copy_element_ancestors(el: ax.Element, verbose: bool = False):
+        """Copies information on element ancestors to clipboard"""
+        i = 0
+        el_list = [el]
+        hdr = actions.user.element_information(el,verbose = False,headers = True)
+        while True:
+            i += 1
+            try:
+                el = el.parent
+                el_list.append(el)
+            except Exception as error:
+                print(f'error: {error}')
+                break
+        msg = "\n".join([actions.user.element_information(x,verbose = False) for x in el_list])
+        msg = hdr + "\n" + msg
         clip.set_text(msg)
-    def copy_mouse_element_ancestors(max_level: int = 12, verbose: bool = True):
+    def copy_mouse_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        
-        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),max_level,verbose)
-    def copy_focused_element_ancestors(max_level: int = 12, verbose: bool = True):
+        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),verbose)
+    def copy_focused_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
-        actions.user.copy_element_ancestors(winui.focused_element(),max_level,verbose)
+        actions.user.copy_element_ancestors(winui.focused_element(),verbose)
         
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
