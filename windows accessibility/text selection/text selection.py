@@ -126,6 +126,29 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
         actions.sleep(0.2)
         init_range.select()
 
+def scroll_to_selection(r,init_rect):
+    """Scrolls to the input text range"""
+    # Attempt to scroll into view
+    try:
+        trg_rect = r.bounding_rectangles[0]
+        if trg_rect:
+            if trg_rect.y <= -0.0:
+                # target selection is offscreen
+                r.scroll_into_view(align_to_top = True)
+                # does not work if mouse is not on scrolling element
+                actions.user.mouse_scroll_up(0.5)
+            else:
+                # try to scroll so that selected texas in the same position as previous cursor location
+                # but this won't work consistently because of dpi scaling
+                # better if scale_factor is too high than too low
+                scale_factor = 2
+                dy = int((trg_rect.y - init_rect.y) / scale_factor)
+                actions.mouse_scroll(y=dy)
+        else:
+            r.scroll_into_view(align_to_top = True)
+    except Exception as error:
+        print(f"FUNCTION: scroll_to_selection\n{error}") # some apps or windows versions don't have bounding rectangles yet?
+
 ctx = Context()
 
 mod.list("win_dynamic_nav_target")
@@ -267,30 +290,11 @@ class Actions:
                     pass # some apps or windows versions don't have bounding rectangles yet?
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
-                    try:
-                        trg_rect = r.bounding_rectangles[0]
-                    except Exception as error:
-                        pass # some apps or windows versions don't have bounding rectangles yet?
                     src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
                     trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
                     r.move_endpoint_by_range(src_pos,trg_pos,target = r)
                     r.select()
-                    # Attempt to scroll into view
-                    if trg_rect:
-                        if trg_rect.y <= -0.0:
-                            # target selection is offscreen
-                            r.scroll_into_view(align_to_top = True)
-                            # does not work if mouse is not on scrolling element
-                            actions.user.mouse_scroll_up(0.5)
-                        else:
-                            # try to scroll so that selected texas in the same position as previous cursor location
-                            # but this won't work consistently because of dpi scaling
-                            # better if scale_factor is too high than too low
-                            scale_factor = 2
-                            dy = int((trg_rect.y - init_rect.y) / scale_factor)
-                            actions.mouse_scroll(y=dy)
-                    else:
-                        r.scroll_into_view(align_to_top = True)
+                    scroll_to_selection(r,init_rect)
             except:
                 print("unhandled exception in windows accessibility text selection; reverting to old method")
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               

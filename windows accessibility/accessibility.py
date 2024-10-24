@@ -556,7 +556,7 @@ class Actions:
             if "SelectionItem" in el.patterns:
                 el.selectionitem_pattern.select()
             elif "LegacyIAccessible" in el.patterns:
-                el.legacyiaccessible_pattern.select(0)
+                el.legacyiaccessible_pattern.select(1)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
         elif action == "invoke":
