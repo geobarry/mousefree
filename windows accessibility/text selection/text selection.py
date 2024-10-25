@@ -350,6 +350,22 @@ class Actions:
             cur_range.move_endpoint_by_range(pos,pos,target = ext_range)
             cur_range.select()            
             cur_range.scroll_into_view(True)
+    def expand_selection(left: bool = True, right: bool = True, 
+            unit: str = "Character", ordinal: int = 1):
+        """Expands selection in the specified directions"""
+        el = ui.focused_element()
+        if "Text" in el.patterns:
+            cur_range = el.text_pattern.selection[0]
+#            ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
+#            pos = "Start" if scope_dir.upper() == "UP" else "End"
+#     def move_endpoint_by_unit(self, endpoint: str, unit: str, count: int) -> int: ...        
+        if left:
+            cur_range.move_endpoint_by_unit("Start",unit,-1*ordinal)
+        if right:
+            cur_range.move_endpoint_by_unit("End",unit,ordinal)
+        cur_range.select()            
+        cur_range.scroll_into_view(True)
+    
     def select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = ui.focused_element() 

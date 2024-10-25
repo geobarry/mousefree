@@ -63,12 +63,13 @@ extend {user.before_or_after} [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$
 	user.extend_selection(win_fwd_dyn_nav_trg,"DOWN",before_or_after,ordinals or 1)
 extend {user.before_or_after} [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$:
 	user.extend_selection(win_bkwd_dyn_nav_trg,"UP",before_or_after,ordinals or 1)
-
 extend {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <user.win_nav_target>$:
 	user.extend_selection(win_nav_target,text_search_direction,before_or_after,ordinals or 1)
-
 extend {user.text_search_direction} <number_small> {user.text_search_unit}$:
 	user.extend_by_unit(text_search_unit,text_search_direction,number_small)
+selection expand$: user.expand_selection()
+selection expand right$: user.expand_selection(false,true)
+selection expand left$: user.expand_selection(true,false)
 
 # SELECT A RANGE 
 #	*doesn't use dynamic search so "word" or "phrase" are needed
