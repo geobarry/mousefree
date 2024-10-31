@@ -78,7 +78,6 @@ def find_target(trg: re.Pattern,
     else:
         print("Target not found :(")
         return None
-
 def get_scope(scope_dir: str = "DOWN",
                 scope_unit: str = "Line",
                 scope_unit_count: int = 100):
@@ -107,7 +106,6 @@ def get_scope(scope_dir: str = "DOWN",
     print(f"contains Saharan: {'Saharan' in cur_range.text}")
 #    print(f"cur_range: {cur_range.text}")
     return cur_range
-
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
     # get textRange so we can return cursor to original position
@@ -125,7 +123,6 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if init_range != None:
         actions.sleep(0.2)
         init_range.select()
-
 def scroll_to_selection(r,init_rect):
     """Scrolls to the input text range"""
     # Attempt to scroll into view
@@ -150,7 +147,6 @@ def scroll_to_selection(r,init_rect):
         print(f"FUNCTION: scroll_to_selection\n{error}") # some apps or windows versions don't have bounding rectangles yet?
 
 ctx = Context()
-
 mod.list("win_dynamic_nav_target")
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
@@ -177,12 +173,8 @@ def win_bkwd_dyn_nav_trg(_) -> str:
     return f"""
     {t}
     """
-
-
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(
-    rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | variable {user.variable_list} | function {user.function_list} | number <user.real_number> | word <user.word> | phrase <user.text>"
-)
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | variable {user.variable_list} | function {user.function_list} | number <user.real_number> | word <user.word> | phrase <user.text>")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     include_homophones = False
@@ -250,6 +242,7 @@ class Actions:
             t = actions.user.formatted_text(t,fmt)
             with clip.revert():
                 clip.set_text(t)
+                actions.sleep(0.15)
                 actions.edit.paste()
                 actions.sleep(0.15)
         process_selection(format_process,trg,scope_dir,ordinal)
@@ -270,6 +263,7 @@ class Actions:
             # would be nice to match case with the original selected text here
             with clip.revert():
                 clip.set_text(x)
+                actions.sleep(0.15)
                 actions.edit.paste()
                 actions.sleep(0.15)
   
@@ -365,7 +359,6 @@ class Actions:
             cur_range.move_endpoint_by_unit("End",unit,ordinal)
         cur_range.select()            
         cur_range.scroll_into_view(True)
-    
     def select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = ui.focused_element() 
@@ -375,9 +368,6 @@ class Actions:
             cur_range.select()
         else:
             actions.user.edit_command("select", unit)
-
-    
-                
     def test_backward_search():
         """for debugging"""
         el = ui.focused_element()
