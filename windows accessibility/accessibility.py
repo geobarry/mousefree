@@ -485,22 +485,43 @@ class Actions:
                 return r
         r = get_descendants(el, prop_list,1,generation,r)
         return r
-    def matching_descendant(el: ax.Element, prop_list: list, generation: int):
+    def matching_descendant(el: ax.Element, prop_list: list, generation: int, extra_gen: int = 0):
         """Returns the descendant of the input element that matches the property list"""
-        def get_descendant(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
-            if cur_gen == trg_gen:
-                for child in el.children:
-                    if actions.user.element_match(child,prop_list):
-                        return child
-                return None
-            else:
-                for child in el.children:
-                    el = get_descendant(child,prop_list,cur_gen + 1,trg_gen)
-                    if el:
-                        return el
-                return None
-        el = get_descendant(el,prop_list,1,generation)
-        return el
+        # def get_descendant(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
+            # if cur_gen == trg_gen:
+                # for child in el.children:
+                    # if actions.user.element_match(child,prop_list):
+                        # return child
+                # return None
+            # else:
+                # for child in el.children:
+                    # el = get_descendant(child,prop_list,cur_gen + 1,trg_gen)
+                    # if el:
+                        # return el
+                # return None
+        # el = get_descendant(el,prop_list,1,generation)
+        # return el
+        cur_level = 0
+        el_id = -1
+        parent_id = -1
+        Q = []
+        # r = []
+        Q.append((cur_level,parent_id,el))    
+        while len(Q) > 0:        
+            cur_level,parent_id,el = Q.pop(0)
+            if cur_level <= generation + extra_gen:
+                el_id += 1
+#                r.append((cur_level,el_id,parent_id,el))
+                try:
+                    for child in el.children:
+                        Q.append((cur_level+1,el_id,child))        
+                        if cur_level+1  >= generation:
+                            if actions.user.element_match(child,prop_list):
+                                return child
+                except:
+                    pass
+#        return r
+
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
         if root == None:
