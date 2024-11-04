@@ -46,7 +46,6 @@ def precise_target_and_position(target: re.Pattern,
         return (precise_trg,precise_ordinal)
     else:
         return (None,None)
-        
 def find_target(trg: re.Pattern, 
                 text_range: ax.TextRange = None,
                 search_dir: str = "DOWN",
@@ -103,7 +102,7 @@ def get_scope(scope_dir: str = "DOWN",
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*scope_unit_count)
     print(f"FUNCTION: get_scope")
     print(f'scope_dir: {scope_dir}')
-    print(f"contains Saharan: {'Saharan' in cur_range.text}")
+    
 #    print(f"cur_range: {cur_range.text}")
     return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
@@ -170,6 +169,8 @@ def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: win_bkwd_dyn_nav_trg")
     cur_range = get_scope("UP","Line",settings.get("user.win_selection_distance"))
     t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
+    # t = t.replace("’","'")
+    print(f't: {t}')
     return f"""
     {t}
     """
@@ -212,21 +213,22 @@ def win_nav_target(m) -> str:
 
 @mod.action_class
 class Actions:
-    def select_text(target: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
+        print("FUNCTION: select_text")
         print(f'select_text: scope_dir: {scope_dir}')
-        target = re.compile(target.replace(" ",".{,3}"), re.IGNORECASE)
+        trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
             try:
-                r = find_target(target,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
                 
                     r.select()
             except:
-                actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
+                actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
         else:
-            actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",target,1)
+            actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
     def replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process():
@@ -248,6 +250,8 @@ class Actions:
         process_selection(format_process,trg,scope_dir,ordinal)
     def phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
+        print("FUNCTION: phones_text")
+        print(f'trg: {trg}')
         def phones_process():
             # perform homophones operation
             w = actions.edit.selected_text()
@@ -255,7 +259,6 @@ class Actions:
             lower_options = [x.lower() for x in options]
             print(f'options: {options}')
             i = lower_options.index(w.lower())
-            
             i = (i + 1) % len(options)
             x = options[i]
             print(f'i: {i}')
@@ -266,7 +269,6 @@ class Actions:
                 actions.sleep(0.15)
                 actions.edit.paste()
                 actions.sleep(0.15)
-  
         process_selection(phones_process,trg,scope_dir,ordinal)
     def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
