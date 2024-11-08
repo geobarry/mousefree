@@ -10,54 +10,8 @@ from contextlib import redirect_stdout
 import io
 from copy import deepcopy
 
-# this should be changed to a setting
-auto_highlight_delay = 1.5
-
 # list for tracking a set of clickable points
 marked_elements = []
-
-class element_highlights:
-    def __init__(self):        
-        self.canvas = canvas.Canvas.from_screen(ui.main_screen())
-        self.canvas.register('draw', self.draw_canvas) 
-        self.canvas.freeze() # uncomment this line for debugging
-        self.rectangles = []
-        self.labels = []
-    def add_element(self,rect,label = ''):
-        self.rectangles.append(rect)
-        self.labels.append(label)
-        self.canvas.move(0,0) # this forces canvas redraw
-    def remove_element(self,rect):
-        try:
-            idx = self.rectangles.index(rect)
-            del self.rectangles[idx]
-            del self.labels[idx]
-            self.canvas.move(0,0) # this forces canvas redraw
-        except:
-            pass
-        print(f"There are now {len(self.rectangles)} elements in highlight list")
-    def clear_elements(self):
-        self.rectangles = []
-        self.labels = []
-        self.canvas.move(0,0) # this forces canvas redraw
-    def draw_canvas(self, canvas):
-        paint = canvas.paint
-        paint.color = 'f3f'
-        paint.style = paint.Style.STROKE
-        if len(self.rectangles) > 0:
-            for idx in range(len(self.rectangles)):
-                rect = self.rectangles[idx]
-                paint.stroke_width = 7
-                canvas.draw_round_rect(rect,25,25,paint)
-                # for now draw label below element
-                lbl = self.labels[idx]
-                if lbl != '':
-                    paint.stroke_width = 2
-                    actions.user.text_aliased(lbl,rect.x,rect.y + rect.height + 60,46,canvas)
-    def disable(self):
-        self.canvas.close()
-        self.canvas = None
-el_highlights = element_highlights()
 
 class mouse_mover:
     """Moves mouse using cron intervals until destination is reached"""
@@ -121,7 +75,7 @@ mod.list("handle_position","position for grabbing ui elements")
 mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
-mod.tag("ax_auto_highlight","Auto highlight setting is true.")
+
 mod.setting(
     "ax_auto_highlight",
     type = bool,
@@ -537,17 +491,6 @@ class Actions:
         return el
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
-        if settings.get("user.ax_auto_highlight"):
-            actions.user.clear_highlights()
-            if action not in ["highlight","label"]:
-#                actions.user.act_on_element(el,"highlight",delay_after_ms)
-                # cannot recursively call action
-                try:
-                    rect = el.rect
-                    el_highlights.add_element(rect)
-                except:
-                    print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
-                delay_after_ms = max(delay_after_ms,1000)
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
@@ -562,17 +505,9 @@ class Actions:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "highlight":
             print("HIGHLIGHTING...")
-            try:
-                rect = el.rect
-                el_highlights.add_element(rect)
-            except:
-                print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
+            actions.user.highlight_element(el)
         elif action == "label":
-            try:
-                rect = el.rect
-                el_highlights.add_element(rect,el.name)
-            except:
-                print(f"Error in accessibility.py function act_on_element: Element has no rectangle.")
+            actions.user.highlight_element(el,el.name)
         elif action == "select":
             if "SelectionItem" in el.patterns:
                 el.selectionitem_pattern.select()
@@ -594,8 +529,6 @@ class Actions:
                 ctrl.mouse_click()
             elif action == "right-click":
                 ctrl.mouse_click(1)
-            if settings.get("user.ax_auto_highlight"):
-                actions.user.clear_highlights()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
@@ -624,6 +557,10 @@ class Actions:
                                 delay: float = 0.09, 
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
+        # TO-DO:
+        # Modifies so this goes one element at a time and is integrated with slow repeater,
+        # so cycle can be stopped with "Stop" or "Stop It"
+        # ---
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
         # to avoid this, wrap in try except clause 
@@ -631,7 +568,7 @@ class Actions:
         # remove previous highlights
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
-        # Function to get next element, sometimes need to be persisted
+        # Function to get next element, sometimes need to be persistent
         def focused_element():
             n = 0
             while n < 3:
@@ -676,9 +613,6 @@ class Actions:
             except Exception as error:
                 print(error)
             if actions.user.element_match(el,prop_list):
-                if settings.get("user.ax_auto_highlight"):
-                    actions.user.act_on_element(el,"highlight")
-                    actions.sleep(auto_highlight_delay)
                 return el
             else:
                 return None
@@ -690,46 +624,6 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
-    def cycle_key_action(key: str, action: str, delay_ms: int = 500, limit: int = 30):
-        """Use key to cycle through elements and perform action on each."""
-        # need to change this to use repeater that can be stopped with "stop it"
-        start_rect = actions.user.el_prop_val(winui.focused_element(),"rect")
-        i = 0
-        while True:
-            actions.user.clear_highlights()
-            actions.user.act_on_element(winui.focused_element(),action,delay_ms)
-            actions.key(key)
-            actions.sleep(f"{delay_ms + 50}ms")
-            i += 1
-            if i > limit:
-                break
-            if actions.user.el_prop_val(winui.focused_element(),"rect") == start_rect:
-                break
-    def ax_auto_highlight(val: bool = True):
-        """Toggles the ax_auto_highlight setting on or off"""
-        ctx.settings["user.ax_auto_highlight"] = val        
-    def remove_highlight(el: ax.Element):
-        """Remove element from highlights"""
-        try:
-            el_highlights.remove_element(el.rect)
-        except:
-            print("Unable to remove highlight: Element rectangle does not match any current highlight")
-    def clear_highlights():
-        """Removes all ui elements from the highlight list"""
-        el_highlights.clear_elements()
-    def key_highlight(keys: str, force: bool = True, delay_before_highlight: float = 0.05, delay_after_highlight: float = 0):
-        """Presses a key sequence and then highlights the focused element. If not forced, only highlights if in auto highlight mode."""
-        actions.key(keys)
-        if force or settings.get("user.ax_auto_highlight"):
-            if delay_before_highlight > 0:
-                actions.sleep(delay_before_highlight)
-            actions.user.clear_highlights()
-            actions.user.act_on_focused_element("highlight")
-        if delay_after_highlight > 0:
-            actions.sleep(delay_after_highlight)
-    def hover_focused():
-        """Hovers the mouse on the currently focused element"""
-        actions.user.act_on_element(winui.focused_element(),"hover")
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
         global marked_elements
@@ -949,7 +843,7 @@ class Actions:
                 access_key = clean(actions.user.el_prop_val(el,"access_key"))
                 print(f'{i} access_key: {access_key}')
                 print(f'heading_access_key: {heading_access_key}')
-                # check that we're not back at the first element
+                # hello check that we're not back at the first element
                 if name == first_name and access_key == first_access_key:
                     break
                 # check that access key begins with (but is not the same as) first access key

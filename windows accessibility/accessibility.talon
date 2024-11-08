@@ -21,28 +21,15 @@ and mode: user.zen
 	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
 	
 ^{user.nav_key} {user.ui_action}$:
-	user.clear_highlights()
 	key("{nav_key}")
 	user.act_on_focused_element(ui_action)
 
 next {user.ui_action}$:
-	user.clear_highlights()
 	key(tab)
 	user.act_on_focused_element(ui_action)
-
-^cycle {user.nav_key} {user.ui_action}$: user.cycle_key_action(nav_key,ui_action)
 	
 # CURRENT ELEMENTS
 
 ^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 
 ^{user.ui_action} mouse [element]$: user.act_on_mouse_element(ui_action) 
 
-# MANAGING HIGHLIGHTS LIST
-
-clear (highlights|labels): user.clear_highlights()
-
-# SETTINGS
-auto highlight [on]: user.ax_auto_highlight(true)
-auto highlight off: 
-	user.ax_auto_highlight(false)
-	user.clear_highlights()

@@ -125,23 +125,12 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
 def scroll_to_selection(r,init_rect):
     """Scrolls to the input text range"""
     # Attempt to scroll into view
+    # Would like to make it so that the selected items grows to the center of the screen
+    # but so far attempts to do that have failed to work consistently
+    # hmm... seems like scroll into view only works going down...
     try:
-        trg_rect = r.bounding_rectangles[0]
-        if trg_rect:
-            if trg_rect.y <= -0.0:
-                # target selection is offscreen
-                r.scroll_into_view(align_to_top = True)
-                # does not work if mouse is not on scrolling element
-                actions.user.mouse_scroll_up(0.5)
-            else:
-                # try to scroll so that selected texas in the same position as previous cursor location
-                # but this won't work consistently because of dpi scaling
-                # better if scale_factor is too high than too low
-                scale_factor = 2
-                dy = int((trg_rect.y - init_rect.y) / scale_factor)
-                actions.mouse_scroll(y=dy)
-        else:
-            r.scroll_into_view(align_to_top = True)
+        actions.sleep(0.1)
+        r.scroll_into_view(align_to_top = True)
     except Exception as error:
         print(f"FUNCTION: scroll_to_selection\n{error}") # some apps or windows versions don't have bounding rectangles yet?
 
