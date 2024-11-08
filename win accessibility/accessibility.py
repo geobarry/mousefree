@@ -13,62 +13,6 @@ from copy import deepcopy
 # list for tracking a set of clickable points
 marked_elements = []
 
-class mouse_mover:
-    """Moves mouse using cron intervals until destination is reached"""
-    def __init__(self, dest: Point2d, ms = None, callback = None):        
-        self.callback = callback
-        self.dest = dest
-        self.orig = ctrl.mouse_pos()
-        self.cur = self.orig
-        dx = self.dest.x - self.orig[0]
-        dy = self.dest.y - self.orig[1]
-        totD = ((dx ** 2) + (dy ** 2)) ** 0.5
-        if ms != None:
-            totT = ms
-        else:
-            totT = self.get_move_time(totD)
-        self.num_intervals = max(1,math.ceil(totT / 30))
-        self.interval_x = dx / self.num_intervals
-        self.interval_y = dy / self.num_intervals
-        self.job = cron.interval('30ms', self.move_next)
-        self.completed = 0
-    def get_move_time(self,d):
-        """Calculates the total time to move the mouse based on distance in pixels"""
-        # Keys: move distance (pixels)
-        # Values: move time (ms)
-        move_times = {
-            -1:50,
-            100:200,
-            500:350,
-            1000:450,
-            2000:700,
-            10000:1200,
-            1000000:100000
-        }
-        dkeys = sorted(list(move_times))
-
-        d = abs(d)
-        id = 0
-        while dkeys[id] < d:
-            id += 1
-        lowD,highD = dkeys[id-1],dkeys[id]
-        lowT,highT = move_times[lowD],move_times[highD]
-        return int(lowT + (highT - lowT) * (d - lowD) / (highD - lowD))
-    def move_next(self):
-        """Moves mouse by one interval until destination reached"""
-        # handle last move
-        if self.completed >= self.num_intervals:
-            ctrl.mouse_move(self.dest.x,self.dest.y)
-            cron.cancel(self.job)
-            if self.callback != None:
-                self.callback()
-        else:
-            # handle previous moves
-            self.completed += 1
-            x = round(self.orig[0] + self.interval_x * self.completed)
-            y = round(self.orig[1] + self.interval_y * self.completed)
-            ctrl.mouse_move(x,y)
-
 mod = Module()
 
 mod.list("handle_position","position for grabbing ui elements")    
@@ -84,16 +28,6 @@ mod.setting(
 )
 
 ctx = Context()
-
-def settings_change_handler(*args):
-    cur_tags = [tag for tag in ctx.tags]
-    if settings.get("user.ax_auto_highlight"):
-        cur_tags.append("user.ax_auto_highlight")
-    else:
-        cur_tags.remove("user.ax_auto_highlight")
-    ctx.tags = cur_tags
-    
-settings.register("user.ax_auto_highlight",settings_change_handler)
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
@@ -474,8 +408,6 @@ class Actions:
                                 return child
                 except:
                     pass
-#        return r
-
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
         if root == None:
@@ -494,13 +426,13 @@ class Actions:
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
-                mouse_obj = mouse_mover(loc, ms = delay_after_ms)
+                actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "hover":
             loc = actions.user.element_location(el)
             if loc != None:    
-                mouse_obj = mouse_mover(loc, ms = delay_after_ms)
+                actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "highlight":
@@ -675,212 +607,6 @@ class Actions:
             ctrl.mouse_move(x,y)
         except:
             pass
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, verbose: str = False):
-        """Returns information separated by tabs that can be pasted into a spreadsheet"""
-        msg = ""
-        prop_list = ["name","class_name",
-                        "help_text","automation_id",
-                        "printout",
-                        "children","patterns",
-                        "is_offscreen",
-                        "clickable_point",
-                        "rect.x","rect.y",
-                        "rect.width","rect.height"
-                    ]
-        other_prop = [
-                    "window_handle","pid","access_key","has_keyboard_focus",
-                    "is_keyboard_focusable","is_enabled",
-                    "children","is_control_element","is_content_element",
-                    "item_type","item_status","described_by",
-                    "flows_to","provider_description",
-                    "value.is_read_only",
-                    "legacy.value","legacy.selection",
-                    "value","text"
-                ]
-        if verbose:
-            prop_list += other_prop
-        # Construct headers
-        if headers:
-            return "\t".join(prop_list)
-        elif as_dict:
-            return  {prop:str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list}
-        else:
-            # Get property values
-            return  "\t".join([str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = True):
-        """Gets information on elements accessible by pressing input key"""        
-        i = 1
-        el = winui.focused_element()
-        orig_el = el
-        msg = actions.user.element_information(el, verbose = verbose)
-        messages = []
-        while True:
-            print(f"*******\nELEMENT NUMBER: {i}\n*******")
-            messages.append(msg)
-            actions.sleep(delay)
-            actions.key(key)
-            el = winui.focused_element()
-            msg = actions.user.element_information(el, verbose = verbose)    
-            if i > limit or el.__eq__(orig_el):
-                break
-            i += 1
-        clip.set_text("\n".join(messages))
-    def copy_mouse_elements_to_clipboard():
-        """Copies elements with rectangle containing current mouse position"""
-        pos = ctrl.mouse_pos()
-        # get element designated by windows accessibility
-        el = ui.element_at(pos[0],pos[1])
-        root = winui.active_window().element
-        elements = [el] + list(get_every_child(root,max_level = 17))
-        n = 0
-        msg = actions.user.element_information(elements[0],headers = True)
-        for el in elements:
-            r = actions.user.el_prop_val(el,"rect")
-            if r:
-                if (r.x < pos[0] < r.x + r.width) and (r.y < pos[1] < r.y + r.height):
-                    msg += "\n" + actions.user.element_information(el)
-                    n += 1                
-        msg += f"\n\n {n} elements found"
-        clip.set_text(msg)
-    def copy_focused_element_to_clipboard():
-        """Copies information about currently focused element to the clipboard"""
-        el = winui.focused_element()
-        msg = actions.user.element_information(el, headers = True, verbose = True)
-        msg += "\n" + actions.user.element_information(el, verbose = True)
-        clip.set_text(msg)
-    def copy_focused_element_descendants(levels: int = 12):
-        """Copies information about currently focused element and children to the clipboard"""
-        el = winui.focused_element()
-        actions.user.copy_elements_to_clipboard(levels,el)
-    def copy_element_ancestors(el: ax.Element, verbose: bool = False):
-        """Copies information on element ancestors to clipboard"""
-        i = 0
-        el_list = [el]
-        hdr = actions.user.element_information(el,verbose = False,headers = True)
-        while True:
-            i += 1
-            try:
-                el = el.parent
-                el_list.append(el)
-            except Exception as error:
-                print(f'error: {error}')
-                break
-        msg = "\n".join([actions.user.element_information(x,verbose = False) for x in el_list])
-        msg = hdr + "\n" + msg
-        clip.set_text(msg)
-    def copy_mouse_element_ancestors(verbose: bool = True):
-        """Retrieves list of ancestors of current mouse element"""
-        pos = ctrl.mouse_pos()        
-        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),verbose)
-    def copy_focused_element_ancestors(verbose: bool = True):
-        """Retrieves list of ancestors of currently focused element"""
-        actions.user.copy_element_ancestors(winui.focused_element(),verbose)
-        
-    def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
-        """Attempts to retrieve all properties from all elements"""
-        print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
-        if root == None:
-            root = winui.active_window().element
-        # mark elements with special status
-        # focused element
-        focused_el = winui.focused_element()
-        prop_list = ["name","class_name","automation_id","printout"]
-        focus_fingerprint = [actions.user.el_prop_val(focused_el,prop) for prop in prop_list]
-        # mouse elements
-        mouse_fingerprints = []
-        pos = ctrl.mouse_pos()
-        def el_data(level,cur_id,parent_id,el):
-            status = []
-            # check to see if this is the focused element
-            el_fingerprint = []
-            for prop in prop_list:
-                try:
-                    el_fingerprint.append(actions.user.el_prop_val(el,prop) for prop in prop_list)
-                except:
-                    print(f"EXCEPTION retrieving property {prop}")
-            if el_fingerprint == focus_fingerprint:
-                status.append("focused")
-            # check to see if mouse is on element
-            r = actions.user.el_prop_val(el,"rect")
-            if r:
-                if (r.x < pos[0] < r.x + r.width) and (r.y < pos[1] < r.y + r.height):
-                    status.append("mouse")
-            status = "|".join(status)
-            r = f"{status}\t{level}\t{cur_id}\t{parent_id}\t" + re.sub(r"\r?\n","<<new line>>",actions.user.element_information(el)) 
-            return r
-        if breadth_first:
-            el_info = breadth_first_tree(root,max_level = max_level)
-        else:
-            el_info = depth_first_tree(root,max_level = max_level)
-        print(f"{len(el_info)} elements in tree...")
-        msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
-        messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]
-        clip.set_text(msg + "\n" + "\n".join(messages))
-    def copy_ribbon_elements_as_talon_list():
-        """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
-            assumes menu heading is selected with rectangle around it, and ribbon is expanded"""
-        i = 1
-        el = winui.focused_element()
-        heading_access_key = clean(actions.user.el_prop_val(el,"access_key")) 
-        # convention: use menu heading name as prefix for every command
-        prefix = el.name
-        # press tab to get to the first command; note grayed out commands will not be reached
-        actions.key("tab")
-        el = winui.focused_element()
-        first_name = f"{prefix} {clean(el.name)}"
-        first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
-        r = []
-        while True:
-            i += 1
-            if i > 60:
-                print("Stopping because exceeded count threshold")
-                break
-            actions.key("tab")
-            actions.sleep(0.05)
-            try:
-                el = winui.focused_element()
-                name = f"{prefix} {clean(el.name)}"
-                access_key = clean(actions.user.el_prop_val(el,"access_key"))
-                print(f'{i} access_key: {access_key}')
-                print(f'heading_access_key: {heading_access_key}')
-                # hello check that we're not back at the first element
-                if name == first_name and access_key == first_access_key:
-                    break
-                # check that access key begins with (but is not the same as) first access key
-                elif access_key.startswith(heading_access_key) and not access_key == heading_access_key:
-                    r.append((name,access_key))
-                else:
-                    # if access key is the same as first element but name is not, we have a phantom element
-                    pass
-            except:
-                pass
-        print("Got to the end...")
-        msg = "\n".join([f"{key}:{val}" for key,val in r])
-        print(f'msg: {msg}')
-        clip.set_text(msg)
-    def copy_ribbon_headings_as_talon_list():
-        """Copies information on ribbon headings to the clipboard"""
-        actions.key("esc:5 alt")
-        actions.sleep(0.2)
-        i = 1
-        el = winui.focused_element()
-        first_name = clean(el.name)
-        first_access_key = actions.user.el_prop_val(el,"access_key")
-        r = {}
-        r[first_name] = clean(first_access_key)
-        while True:
-            i += 1
-            if i > 100:
-                break
-            actions.key("right")
-            el = winui.focused_element()
-            name = clean(el.name)
-            if name == first_name:
-                break
-            else:
-                access_key = actions.user.el_prop_val(el,"access_key")
-                r[name] = clean(access_key)
-        clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
 
 def clean(t):
     t = t.lower()
