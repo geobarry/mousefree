@@ -64,7 +64,21 @@ class element_highlights:
             
             if lbl != '':
                 paint.stroke_width = 2
-                actions.user.text_aliased(lbl,rect.x,rect.y + rect.height + 60,46,canvas)        
+                if len(lbl) > 50:
+                    lbl = lbl[:50]
+                # determine label placement
+                # assume text dimensions
+                lbl_wd = 600
+                lbl_ht = 30
+                top_margin = rect.y
+                btm_margin = canvas.height - rect.y - rect.height
+                if top_margin > btm_margin:
+                    y = max(rect.y - lbl_ht, 0)
+                else:
+                    y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
+                x = min(rect.x,canvas.width - lbl_wd)
+                print(f"*** {lbl} x = {x} | y = {y}")
+                actions.user.text_aliased(lbl,x,y,46,canvas)        
         if len(self.rectangles) > 0:
             for idx in range(len(self.rectangles)):
                 rect = self.rectangles[idx]
