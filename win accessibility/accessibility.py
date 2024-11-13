@@ -15,7 +15,6 @@ marked_elements = []
 
 mod = Module()
 
-mod.list("handle_position","position for grabbing ui elements")    
 mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
@@ -549,28 +548,6 @@ class Actions:
         prop_list = [prop,val]
         el = actions.user.matching_element(prop_list,max_level = max_level)
         actions.user.act_on_element(el,"invoke")
-    def move_mouse_to_handle(pos: str="center", x_offset: int=0, y_offset: int=0):
-        """moves mouse to left,right or center and top,bottom or center of currently focused element"""
-        el = winui.focused_element()
-        try:
-            rect = el.rect
-            if "left" in pos:
-                x = rect.x
-            elif "right" in pos:
-                x = rect.x + rect.width
-            else:
-                x = rect.x + int(rect.width/2)
-            if "upper" in pos or "top" in pos:
-                y = rect.y
-            elif "lower" in pos or "bottom" in pos:
-                y = rect.y + rect.height
-            else:
-                y = rect.y + int(rect.height/2)
-            x += x_offset
-            y += y_offset
-            ctrl.mouse_move(x,y)
-        except:
-            pass
 
 def clean(t):
     t = t.lower()
