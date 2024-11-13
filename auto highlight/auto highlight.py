@@ -12,19 +12,28 @@ class element_highlights:
         self.labels = []
         self.job = cron.interval('100ms', self.check_for_updates)
         self.auto_highlight = False
+        self.auto_label = False
         self.focused_rect = None
+        self.focused_label = ""
     def check_for_updates(self):
         if self.auto_highlight:
             el = winui.focused_element()
             if el:
                 if el.rect != self.focused_rect:
                     self.focused_rect = el.rect
+                    if self.auto_label:
+                        self.focused_label = el.name
                     self.canvas.move(0,0) # this forces canvas redraw
+                if not self.auto_label:
+                    if self.focused_label != "":
+                        self.focused_label = ""
+                        self.canvas.move(0,0) # this forces canvas redraw
             else:
                 print("FUNCTION check_for_updates: unable to get focused element")
         else:
             if self.focused_rect != None:
                 self.focused_rect = None
+                self.focused_label = ""
                 self.canvas.move(0,0)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
@@ -55,7 +64,21 @@ class element_highlights:
             
             if lbl != '':
                 paint.stroke_width = 2
-                actions.user.text_aliased(lbl,rect.x,rect.y + rect.height + 60,46,canvas)        
+                if len(lbl) > 50:
+                    lbl = lbl[:50]
+                # determine label placement
+                # assume text dimensions
+                lbl_wd = 600
+                lbl_ht = 30
+                top_margin = rect.y
+                btm_margin = canvas.height - rect.y - rect.height
+                if top_margin > btm_margin:
+                    y = max(rect.y - lbl_ht, 0)
+                else:
+                    y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
+                x = min(rect.x,canvas.width - lbl_wd)
+                print(f"*** {lbl} x = {x} | y = {y}")
+                actions.user.text_aliased(lbl,x,y,46,canvas)        
         if len(self.rectangles) > 0:
             for idx in range(len(self.rectangles)):
                 rect = self.rectangles[idx]
@@ -67,21 +90,14 @@ class element_highlights:
             # so we structure this so that we don't need to refer to 
             # self.focused_element here
             print("auto_highlight...")
-            # 
-            #print(self.focused_element)
-            
-            # rect = self.focused_element.rect
-            # if rect:
-            lbl = ""
-            highlight_element(self.focused_rect,lbl,paint)
-            
+            highlight_element(self.focused_rect,self.focused_label,paint)
     def disable(self):
         self.canvas.close()
         self.canvas = None
 el_highlights = element_highlights()
 
 mod = Module()
-
+#
 @mod.action_class
 class Actions:
     def auto_highlight_scroll(amount: int):
@@ -99,8 +115,15 @@ class Actions:
     def auto_highlight_toggle():
         """toggle automatic highlighting of focused element"""
         el_highlights.auto_highlight = not el_highlights.auto_highlight
+    def auto_label_on():
+        """automatically highlight and label focused element"""
+        el_highlights.auto_highlight = True  
+        el_highlights.auto_label = True
+    def auto_label_off():
+        """turn off automatic labelling"""
+        el_highlights.auto_label = False
     def highlight_element(el: ax.Element, lbl: str = ""):
-        """Adds element to highlight list, with optional label"""
+        """Highlight specified element, with optional label"""
         rect = el.rect
         if len(lbl) > 50:
             lbl = lbl[:50]

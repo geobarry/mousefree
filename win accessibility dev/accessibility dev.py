@@ -1,8 +1,47 @@
 from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen, settings
 from talon.windows import ax as ax, ui as winui
+import re
 
 mod = Module()
 ctx = Context()
+
+def breadth_first_tree(el: ax.Element, max_level: int = 7):
+    # do a breadth first search keeping track of levels, ids and parents
+    # returns list of (level,cur_id,parent_id,el)
+    cur_level = 0
+    el_id = -1
+    parent_id = -1
+    Q = []
+    r = []
+    Q.append((cur_level,parent_id,el))    
+    while len(Q) > 0:        
+        cur_level,parent_id,el = Q.pop(0)
+        if cur_level <= max_level:
+            el_id += 1
+            r.append((cur_level,el_id,parent_id,el))
+            try:
+                for child in el.children:
+                    Q.append((cur_level+1,el_id,child))        
+            except:
+                pass
+    return r
+def depth_first_tree(el: ax.Element, max_level: int = 7):
+    # do a breadth first search keeping track of levels, ids and parents
+    # returns list of (level,cur_id,parent_id,el)
+    el_id = 0
+    r = [(0,el_id,-1,el)]
+    def get_children(el, el_id, level, max_level):
+        r = []
+        if level < max_level:
+            parent_id = el_id
+            for el in el.children:
+                el_id += 1
+                r.append((level + 1,el_id,parent_id,el))
+                r = r + get_children(el,el_id,level + 1, max_level)
+        return r
+    r = r + get_children(el,el_id,0,max_level)
+    return r
+            
 
 @mod.action_class
 class Actions:
