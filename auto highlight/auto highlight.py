@@ -100,6 +100,7 @@ class Actions:
         """toggle automatic highlighting of focused element"""
         el_highlights.auto_highlight = not el_highlights.auto_highlight
     def highlight_element(el: ax.Element, lbl: str = ""):
+        """Adds element to highlight list, with optional label"""
         rect = el.rect
         if len(lbl) > 50:
             lbl = lbl[:50]
