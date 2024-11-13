@@ -1,5 +1,6 @@
 from talon import Module, ui, Context, ctrl, cron, actions
 from talon.types import Point2d as Point2d
+from talon.windows import ax as ax, ui as winui
 import math
 
 mod = Module()
@@ -94,7 +95,12 @@ class Actions:
         mouse_to_obj_handle(obj,hnd_pos,ms,x_offset,y_offset)
     def mouse_to_focused_element_handle(hnd_pos: str,ms: int = 350, x_offset: int = 0, y_offset: int = 0):
         """Moves mouse to one of eight positions on edge of element"""
-        obj = ui.focused_element().rect
+        obj = winui.focused_element().rect
+        print(f'obj: {obj}')
+        mouse_to_obj_handle(obj,hnd_pos,ms,x_offset,y_offset)
+    def mouse_to_active_window_handle(hnd_pos: str,ms: int = 350, x_offset: int = 0, y_offset: int = 0):
+        """Moves the mouse to one of eight positions on window"""
+        obj = winui.active_window().rect
         print(f'obj: {obj}')
         mouse_to_obj_handle(obj,hnd_pos,ms,x_offset,y_offset)
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
