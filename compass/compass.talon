@@ -6,12 +6,12 @@ exit compass: user.compass_disable()
 # SET DIRECTION
 # set the compasss direction, e.g. "north"
 
-[compass] <user.bearing>$:	user.compass_set_bearing(user.bearing)
+[compass] <user.bearing>$:	user.compass_enable(user.bearing)
 
 # ROTATE
 # rotate compass towards a compass direction, e.g. "30 east"
 
-[compass] <number> [degrees] <user.bearing>$: user.move_cardinal(number, user.bearing)
+[compass] <user.real_number> [degrees] <user.bearing>$: user.move_cardinal(real_number, user.bearing)
 nudge <user.bearing>$: user.move_cardinal(0.3,user.bearing)
 
 # reverse direction  
@@ -19,7 +19,8 @@ nudge <user.bearing>$: user.move_cardinal(0.3,user.bearing)
 
 # MOVE
 # move specified distance in pixels, e.g. "go five hundred"
-(go | out | go out | fly) <number>$: user.fly_out(number,1000)
+go <number>$: user.fly_out(number,500)
+move <number>$: user.fly_out(number,1000)
 walk <number>$: user.fly_out(number,3000)
 crawl <number>$: user.fly_out(number,8000)
 
@@ -73,6 +74,10 @@ wheel right:
 wheel tiny right: 
 	user.mouse_scroll_right(0.5)
 	user.start_extra_time()
+
+# COMMANDS FOR REPEATING
+second: core.repeat_command(1)
+again: core.repeat_partial_phrase(1)
 
 # COMMAND FOR DEBUGGING WHILE IN COMPASS MODE
 ^talon test last$:

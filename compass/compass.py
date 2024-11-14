@@ -315,45 +315,49 @@ compass_object = compass(5000, 5000)
 
 mod = Module()
 mod.list('compass_display_mode', desc = 'amount of information displayed in compass grid')
+mod.list("cardinal_direction",desc = "spoken forms for compass cardinal directions")
 mod.mode("compass",desc = "Compass commands only")
 
-@mod.capture(rule="((north | east | south | west | northeast | southeast | southwest | northwest | up | down | left | right) [(north | east | south | west | northeast | southeast | southwest | northwest)])")
+@mod.capture(rule="{user.cardinal_direction} [<user.real_number> [degrees] {user.cardinal_direction}]")
 def bearing(m) -> float:
     """determines bearing from spoken compass direction"""
-    def bearing_average(b1,b2):
-        difference = ((b2 - b1 + 180) % 360) - 180
-        return b1 + difference/2
-        
-    bearing_lookup = {
-        'northeast':45,'southeast':135,'southwest':225,'northwest':315,
-        'north':0,'east':90,'south':180,'west':270,
-        'up':0,'right':90,'down':180,'left':270
-        }
-    bearing = None
-    for w in range(len(m)-1,-1,-1):
-        if bearing == None:
-            bearing = bearing_lookup[m[w]]
+    if len(m) == 1:
+        return float(m[0])
+    else:
+        b1 = float(m[0])
+        if len(m) == 3:
+            b2 = float(m[2])
         else:
-            bearing = bearing_average(bearing, bearing_lookup[m[w]])
-    return bearing
+            b2 = float(m[3])
+        if b2 - b1 > 180:
+            return b1 - float(m[1])
+        elif b2 - b1 > 0:
+            return b1 + float(m[1])
+        elif b2 - b1 > -180:
+            return b1 - float(m[1])
+        else:
+            return b1 + float(m[1])
 
-          
 @mod.action_class
 class Actions:
-    def compass_enable(display_mode: int = -1):
+    def compass_enable(bearing: float = -999,display_mode: int = -1):
         """Enable relative mouse guide"""
         if display_mode == -1:
             display_mode = compass_object.active_display_mode
-        compass_object.enable()
-        compass_object.elapsed_ms = 0
-        compass_object.display_mode = display_mode
-
-    def compass_set_bearing(bearing: float):
-        """enable relative mouse guide and point to given bearing direction"""
+        if bearing == -999:
+            bearing = compass_object.bearing
         compass_object.enable(bearing)
         compass_object.elapsed_ms = 0
-        compass_object.display_mode = compass_object.active_display_mode
-        
+        compass_object.display_mode = display_mode
+        actions.mode.enable("user.compass")
+        actions.mode.disable("command")
+
+    def start_extra_time():
+        """Begins extra time where display is tiny, before compass exits 100%"""
+        actions.mode.enable("command")
+        actions.mode.enable("user.compass")
+        actions.user.compass_enable(-999,1)
+
     def compass_disable():
         """Disable relative mouse guide"""
         compass_object.disable()
@@ -369,34 +373,28 @@ class Actions:
         if delta < 0:
             move_degrees = -move_degrees            
         # initialize compass compass
-        compass_object.enable((compass_object.bearing + move_degrees) % 360)
-        compass_object.elapsed_ms = 0
-        compass_object.display_mode = compass_object.active_display_mode
+        actions.user.compass_enable((compass_object.bearing + move_degrees) % 360)
 
     def fly_out(distance: int, max_ms: int = -1):
         """move out the specified number of pixels"""
         pos = ctrl.mouse_pos()
         cx,cy = pos[0],pos[1]
         trg = compass_object.pot_of_gold(cx, cy, distance, compass_object.bearing)
-        print(f'trg: {trg}')
         actions.user.slow_mouse(round(trg[0]),round(trg[1]),max_ms)
         if max_ms > 0:
             compass_object.max_ms = max_ms
-        compass_object.elapsed_ms = 0
-        compass_object.display_mode = compass_object.active_display_mode
+        actions.user.compass_enable()
 
     def reverse():
         """reverse direction"""
-        compass_object.bearing = (compass_object.bearing + 180) % 360        
-        update_canvas()
-        compass_object.elapsed_ms = 0
-        compass_object.display_mode = compass_object.active_display_mode
+        actions.user.compass_enable((compass_object.bearing + 180) % 360)
 
     def fly_back(distance: int):
         """turn around and move back the specified number of pixels"""
         compass_object.bearing = (compass_object.bearing + 180) % 360
         actions.user.fly_out(distance)
         compass_object.bearing = (compass_object.bearing + 180) % 360
+        actions.user.compass_enable()
 
     def compass_jiggle(max_dist: int = 10):
         """move the mouse around a little"""
@@ -409,25 +407,11 @@ class Actions:
             actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
             actions.sleep("50ms")
         actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
-        
-    def center_compass():
-        """move mouse to center of screen"""
-        x,y = int(compass_object.width/2), int(compass_object.height/2)
-        ctrl.mouse_move(x,y)
-        compass_object.last_pos = x,y
-        compass_object.cur_pos = x,y
-        compass_object.target_pos = x,y
-        compass_object.bearing = -1
-        ctx.tags = ["user.compass_showing","user.compass_active"]
+        actions.user.start_extra_time()
 
-    def compass_set_display_mode(mode: str):
+    def compass_set_default_display_mode(mode: str):
         """change how much information is displayed in the compass grid"""
         compass_object.active_display_mode = mode
         compass_object.display_mode = mode
     
-    def start_extra_time():
-        """Begins extra time where display is tiny, before compass exits 100%"""
-        actions.mode.enable("command")
-        compass_object.display_mode = 1
-        compass_object.elapsed_ms = 0        
 ctx = Context()
