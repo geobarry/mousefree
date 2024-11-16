@@ -122,7 +122,7 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if init_range != None:
         actions.sleep(0.2)
         init_range.select()
-def scroll_to_selection(r,init_rect):
+def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
     # Attempt to scroll into view
     # Would like to make it so that the selected items grows to the center of the screen
@@ -164,7 +164,7 @@ def win_bkwd_dyn_nav_trg(_) -> str:
     {t}
     """
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | variable {user.variable_list} | function {user.function_list} | number <user.real_number> | word <user.word> | phrase <user.text>")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student_list} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     include_homophones = False
@@ -174,10 +174,6 @@ def win_nav_target(m) -> str:
         return re.compile(m.navigation_target_name).pattern
     if hasattr(m,"abbreviation"):
         t = m.abbreviation
-    if hasattr(m,"variable_list"):
-        t = m.variable_list
-    if hasattr(m,"function_list"):
-        t = m.function_list
     if hasattr(m,"real_number"):
         x = int(m.real_number)
         y = float(m.real_number)
@@ -188,6 +184,22 @@ def win_nav_target(m) -> str:
     if hasattr(m,"text"):
         t = m.text
         include_homophones = True
+    if hasattr(m,"variable_list"):
+        t = m.variable_list
+    if hasattr(m,"person_list"):
+        t = m.person_list
+    if hasattr(m,"student_list"):
+        t = m.student_list
+    if hasattr(m,"module_list"):
+        t = m.module_list
+    if hasattr(m,"function_list"):
+        t = m.function_list
+    if hasattr(m,"keyword_list"):
+        t = m.keyword_list
+    if hasattr(m,"app_list"):
+        t = m.app_list
+    if hasattr(m,"font"):
+        t = m.font
     if include_homophones:
         # include homophones
         word_list = re.findall(r"\w+",t)
@@ -214,6 +226,7 @@ class Actions:
                 if r != None:
                 
                     r.select()
+                    scroll_to_selection(r)
             except:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
         else:
