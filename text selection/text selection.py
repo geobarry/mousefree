@@ -25,7 +25,9 @@ def precise_target_and_position(target: re.Pattern,
 
     # find all instances of the target within the text range text
     t = text_range.text
+    print("FUNCTION: precise_target_and_position")
     print(f"target: {target}")
+    
     m = re.findall(target,t)
     if m and len(m) >= ordinal:
         print(f'm: {m}')
@@ -58,6 +60,8 @@ def find_target(trg: re.Pattern,
             print("Error in function find_target: focused element does not have text pattern")
             return None
         text_range = el.text_pattern.selection[0]
+    print("FUNCTION: find_target")
+    print(f'text_range: {text_range.text}')
     # Use regex to find exact match text and its position
     precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
     if precise_trg != None:
@@ -122,7 +126,7 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if init_range != None:
         actions.sleep(0.2)
         init_range.select()
-def scroll_to_selection(r,init_rect):
+def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
     # Attempt to scroll into view
     # Would like to make it so that the selected items grows to the center of the screen
@@ -164,20 +168,16 @@ def win_bkwd_dyn_nav_trg(_) -> str:
     {t}
     """
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | variable {user.variable_list} | function {user.function_list} | number <user.real_number> | word <user.word> | phrase <user.text>")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     include_homophones = False
     if hasattr(m, "any_alphanumeric_key"):
         return re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
     if hasattr(m, "navigation_target_name"):
-        return re.compile(m.navigation_target_name).pattern
+        return re.compile(m.navigation_target_name)
     if hasattr(m,"abbreviation"):
         t = m.abbreviation
-    if hasattr(m,"variable_list"):
-        t = m.variable_list
-    if hasattr(m,"function_list"):
-        t = m.function_list
     if hasattr(m,"real_number"):
         x = int(m.real_number)
         y = float(m.real_number)
@@ -188,6 +188,22 @@ def win_nav_target(m) -> str:
     if hasattr(m,"text"):
         t = m.text
         include_homophones = True
+    if hasattr(m,"variable_list"):
+        t = m.variable_list
+    if hasattr(m,"person_list"):
+        t = m.person_list
+    if hasattr(m,"student_list"):
+        t = m.student_list
+    if hasattr(m,"module_list"):
+        t = m.module_list
+    if hasattr(m,"function_list"):
+        t = m.function_list
+    if hasattr(m,"keyword_list"):
+        t = m.keyword_list
+    if hasattr(m,"app_list"):
+        t = m.app_list
+    if hasattr(m,"font"):
+        t = m.font
     if include_homophones:
         # include homophones
         word_list = re.findall(r"\w+",t)
@@ -206,6 +222,7 @@ class Actions:
         """Selects text using windows accessibility pattern if possible"""
         print("FUNCTION: select_text")
         print(f'select_text: scope_dir: {scope_dir}')
+        
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         el = ui.focused_element()
         if "Text" in el.patterns:
@@ -214,6 +231,7 @@ class Actions:
                 if r != None:
                 
                     r.select()
+                    scroll_to_selection(r)
             except:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
         else:
@@ -285,10 +303,7 @@ class Actions:
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-    def extend_selection(trg: str,
-                        scope_dir: str,
-                        before_or_after: str,
-                        ordinal: int = 1):
+    def extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = ui.focused_element()
@@ -337,7 +352,7 @@ class Actions:
             cur_range.scroll_into_view(True)
     def expand_selection(left: bool = True, right: bool = True, 
             unit: str = "Character", ordinal: int = 1):
-        """Expands selection in the specified directions"""
+        """Expands selection in the specified direction(s)"""
         el = ui.focused_element()
         if "Text" in el.patterns:
             cur_range = el.text_pattern.selection[0]
@@ -358,16 +373,16 @@ class Actions:
             cur_range.expand_to_enclosing_unit(unit)
             cur_range.select()
         else:
-            actions.user.edit_command("select", unit)
-    def test_backward_search():
-        """for debugging"""
-        el = ui.focused_element()
-        cur_range = el.text_pattern.selection[0]
-        r = cur_range.find_text("distance",backward = True)
-        r.select()
-    def test_forward_search():
-        """for debugging"""
-        el = ui.focused_element()
-        cur_range = el.text_pattern.selection[0]
-        r = cur_range.find_text("distance",backward = False)
-        r.select()
+            # need to handle these individually because community edit commands
+            # use classes that I don't know how to access
+            if unit == "Line":
+                # 
+                actions.edit.line_start()
+                actions.edit.extend_line_end()
+            elif unit == "Word":
+                print("selecting word...")
+                actions.edit.word_left()
+                actions.edit.extend_word_right()
+            elif unit == "Paragraph":
+                actions.edit.extend_paragraph_start()
+                actions.edit.extend_paragraph_end()

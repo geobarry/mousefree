@@ -354,10 +354,9 @@ class Actions:
 
     def start_extra_time():
         """Begins extra time where display is tiny, before compass exits 100%"""
-        actions.mode.enable("command")
-        actions.mode.enable("user.compass")
         actions.user.compass_enable(-999,1)
-
+        actions.mode.enable("command")
+        
     def compass_disable():
         """Disable relative mouse guide"""
         compass_object.disable()
