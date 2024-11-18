@@ -2,8 +2,13 @@ from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, se
 from talon.windows import ax as ax, ui as winui
 from talon.types import Point2d as Point2d
 from talon.skia import  Paint
+import time
 
-class element_highlights:
+mod = Module()
+
+mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
+
+class element_tracker:
     def __init__(self):        
         self.canvas = canvas.Canvas.from_screen(winui.main_screen())
         self.canvas.register('draw', self.draw_canvas) 
@@ -15,7 +20,9 @@ class element_highlights:
         self.auto_label = False
         self.focused_rect = None
         self.focused_label = ""
+        self.active_tags = set()
     def check_for_updates(self):
+        # handle auto highlight
         if self.auto_highlight:
             el = winui.focused_element()
             if el:
@@ -77,7 +84,6 @@ class element_highlights:
                 else:
                     y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
                 x = min(rect.x,canvas.width - lbl_wd)
-                print(f"*** {lbl} x = {x} | y = {y}")
                 actions.user.text_aliased(lbl,x,y,46,canvas)        
         if len(self.rectangles) > 0:
             for idx in range(len(self.rectangles)):
@@ -89,15 +95,12 @@ class element_highlights:
             # will interfere with talon command canvas somehow, 
             # so we structure this so that we don't need to refer to 
             # self.focused_element here
-            print("auto_highlight...")
             highlight_element(self.focused_rect,self.focused_label,paint)
     def disable(self):
         self.canvas.close()
         self.canvas = None
-el_highlights = element_highlights()
+el_highlights = element_tracker()
 
-mod = Module()
-#
 @mod.action_class
 class Actions:
     def auto_highlight_scroll(amount: int):
