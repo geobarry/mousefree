@@ -76,7 +76,8 @@ class Actions:
             return  {prop:str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list}
         else:
             # Get property values
-            return  "\t".join([str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list])
+            return  "\t".join(["|".join(str(actions.user.el_prop_val(el,prop,as_text = True)).splitlines()) for prop in prop_list])
+
     def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = True):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
@@ -141,10 +142,16 @@ class Actions:
     def copy_mouse_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        
-        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),verbose)
+        el = winui.element_at(pos[0],pos[1])
+        print("FUNCTION: copy_mouse_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
     def copy_focused_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
-        actions.user.copy_element_ancestors(winui.focused_element(),verbose)
+        el = winui.focused_element()
+        print("FUNCTION: copy_focused_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
         
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
