@@ -137,11 +137,19 @@ mod.list("dynamic_element", desc="List of children of the active window")
 
 @ctx.dynamic_list("user.dynamic_element")
 def dynamic_element(_) -> dict[str,str]:
-    root = winui.active_window().element
+    win = winui.active_window()
+    if win == None:
+        print("no active window...")
+        return {}
+    root = win.element
+    if root == None:
+        print("active window has no element...")
+        return {}
     elements = list(get_every_child(root))
     out = {}
     for el in elements:
         alias = str(el.name)
+        print(f'alias: {alias}')
         if alias == "":
             alias = str(el.help_text)
         if alias != "":

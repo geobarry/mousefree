@@ -175,10 +175,16 @@ class Actions:
     def copy_mouse_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        
-        actions.user.copy_element_ancestors(ui.element_at(pos[0],pos[1]),verbose)
+        el = winui.element_at(pos[0],pos[1])
+        print("FUNCTION: copy_mouse_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
     def copy_focused_element_ancestors(verbose: bool = True):
         """Retrieves list of ancestors of currently focused element"""
-        actions.user.copy_element_ancestors(winui.focused_element(),verbose)
+        el = winui.focused_element()
+        print("FUNCTION: copy_focused_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
         
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
