@@ -350,13 +350,11 @@ class Actions:
         compass_object.elapsed_ms = 0
         compass_object.display_mode = display_mode
         actions.mode.enable("user.compass")
-        actions.mode.disable("command")
-
-    def start_extra_time():
-        """Begins extra time where display is tiny, before compass exits 100%"""
-        actions.user.compass_enable(-999,1)
-        actions.mode.enable("command")
-        
+        if display_mode > 1:
+            actions.mode.disable("command")
+        else:
+            actions.mode.enable("command")
+      
     def compass_disable():
         """Disable relative mouse guide"""
         compass_object.disable()
@@ -395,8 +393,9 @@ class Actions:
         compass_object.bearing = (compass_object.bearing + 180) % 360
         actions.user.compass_enable()
 
-    def compass_jiggle(max_dist: int = 10):
+    def compass_jiggle(max_dist: int = 15):
         """move the mouse around a little"""
+        actions.user.compass_enable(-999,1)
         pos = ctrl.mouse_pos()
         init_x,init_y = pos[0],pos[1]
         for n in range(10):
@@ -404,9 +403,9 @@ class Actions:
             b = 360*random.random()
             trg = compass_object.pot_of_gold(init_x,init_y,d,b)
             actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
+            print(f'trg: {trg}')
             actions.sleep("50ms")
         actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
-        actions.user.start_extra_time()
 
     def compass_set_default_display_mode(mode: str):
         """change how much information is displayed in the compass grid"""

@@ -346,31 +346,15 @@ class Actions:
         return r
     def matching_descendant(el: ax.Element, prop_list: list, generation: int, extra_gen: int = 0):
         """Returns the descendant of the input element that matches the property list"""
-        # def get_descendant(el: ax.Element, prop_list: list, cur_gen: int, trg_gen: int):
-            # if cur_gen == trg_gen:
-                # for child in el.children:
-                    # if actions.user.element_match(child,prop_list):
-                        # return child
-                # return None
-            # else:
-                # for child in el.children:
-                    # el = get_descendant(child,prop_list,cur_gen + 1,trg_gen)
-                    # if el:
-                        # return el
-                # return None
-        # el = get_descendant(el,prop_list,1,generation)
-        # return el
         cur_level = 0
         el_id = -1
         parent_id = -1
         Q = []
-        # r = []
         Q.append((cur_level,parent_id,el))    
         while len(Q) > 0:        
             cur_level,parent_id,el = Q.pop(0)
             if cur_level <= generation + extra_gen:
                 el_id += 1
-#                r.append((cur_level,el_id,parent_id,el))
                 try:
                     for child in el.children:
                         Q.append((cur_level+1,el_id,child))        
@@ -381,16 +365,23 @@ class Actions:
                     pass
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
+        print("FUNCTION: actions.user.find_el_by_prop_seq()")
+        print(f'root: {root}')
         if root == None:
             root = winui.active_window().element
-        el = root
+        el = root        
+        gen = 0
         for prop_list in prop_seq:
-            if verbose:
-                n = actions.user.count_matching_children(el,prop_list)
-                print(f"{prop_list}: {n} matching children")
-            el = actions.user.matching_child(el,prop_list)            
+            if prop_list == []:
+                gen += 1
+            else:
+                print(f'el: {el}')
+                print(f"children: {el.children}")
+                print(f'prop_list: {prop_list}')                
+                el = actions.user.matching_descendant(el,prop_list,gen)
+                gen = 0
             if el == None:
-                break
+                break        
         return el
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""

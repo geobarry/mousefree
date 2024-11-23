@@ -104,7 +104,7 @@ winui.register("element_focus",handle_focus_change)
 class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
-        el_highlights.auto_highlight = False
+        el_highlights.auto_highlight = on
         handle_focus_change(winui.focused_element())
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""

@@ -33,47 +33,47 @@ drag: user.mouse_drag(0)
 # MOUSE COMMANDS THAT WILL EXIT COMPASS
 (touch | click):
 	mouse_click(0)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 (righty | right click):
 	mouse_click(1)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 drag end:
     user.mouse_drag_end()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 (double click | dub click | duke):
 	mouse_click() 
 	mouse_click()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel down: 
 	user.mouse_scroll_down()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel tiny [down]: 
 	user.mouse_scroll_down(0.2)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel downer: 
 	user.mouse_scroll_down_continuous()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel up: 
 	user.mouse_scroll_up()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel tiny up: 
 	user.mouse_scroll_up(0.2)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel upper: 
 	user.mouse_scroll_up_continuous()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel left: 
 	user.mouse_scroll_left()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel tiny left: 
 	user.mouse_scroll_left(0.5)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel right: 
 	user.mouse_scroll_right()
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 wheel tiny right: 
 	user.mouse_scroll_right(0.5)
-	user.start_extra_time()
+	user.compass_enable(-999,1)
 
 # COMMANDS FOR REPEATING
 second: core.repeat_command(1)
