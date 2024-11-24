@@ -149,7 +149,6 @@ def dynamic_element(_) -> dict[str,str]:
     out = {}
     for el in elements:
         alias = str(el.name)
-        print(f'alias: {alias}')
         if alias == "":
             alias = str(el.help_text)
         if alias != "":
@@ -366,7 +365,6 @@ class Actions:
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
         print("FUNCTION: actions.user.find_el_by_prop_seq()")
-        print(f'root: {root}')
         if root == None:
             root = winui.active_window().element
         el = root        
@@ -375,9 +373,6 @@ class Actions:
             if prop_list == []:
                 gen += 1
             else:
-                print(f'el: {el}')
-                print(f"children: {el.children}")
-                print(f'prop_list: {prop_list}')                
                 el = actions.user.matching_descendant(el,prop_list,gen)
                 gen = 0
             if el == None:
@@ -452,13 +447,13 @@ class Actions:
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
         # TO-DO:
-        # Modifies so this goes one element at a time and is integrated with slow repeater,
+        # Modifyh so this goes one element at a time and is integrated with slow repeater,
         # so cycle can be stopped with "Stop" or "Stop It"
         # ---
         # if the previous action has not completed an error can occur
         # (e.g. PowerPoint accessing format panel from context menu)
         # to avoid this, wrap in try except clause 
-        print("FUNCTION: key_to_matching_element")
+        # print("FUNCTION: key_to_matching_element")
         # remove previous highlights
         if settings.get("user.ax_auto_highlight"):
             actions.user.clear_highlights()
@@ -473,15 +468,16 @@ class Actions:
                     actions.sleep(delay)
             return None
         # initialize
+        print("FUNCTION: key_to_matching_element")
         el = focused_element()
-        print(f'el: {el}')
+        # print(f'el: {el}')
         last_el = el
         i = 1
         matches = 0
         if el:
             try:
                 first_el_id = identity(el)
-                print(f"1st element: {first_el_id}")
+                # print(f"1st element: {first_el_id}")
                 while True:
                     actions.key(key)
                     if delay > 0:
@@ -497,18 +493,23 @@ class Actions:
                         last_el = el
                         i += 1
                         if matches == ordinal:
+                            # print(f"Found #{ordinal} matching element!")
                             break
                         if i == limit:
+                            print(f"Reached limit... :(")
                             break
                         if identity(el) == first_el_id:
+                            print(f"Cycled back to first element... :(")
                             break
                     else:
+                        print(f"Element is not... :(")
                         break
             except Exception as error:
                 print(error)
             if actions.user.element_match(el,prop_list):
                 return el
             else:
+                print(f"Element doesn't match property list... :(")
                 return None
     def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
