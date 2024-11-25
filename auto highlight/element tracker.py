@@ -20,6 +20,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.active_tags = set()
+        self.focused_element = None
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -82,6 +83,7 @@ def handle_focus_change(el):
     # handle auto highlight
     if el_highlights.auto_highlight:
         if el:
+            el_highlights.focused_element = el
             if el.rect != el_highlights.focused_rect:
                 el_highlights.focused_rect = el.rect
                 if el_highlights.auto_label:

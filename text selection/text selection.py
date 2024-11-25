@@ -17,20 +17,21 @@ def precise_target_and_position(target: re.Pattern,
                 text_range: ax.TextRange,
                 search_dir: str = "DOWN",
                 ordinal: int = 1):
-    """Returns a tuple of (str,int) representing the precise match 
-        and the ordinal rank of that precise match from the beginning, 
-        so that we can transfer information from the regex match 
-        to the windows accessibility TextRange.find_text function"""
-    # Note this is not going to work very well for things like "second previous parens"
-
+    """HELPER FUNCTION FOR find_target"""
+    # Returns a tuple of (str,int) representing the precise match 
+    # and the ordinal rank of that precise match from the beginning, 
+    # so that we can transfer information from the regex match 
+    # to the windows accessibility TextRange.find_text function
+    
+    # handle homophones, single quotes 
+    # incoming target should have regular straight quotes
+    t = modify_regex_include_homophones(target.pattern)
+    t = re.sub(r"'","[’']",t)
+    target = re.compile(t, re.IGNORECASE)
     # find all instances of the target within the text range text
     t = text_range.text
-    print("FUNCTION: precise_target_and_position")
-    print(f"target: {target}")
-    
     m = re.findall(target,t)
     if m and len(m) >= ordinal:
-        print(f'm: {m}')
         # determine precise target and loop parameters to iterate through preceding matches
         if search_dir.upper() == "UP":
             precise_trg = m[-ordinal]
@@ -44,7 +45,6 @@ def precise_target_and_position(target: re.Pattern,
         for i in range(start,stop,step):
             if m[i] == precise_trg:
                 precise_ordinal += 1
-        print(f'precise_trg: {precise_trg}')
         return (precise_trg,precise_ordinal)
     else:
         return (None,None)
@@ -52,7 +52,9 @@ def find_target(trg: re.Pattern,
                 text_range: ax.TextRange = None,
                 search_dir: str = "DOWN",
                 ordinal: int = 1) -> ax.TextRange:
-    """Searches for the target and return a ax.TextRange object or None"""
+    """Searches for the target in the text range.
+        Will handle straight versus curly single quotes and homophones.
+        Returns a ax.TextRange object or None"""
     # Handle case of no TextRange input
     if text_range is None:
         el = ui.focused_element()
@@ -137,6 +139,16 @@ def scroll_to_selection(r,init_rect = None):
         r.scroll_into_view(align_to_top = True)
     except Exception as error:
         print(f"FUNCTION: scroll_to_selection\n{error}") # some apps or windows versions don't have bounding rectangles yet?
+def modify_regex_include_homophones(t: str):
+    word_list = re.findall(r"\w+",t)
+    word_list = set(word_list)
+    for w in word_list:
+        phone_list = actions.user.homophones_get(w)
+        if phone_list:
+            t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
+    # accommodate formatting by allowing non-letter characters between words
+    t = t.replace(" ","[^a-z|A-Z]*")
+    return t
 
 ctx = Context()
 mod.list("win_dynamic_nav_target")
@@ -152,8 +164,10 @@ mod.list("win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: win_fwd_dyn_nav_trg")
     cur_range = get_scope("DOWN","Line",settings.get("user.win_selection_distance"))
-    t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
+    t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+    t = re.sub(r"’","'",t)
     return f"""
+    print(f't: {t}')
     {t}
     """
 mod.list("win_bkwd_dyn_nav_trg")
@@ -161,8 +175,8 @@ mod.list("win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: win_bkwd_dyn_nav_trg")
     cur_range = get_scope("UP","Line",settings.get("user.win_selection_distance"))
-    t = re.sub(r'[^A-Za-z]+', ' ', cur_range.text)
-    # t = t.replace("’","'")
+    t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+    t = re.sub(r"’","'",t)
     print(f't: {t}')
     return f"""
     {t}
