@@ -9,7 +9,9 @@ Perform mouse movement with command sequences like:
 #### Important Note
 Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. To achieve this, Command Mode is turned off when initiating the first compass command. You can always restore Command Mode with "Exit Compass".
 ## Motivation
-The computer mouse is a major source of RSI and a big reason that I switched to Talon, but mouse control with voice is often one of the more frustrating tasks for new Talon users. Although a rectangular grid can be very efficient, for many people it is more natural and intuitive to move your mouse a specified direction and distance. With this in mind, Compass uses a cardinal direction - offset - distance protocol inspired by surveying and navigation to make voice-controlled mouse movement feel more natural. With a concise grammar and automatic mode management to avoid misrecognitions, my hope is that mouse control with Compass can help other Talon users stop reaching for their actual mouse.
+The computer mouse is a major source of RSI and a big reason that I switched to Talon, but mouse control with voice was one of the more frustrating tasks for me as a new Talon user. Although a rectangular grid can be very efficient, for many people it is more natural and intuitive to move your mouse a specified direction and distance. 
+
+With this in mind, Compass uses a cardinal direction - offset - distance protocol inspired by surveying and navigation to make voice-controlled mouse movement feel more natural. With a concise grammar and automatic mode management to avoid misrecognitions, my hope is that mouse control with Compass can help other Talon users stop reaching for their actual mouse.
 ## Installation
 #### Existing talon users
 Just copy or clone all files to somewhere in your talon user folder. 
