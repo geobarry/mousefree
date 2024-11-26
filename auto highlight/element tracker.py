@@ -21,6 +21,7 @@ class element_tracker:
         self.focused_label = ""
         self.active_tags = set()
         self.focused_element = None
+        self.job = cron.interval(f'300ms', self.check_focused_element)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -78,30 +79,35 @@ class element_tracker:
     def disable(self):
         self.canvas.close()
         self.canvas = None
+    def check_focused_element(self):
+        self.handle_focus_change(self.focused_element)
+    def handle_focus_change(self,el):
+        # handle auto highlight
+        if self.auto_highlight:
+            if el:
+                self.focused_element = el
+                if el.rect != self.focused_rect:
+                    self.focused_rect = el.rect
+                    if self.auto_label:
+                        self.focused_label = el.name
+                    self.canvas.move(0,0) # this forces canvas redraw
+                if not self.auto_label:
+                    if self.focused_label != "":
+                        self.focused_label = ""
+                        self.canvas.move(0,0) # this forces canvas redraw
+            else:
+                print("FUNCTION check_for_updates: unable to get focused element")
+        else:
+            if self.focused_rect != None:
+                self.focused_rect = None
+                self.focused_label = ""
+                self.canvas.move(0,0)
+
 el_highlights = element_tracker()
 def handle_focus_change(el):
-    # handle auto highlight
-    if el_highlights.auto_highlight:
-        if el:
-            el_highlights.focused_element = el
-            if el.rect != el_highlights.focused_rect:
-                el_highlights.focused_rect = el.rect
-                if el_highlights.auto_label:
-                    el_highlights.focused_label = el.name
-                el_highlights.canvas.move(0,0) # this forces canvas redraw
-            if not el_highlights.auto_label:
-                if el_highlights.focused_label != "":
-                    el_highlights.focused_label = ""
-                    el_highlights.canvas.move(0,0) # this forces canvas redraw
-        else:
-            print("FUNCTION check_for_updates: unable to get focused element")
-    else:
-        if el_highlights.focused_rect != None:
-            el_highlights.focused_rect = None
-            el_highlights.focused_label = ""
-            el_highlights.canvas.move(0,0)
-
+    el_highlights.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
+
 @mod.action_class
 class Actions:
     def auto_highlight(on: bool = True):
