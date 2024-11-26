@@ -6,7 +6,7 @@ mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
 update_interval = 30
-fade_time = 5000 # ten seconds
+fade_time = 5000 # five seconds
 
 def f_distance(from_pos,to_pos):
     return (((to_pos[0]-from_pos[0]) ** 2) + ((to_pos[1] - from_pos[1]) ** 2))**0.5
