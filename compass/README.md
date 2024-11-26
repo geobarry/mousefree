@@ -81,11 +81,13 @@ A radial grid is displayed to guide direction and distance specification. Here a
 Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. Upon initialization:
   * Command Mode is turned off 
   * Compass Mode is turned on
+
 To return to Command Mode:
   * Say "Exit Compass"
   * Perform a mouse action ("click" (or "touch"), "right-click", "drag end", "wheel downer")
   * Wait 15 seconds
-All of the above options will enable Command Mode immediately. The last two options will also keep Compass Mode enabled for 5 seconds, so you can perform additional Compass actions without initializing again.
+
+All of the above options will enable Command Mode immediately. The last two options will also keep Compass Mode enabled for 5 seconds, so you can perform additional Compass actions without re-initializing.
   
 # Feedback
 I hope that you find this tool useful. Any feedback on how to improve Compass is welcome!
