@@ -4,7 +4,9 @@
 Talon voice commands to control mouse using a first-person navigation perspective.
 ## Overview
 Perform mouse movement with command sequences like:
+
 ``` "Compass North - 20 East - Go 500 - Exit Compass" ```
+#### Important Note
 Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. To achieve this, Command Mode is turned off when initiating the first compass command. You can always restore Command Mode with "Exit Compass".
 ## Motivation
 The computer mouse is a major source of RSI and a big reason that I switched to Talon, but mouse control with voice is often one of the more frustrating tasks for new Talon users. Although a rectangular grid can be very efficient, for many people it is more natural and intuitive to move your mouse a specified direction and distance. With this in mind, Compass uses a cardinal direction - offset - distance protocol inspired by surveying and navigation to make voice-controlled mouse movement feel more natural. With a concise grammar and automatic mode management to avoid misrecognitions, my hope is that mouse control with Compass can help other Talon users stop reaching for their actual mouse.
@@ -19,9 +21,10 @@ Just copy or clone all files to somewhere in your talon user folder.
 ## Usage
 The basic sequence involves three conceptual steps:
   1. Set an initial bearing direction
-  2. Fine-tune the bearing direction 
+  2. Adjust the bearing direction (optional)
   3. Move the mouse a given number of pixels
-This process can be combined with standard Talon mouse control commands to click, right-click or drag the mouse. 
+
+This procedure can be combined with standard Talon mouse control commands to click, right-click or drag the mouse. 
 
 #### Examples
 A basic sequence:  
