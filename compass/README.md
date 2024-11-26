@@ -3,28 +3,28 @@
 
 # Talon compass
 Talon voice commands to control mouse using a first-person navigation perspective.
-# Overview
+## Overview
 Perform mouse movement with command sequences like:
 ``` "Compass North - 20 East - Go 500 - Exit Compass" ```
 Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. To achieve this, Command Mode is turned off when initiating the first compass command. You can always restore Command Mode with "Exit Compass".
-# Motivation
+## Motivation
 The computer mouse is a major source of RSI and a big reason that I switched to Talon, but mouse control with voice is often one of the more frustrating tasks for new Talon users. Although a rectangular grid can be very efficient, for many people it is more natural and intuitive to move your mouse a specified direction and distance. With this in mind, Compass uses a cardinal direction - offset - distance protocol inspired by surveying and navigation to make voice-controlled mouse movement feel more natural. With a concise grammar and automatic mode management to avoid misrecognitions, my hope is that mouse control with Compass can help other Talon users stop reaching for their actual mouse.
-# Installation
-### Existing talon users
+## Installation
+#### Existing talon users
 Just copy or clone all files to somewhere in your talon user folder. 
-### New talon users
+#### New talon users
 1. Read up on how to install and get started with talon here:
    - https://talonvoice.com/
    - https://talon.wiki/
 2. Once you are up and running, just copy or clone all files to somewhere in your talon user folder. 
-# Usage
+## Usage
 The basic sequence involves three conceptual steps:
   1. Set an initial bearing direction
   2. Fine-tune the bearing direction 
   3. Move the mouse a given number of pixels
 This process can be combined with standard Talon mouse control commands to click, right-click or drag the mouse. 
 
-### Examples
+#### Examples
 A basic sequence:  
 
 ``` compass north ```  
@@ -44,7 +44,7 @@ A more complicated sequence showing additional capabilities:
 
 <br/>
 
-# More Detailed Command List
+## Detailed Command List
 (but maybe not comprehensive - always check actual talon files for most up to date list)
 
 ### Initialization
