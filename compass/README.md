@@ -22,8 +22,8 @@ Just copy or clone all files to somewhere in your talon user folder.
 2. Once you are up and running, just copy or clone all files to somewhere in your talon user folder. 
 ## Usage
 The basic sequence involves three conceptual steps:
-  1. Set an initial bearing direction
-  2. Adjust the bearing direction (optional)
+  1. Set an initial compass direction
+  2. Adjust the compass direction (optional)
   3. Move the mouse a given number of pixels
 
 This procedure can be combined with standard Talon mouse control commands to click, right-click or drag the mouse. 
@@ -37,7 +37,7 @@ A basic sequence:
 
 A more complicated sequence showing additional capabilities:
 
-``` compass Center```  
+``` compass up```  
 ``` north-northeast ```  
 ``` 5 right ```  
 ``` Drag ```  
@@ -45,8 +45,6 @@ A more complicated sequence showing additional capabilities:
 ``` Backup 15 ```  
 ``` Drag End ```  
 ``` compass Reverse ```  
-
-<br/>
 
 ## Detailed Command List
 (but maybe not comprehensive - always check actual talon files for most up to date list)
