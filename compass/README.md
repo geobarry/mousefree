@@ -1,5 +1,4 @@
-![compass screenshot](https://github.com/geobarry/talon_compass/assets/13248690/296cf580-3df6-4487-b57d-a51aa4322522)
-
+![compass_screenshot](https://github.com/user-attachments/assets/186c40be-2914-420a-a33d-baa23f0cb43b)
 
 # Talon compass
 Talon voice commands to control mouse using a first-person navigation perspective.
