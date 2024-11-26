@@ -19,13 +19,6 @@ mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
 
-mod.setting(
-    "ax_auto_highlight",
-    type = bool,
-    default = False,
-    desc = "If true, each action on an element will highlight the target element."
-)
-
 ctx = Context()
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
@@ -454,9 +447,7 @@ class Actions:
         # (e.g. PowerPoint accessing format panel from context menu)
         # to avoid this, wrap in try except clause 
         # print("FUNCTION: key_to_matching_element")
-        # remove previous highlights
-        if settings.get("user.ax_auto_highlight"):
-            actions.user.clear_highlights()
+
         # Function to get next element, sometimes need to be persistent
         def focused_element():
             n = 0

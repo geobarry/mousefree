@@ -12,6 +12,9 @@ mod.setting("win_selection_distance",type = int,default = 100,
 
 mod.list("text_search_direction","directions from cursor in which text can be searched")
 mod.list("text_search_unit","units of text that can be searched for in windows accessibility")
+mod.list("win_dynamic_nav_target")
+mod.list("win_fwd_dyn_nav_trg")
+mod.list("win_bkwd_dyn_nav_trg")
 
 def precise_target_and_position(target: re.Pattern, 
                 text_range: ax.TextRange,
@@ -151,7 +154,7 @@ def modify_regex_include_homophones(t: str):
     return t
 
 ctx = Context()
-mod.list("win_dynamic_nav_target")
+
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
     print("FUNCTION: win_dynamic_nav_target")
@@ -159,7 +162,7 @@ def win_dynamic_nav_target(_) -> str:
     return f"""
     {cur_range.text}
     """
-mod.list("win_fwd_dyn_nav_trg")
+
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: win_fwd_dyn_nav_trg")
@@ -170,7 +173,7 @@ def win_fwd_dyn_nav_trg(_) -> str:
     print(f't: {t}')
     {t}
     """
-mod.list("win_bkwd_dyn_nav_trg")
+
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: win_bkwd_dyn_nav_trg")
