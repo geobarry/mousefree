@@ -69,7 +69,15 @@ A more complicated sequence showing additional capabilities:
 ``` compass Display (heavy|medium|light|tiny) ```
   * Adjusts the size and density of the tick marks and labels showing distances and directions on screen
 
-### Command Mode Management
+## Distance and Direction Guides
+A radial grid is displayed to guide direction and distance specification. Here are some visual landmarks:
+  * Red lines are 500 pixels
+  * Longer black/white lines are 100 pixels or 10 degrees
+  * Shorter black/white lines are 50/10 pixels or 5/1 degrees
+  * The end of the red arrow is 50 pixels
+  * The outer edge of the red circle is 30 pixels
+  
+## Command Mode Management
 Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. Upon initialization:
   * Command Mode is turned off 
   * Compass Mode is turned on
@@ -79,6 +87,5 @@ To return to Command Mode:
   * Wait 15 seconds
 All of the above options will enable Command Mode immediately. The last two options will also keep Compass Mode enabled for 5 seconds, so you can perform additional Compass actions without initializing again.
   
-
 # Feedback
 I hope that you find this tool useful. Any feedback on how to improve Compass is welcome!
