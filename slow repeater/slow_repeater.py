@@ -125,6 +125,6 @@ class Actions:
     def jiggle(key: str): 
         """Presses a key followed by its opposite."""
         if key in opposites.keys():
-            actions.user.key_highlight(f"{key} {opposites[key]}")
+            actions.key(f"{key} {opposites[key]}")
 
 ctx = Context()

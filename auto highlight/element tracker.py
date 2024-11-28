@@ -86,15 +86,20 @@ class element_tracker:
         if self.auto_highlight:
             if el:
                 self.focused_element = el
-                if el.rect != self.focused_rect:
-                    self.focused_rect = el.rect
-                    if self.auto_label:
-                        self.focused_label = el.name
-                    self.canvas.move(0,0) # this forces canvas redraw
-                if not self.auto_label:
-                    if self.focused_label != "":
-                        self.focused_label = ""
-                        self.canvas.move(0,0) # this forces canvas redraw
+                try:
+                    rect = actions.user.el_prop_val(el,"rect")
+                    if rect:
+                        if el.rect != self.focused_rect:
+                            self.focused_rect = el.rect
+                            if self.auto_label:
+                                self.focused_label = el.name
+                            self.canvas.move(0,0) # this forces canvas redraw
+                        if not self.auto_label:
+                            if self.focused_label != "":
+                                self.focused_label = ""
+                                self.canvas.move(0,0) # this forces canvas redraw
+                except Exception as error:
+                    print(f'error: {error}')
             else:
                 print("FUNCTION check_for_updates: unable to get focused element")
         else:

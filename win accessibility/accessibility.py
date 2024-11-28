@@ -159,7 +159,11 @@ def dynamic_element(_) -> dict[str,str]:
 class Actions:
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
+        
         try:
+            # handle virtualized elements
+            if "VirtualizedItem" in el.patterns:
+                el.virtualizeditem_pattern.realize()
             if prop_name.lower() == "name":
                 return el.name
             elif prop_name.lower() == "pid":
@@ -404,8 +408,14 @@ class Actions:
             loc = actions.user.element_location(el)
             if loc != None:            
                 actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
+                actions.sleep(f"{delay_after_ms + 50}ms")
+                if action == "click":
+                    ctrl.mouse_click()
+                elif action == "right-click":
+                    ctrl.mouse_click(1)
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
+                return 
         elif action == "hover":
             loc = actions.user.element_location(el)
             if loc != None:    
@@ -432,12 +442,9 @@ class Actions:
         elif action == "toggle":
             if "Toggle" in el.patterns:
                 el.toggle_pattern.toggle()
-        actions.sleep(f"{delay_after_ms + 50}ms")
-        if action == "click" or action == "right-click":
-            if action == "click":
-                ctrl.mouse_click()
-            elif action == "right-click":
-                ctrl.mouse_click(1)
+        elif action == "expand":
+            if "ExpandCollapse" in el.patterns:
+                el.expandcollapse_pattern.expand()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
@@ -488,7 +495,7 @@ class Actions:
         # initialize
         print("FUNCTION: key_to_matching_element")
         el = focused_element()
-        # print(f'el: {el}')
+            # print(f'el: {el}')
         last_el = el
         i = 1
         matches = 0
