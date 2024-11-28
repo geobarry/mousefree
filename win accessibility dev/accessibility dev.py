@@ -103,17 +103,8 @@ class Actions:
         pos = ctrl.mouse_pos()
         # get element designated by windows accessibility
         el = ui.element_at(pos[0],pos[1])
-        root = winui.active_window().element
-        elements = [el] + list(get_every_child(root,max_level = 17))
-        n = 0
-        msg = actions.user.element_information(elements[0],headers = True)
-        for el in elements:
-            r = actions.user.el_prop_val(el,"rect")
-            if r:
-                if (r.x < pos[0] < r.x + r.width) and (r.y < pos[1] < r.y + r.height):
-                    msg += "\n" + actions.user.element_information(el)
-                    n += 1                
-        msg += f"\n\n {n} elements found"
+        msg = actions.user.element_information(el,headers = True)
+        msg += "\n" + actions.user.element_information(el)
         clip.set_text(msg)
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
@@ -147,7 +138,7 @@ class Actions:
         props = props.split(",")
         props = [x.strip() for x in props]
         prop_seq = []
-        for el in el_list[:-2]:
+        for el in el_list[2:]:
             prop_list = []
             for prop in props:
                 val = actions.user.el_prop_val(el,prop,as_text = True)

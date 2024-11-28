@@ -324,18 +324,38 @@ class Actions:
             if actions.user.element_match(child,prop_list):
                 return child
         return None
-    def matching_descendants(el: ax.Element, prop_list: list, generation: int):
-        """Returns the descendants of the input element """
+    def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0):
+        """Returns the matching descendants of the input element """
+        cur_level = 0
+        el_id = -1
+        parent_id = -1
         r = []
-        def get_descendants(el: ax.Element, prop_list, cur_gen: int, trg_gen: int, r):
-            if cur_gen == trg_gen:
-                return [child for child in el.children if actions.user.element_match(child,prop_list)]
-            else:
-                for child in el.children:
-                    r += get_descendants(child, prop_list,cur_gen + 1,trg_gen,r)
-                return r
-        r = get_descendants(el, prop_list,1,generation,r)
+        Q = []
+        Q.append((cur_level,parent_id,el))    
+        while len(Q) > 0:        
+            cur_level,parent_id,el = Q.pop(0)
+            if cur_level <= generation + extra_gen:
+                el_id += 1
+                try:
+                    for child in el.children:
+                        Q.append((cur_level+1,el_id,child))        
+                        if cur_level+1  >= generation:
+                            if actions.user.element_match(child,prop_list):
+                                r.append(child)
+                except:
+                    pass
         return r
+        # Assuming above works, delete comments below and simplify matching_descendant to simply return first element of matching_descendants
+        # r = []
+        # def get_descendants(el: ax.Element, prop_list, cur_gen: int, trg_gen: int, r):
+            # if cur_gen == trg_gen:
+                # return [child for child in el.children if actions.user.element_match(child,prop_list)]
+            # else:
+                # for child in el.children:
+                    # r += get_descendants(child, prop_list,cur_gen + 1,trg_gen,r)
+                # return r
+        # r = get_descendants(el, prop_list,1,generation,r)
+        # return r
     def matching_descendant(el: ax.Element, prop_list: list, generation: int, extra_gen: int = 0):
         """Returns the descendant of the input element that matches the property list"""
         cur_level = 0
@@ -357,20 +377,27 @@ class Actions:
                     pass
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
         """Finds element by working down from root"""
-        print("FUNCTION: actions.user.find_el_by_prop_seq()")
+        if verbose:
+            print("FUNCTION: actions.user.find_el_by_prop_seq()")
         if root == None:
             root = winui.active_window().element
-        el = root        
+        el_list = [root]
         gen = 0
         for prop_list in prop_seq:
+            valid_matches = []
             if prop_list == []:
-                gen += 1
+                    gen += 1
             else:
-                el = actions.user.matching_descendant(el,prop_list,gen)
-                gen = 0
-            if el == None:
+                for el in el_list:
+                   valid_matches += actions.user.matching_descendants(el,prop_list,gen)
+                   gen = 0
+            if len(valid_matches) == 0:
+                if verbose:
+                    print(f"Could not find {prop_list}")
                 break        
-        return el
+            else:
+                el_list = valid_matches
+        return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         if action == "click" or action == "right-click":

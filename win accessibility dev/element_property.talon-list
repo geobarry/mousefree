@@ -2,4 +2,4 @@ list: user.element_property
 -
 name
 class: class_name
-automation id: automation_id
+automation: automation_id
