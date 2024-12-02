@@ -555,11 +555,3 @@ class Actions:
         el = actions.user.matching_element(prop_list,max_level = max_level)
         actions.user.act_on_element(el,"invoke")
 
-def clean(t):
-    t = t.lower()
-    regex = re.compile('[^a-zA-Z0-9]')
-    #First parameter is the replacement, second parameter is your input string
-    t = re.sub('\.\.\.', ' dialog', t)
-    t = regex.sub(' ', t)
-    t = re.sub(' +', ' ', t)
-    return t

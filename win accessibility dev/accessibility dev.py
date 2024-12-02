@@ -115,7 +115,7 @@ class Actions:
     def copy_focused_element_descendants(levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
         el = winui.focused_element()
-        actions.user.copy_elements_to_clipboard(levels,el)
+        actions.user.copy_elements_to_clipboard(levels,root = el)
     def element_ancestors(el: ax.Element):
         """Returns a list of element ancestors including current element"""
         el_list = [el]
@@ -230,6 +230,7 @@ class Actions:
         el = winui.focused_element()
         first_name = f"{prefix} {clean(el.name)}"
         first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
+        print(f'first_access_key: {first_access_key}')
         r = []
         while True:
             i += 1
@@ -243,18 +244,20 @@ class Actions:
                 name = f"{prefix} {clean(el.name)}"
                 access_key = clean(actions.user.el_prop_val(el,"access_key"))
                 print(f'{i} access_key: {access_key}')
-                print(f'heading_access_key: {heading_access_key}')
+#                print(f'heading_access_key: {heading_access_key}')
                 # hello check that we're not back at the first element
                 if name == first_name and access_key == first_access_key:
+                    print("the same name and access key as first element")
                     break
                 # check that access key begins with (but is not the same as) first access key
                 elif access_key.startswith(heading_access_key) and not access_key == heading_access_key:
                     r.append((name,access_key))
                 else:
                     # if access key is the same as first element but name is not, we have a phantom element
+                    print("access key does not match ribbon heading")
                     pass
-            except:
-                pass
+            except Exception as error:
+                print(f'error: {error}')
         print("Got to the end...")
         msg = "\n".join([f"{key}:{val}" for key,val in r])
         print(f'msg: {msg}')
@@ -282,3 +285,12 @@ class Actions:
                 access_key = actions.user.el_prop_val(el,"access_key")
                 r[name] = clean(access_key)
         clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
+
+def clean(t):
+    t = t.lower()
+    regex = re.compile('[^a-zA-Z0-9]')
+    #First parameter is the replacement, second parameter is your input string
+    t = re.sub('\.\.\.', ' dialog', t)
+    t = regex.sub(' ', t)
+    t = re.sub(' +', ' ', t)
+    return t

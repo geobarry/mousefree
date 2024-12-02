@@ -42,10 +42,20 @@ phones [<user.ordinals>] next <user.win_nav_target>$: user.phones_text(win_nav_t
 phones [<user.ordinals>] previous <user.win_nav_target>$: user.phones_text(win_nav_target,"UP",ordinals or 1)
 
 # FORMATTING CORRECTION
-[format] <user.formatters> [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.format_text(user.formatters, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
-[format] <user.formatters> [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.format_text(user.formatters, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
-[format] <user.formatters> [<user.ordinals>] next <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"DOWN",ordinals or 1)
-[format] <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"UP",ordinals or 1)
+format <user.formatters> [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.format_text(user.formatters, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+format <user.formatters> [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.format_text(user.formatters, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+format <user.formatters> [<user.ordinals>] next <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"DOWN",ordinals or 1)
+format <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$: user.format_text(user.formatters, win_nav_target,"UP",ordinals or 1)
+
+format <user.formatters> <user.formatters> [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.format_text(formatters_1, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+	user.format_text(formatters_2, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+format <user.formatters> <user.formatters> [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.format_text(formatters_1, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+	user.format_text(formatters_2, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+format <user.formatters> <user.formatters> [<user.ordinals>] next <user.win_nav_target>$: user.format_text(formatters_1, win_nav_target,"DOWN",ordinals or 1)
+	user.format_text(formatters_2, win_nav_target,"DOWN",ordinals or 1)
+format <user.formatters> <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$: user.format_text(formatters_1, win_nav_target,"UP",ordinals or 1)
+	user.format_text(formatters_2, win_nav_target,"UP",ordinals or 1)
+
 
 # TEXT REPLACEMENT
 replace [<user.ordinals>] next {user.win_fwd_dyn_nav_trg} with <user.prose>$: user.replace_text(prose, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)

@@ -40,7 +40,6 @@ class element_tracker:
         self.labels = []
         self.canvas.move(0,0) # this forces canvas redraw
     def draw_canvas(self, canvas):
-        print("redrawing canvas...")
         paint = canvas.paint
         paint.color = 'f3f'
         paint.style = paint.Style.STROKE
