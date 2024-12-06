@@ -2,6 +2,7 @@ from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, se
 from talon.windows import ax as ax, ui as winui
 from talon.types import Point2d as Point2d
 from talon.skia import  Paint
+from typing import Callable
 import time
 
 mod = Module()
@@ -20,6 +21,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.active_tags = set()
+        self.traversal_function = None
         self.focused_element = None
         self.job = cron.interval(f'300ms', self.check_focused_element)
     def add_element(self,rect,label = ''):
@@ -79,12 +81,12 @@ class element_tracker:
         self.canvas.close()
         self.canvas = None
     def check_focused_element(self):
-        self.handle_focus_change(self.focused_element)
-    def handle_focus_change(self,el):
-        # handle auto highlight
         if self.auto_highlight:
+            self.update_highlight()
+    def update_highlight(self):
+        if self.auto_highlight:
+            el = self.focused_element
             if el:
-                self.focused_element = el
                 try:
                     rect = actions.user.el_prop_val(el,"rect")
                     if rect:
@@ -102,10 +104,20 @@ class element_tracker:
             else:
                 print("FUNCTION check_for_updates: unable to get focused element")
         else:
-            if self.focused_rect != None:
-                self.focused_rect = None
-                self.focused_label = ""
-                self.canvas.move(0,0)
+            self.focused_rect = None
+            self.focused_label = ""
+            self.canvas.move(0,0)
+
+    def handle_focus_change(self,el):
+        if el:
+            self.focused_element = el
+        # handle element traversal
+        print("handling focus change...")
+        if self.traversal_function != None:
+            self.traversal_function()
+        # handle auto highlight
+        if self.auto_highlight:    
+            self.update_highlight()
 
 el_highlights = element_tracker()
 def handle_focus_change(el):
@@ -117,12 +129,12 @@ class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
         el_highlights.auto_highlight = on
-        handle_focus_change(winui.focused_element())
+        el_highlights.update_highlight()
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""
         el_highlights.auto_highlight = on  
         el_highlights.auto_label = on
-        handle_focus_change(winui.focused_element())
+        el_highlights.update_highlight()
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
         rect = el.rect
@@ -147,4 +159,15 @@ class Actions:
         actions.user.highlight_element(winui.focused_element())
         if delay_after_highlight > 0:
             actions.sleep(delay_after_highlight)
+    def focused_element():
+        """returns currently focused element, as recorded by element_tracker"""
+        return el_highlights.focused_element
+    def initialize_traversal(traversal_function: Callable):
+        """initialize a traversal of windows accessibility elements"""
         
+        el_highlights.traversal_function = traversal_function
+        el_highlights.traversal_function()
+    def terminate_traversal():
+    
+        """terminate the continued traversal using a key"""
+        el_highlights.traversal_function = None

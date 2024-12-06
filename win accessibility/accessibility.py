@@ -376,12 +376,12 @@ class Actions:
                 for el in el_list:
                    valid_matches += actions.user.matching_descendants(el,prop_list,gen)
                    gen = 0
-            if len(valid_matches) == 0:
-                if verbose:
-                    print(f"Could not find {prop_list}")
-                break        
-            else:
-                el_list = valid_matches
+                if len(valid_matches) == 0:
+                    if verbose:
+                        print(f"Could not find {prop_list}")
+                    break        
+                else:
+                    el_list = valid_matches
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
@@ -446,6 +446,33 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
+    def new_key_to_matching_element(key: str, 
+                                prop_list: list, 
+                                ordinal: int=1, 
+                                limit: int=20, 
+                                escape_key: str=None, 
+                                delay: float = 0.09, 
+                                verbose: bool = False):
+        """press given key until the first matching element is reached"""
+        def key_continue():
+            if actions.user.focused_element() != None:
+                if actions.user.element_match(actions.user.focused_element(),prop_list):
+                    actions.user.terminate_traversal()
+                    actions.mode.enable("command")
+                    actions.mode.disable("user.slow_repeating")
+                else:
+                    actions.key(key)
+        actions.mode.enable("user.slow_repeating")
+        actions.mode.disable("command")
+        print("initializing traversal function...")
+        
+        actions.user.initialize_traversal(key_continue)
+        
+    def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.09):
+        """press key until element with exact value for one property is reached"""
+        prop_list = [(prop,val)]
+        actions.user.new_key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
+        
     def key_to_matching_element(key: str, 
                                 prop_list: list, 
                                 ordinal: int=1, 
