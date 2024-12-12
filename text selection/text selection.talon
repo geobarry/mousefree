@@ -79,8 +79,8 @@ extend {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <us
 extend {user.text_search_direction} [<number_small>] {user.text_search_unit}$:
 	user.extend_by_unit(text_search_unit,text_search_direction,number_small or 1)
 expand [[<number_small>] {user.text_search_unit}]$: user.expand_selection(true,true,text_search_unit or "character",number_small or 1)
-selection expand right$: user.expand_selection(false,true)
-selection expand left$: user.expand_selection(true,false)
+extend right$: user.expand_selection(false,true)
+extend left$: user.expand_selection(true,false)
 
 # SELECT A RANGE 
 #	*doesn't use dynamic search so "word" or "phrase" are needed

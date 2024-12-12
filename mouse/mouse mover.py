@@ -5,6 +5,7 @@ import math
 
 mod = Module()
 mod.list("handle_position","position for grabbing ui elements")    
+mod.list("move_coordinates","x & y differentials for moving mouse")    
 
 ctx = Context()
 
@@ -85,7 +86,7 @@ def mouse_to_obj_handle(obj,hnd_pos: str, ms: int = 350, x_offset: int = 0, y_of
     }
     x = pos[hnd_pos][0] + x_offset
     y = pos[hnd_pos][1] + y_offset
-    actions.user.slow_mouse(x,y)
+    actions.user.slow_mouse(x,y,ms = ms)
 
 @mod.action_class
 class Actions:
@@ -107,3 +108,9 @@ class Actions:
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
         mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
+    def slow_mouse_relative(dx: int, dy: int, ms: int = None, callback: any = None):
+        """Slowly moves the mouse in the given relative direction"""
+        pos = ctrl.mouse_pos()
+        x = pos[0]
+        y = pos[1]
+        actions.user.slow_mouse(x + dx,y + dy,ms,callback)

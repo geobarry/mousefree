@@ -112,7 +112,6 @@ class element_tracker:
         if el:
             self.focused_element = el
         # handle element traversal
-        print("handling focus change...")
         if self.traversal_function != None:
             self.traversal_function()
         # handle auto highlight

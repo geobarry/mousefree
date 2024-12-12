@@ -55,12 +55,11 @@ class Actions:
                         "help_text","automation_id",
                         "printout",
                         "children","patterns",
-                        "is_offscreen",
-                        "clickable_point",
-                        "rect.x","rect.y",
-                        "rect.width","rect.height"
                     ]
         other_prop = [
+                        "clickable_point",
+                        "rect.x","rect.y",
+                        "rect.width","rect.height",
                     "window_handle","pid","access_key","has_keyboard_focus",
                     "is_keyboard_focusable","is_enabled",
                     "children","is_control_element","is_content_element",
@@ -138,7 +137,7 @@ class Actions:
         props = props.split(",")
         props = [x.strip() for x in props]
         prop_seq = []
-        for el in el_list[2:]:
+        for el in el_list:
             prop_list = []
             for prop in props:
                 val = actions.user.el_prop_val(el,prop,as_text = True)
@@ -147,8 +146,7 @@ class Actions:
         r = "[\n" + ",\n".join(prop_seq) + "\n]"
         r = f"root = winui.active_window().element\nprop_seq = {r}"
         clip.set_text(r)
-        root = winui.active_window().element
-        print(f'root: {root.name}')
+
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""
         el_list = actions.user.element_ancestors(el)
