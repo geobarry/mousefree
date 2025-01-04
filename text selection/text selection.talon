@@ -1,5 +1,5 @@
 os: windows
-and tag: user.Text_pattern
+#and tag: user.Text_pattern
 -
 
 # NAVIGATION

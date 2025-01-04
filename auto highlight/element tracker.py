@@ -18,12 +18,14 @@ class element_tracker:
         self.labels = []
         self.auto_highlight = False
         self.auto_label = False
-        self.focused_rect = None
-        self.focused_label = ""
         self.active_tags = set()
         self.traversal_function = None
-        self.focused_element = None
-        self.job = cron.interval(f'300ms', self.check_focused_element)
+        self.focused_element = winui.focused_element()
+        self.focused_rect = None
+        self.focused_label = ""
+        if self.focused_element != None:
+            self.update_highlight()
+        self.job = cron.interval(f'1000ms', self.check_focused_element)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -47,31 +49,33 @@ class element_tracker:
         paint.style = paint.Style.STROKE
         paint.stroke_width = 7
         def highlight_element(rect,lbl,paint):
-            canvas.draw_round_rect(rect,25,25,paint)
-            # for now draw label below element
-            
-            if lbl != '':
-                paint.stroke_width = 2
-                if len(lbl) > 50:
-                    lbl = lbl[:50]
-                # determine label placement
-                # assume text dimensions
-                lbl_wd = 600
-                lbl_ht = 30
-                top_margin = rect.y
-                btm_margin = canvas.height - rect.y - rect.height
-                if top_margin > btm_margin:
-                    y = max(rect.y - lbl_ht, 0)
-                else:
-                    y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
-                x = min(rect.x,canvas.width - lbl_wd)
-                actions.user.text_aliased(lbl,x,y,46,canvas)        
+            if self.auto_highlight:
+                if rect != None:
+                    canvas.draw_round_rect(rect,25,25,paint)
+            if self.auto_label:
+                if lbl != '':
+                    if rect != None:
+                        paint.stroke_width = 2
+                        if len(lbl) > 50:
+                            lbl = lbl[:50]
+                        # determine label placement
+                        # assume text dimensions
+                        lbl_wd = 600
+                        lbl_ht = 30
+                        top_margin = rect.y
+                        btm_margin = canvas.height - rect.y - rect.height
+                        if top_margin > btm_margin:
+                            y = max(rect.y - lbl_ht, 0)
+                        else:
+                            y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
+                        x = min(rect.x,canvas.width - lbl_wd)
+                        actions.user.text_aliased(lbl,x,y,46,canvas)        
         if len(self.rectangles) > 0:
             for idx in range(len(self.rectangles)):
                 rect = self.rectangles[idx]
                 lbl = self.labels[idx]
                 highlight_element(rect,lbl,paint)
-        if self.auto_highlight:
+        if self.auto_highlight or self.auto_label:
             # references to self.focused_element inside this function
             # will interfere with talon command canvas somehow, 
             # so we structure this so that we don't need to refer to 
@@ -81,15 +85,17 @@ class element_tracker:
         self.canvas.close()
         self.canvas = None
     def check_focused_element(self):
-        if self.auto_highlight:
+        if self.auto_highlight or self.auto_label:
             self.update_highlight()
     def update_highlight(self):
-        if self.auto_highlight:
+        rectangle_found = False
+        if self.auto_highlight or self.auto_label:
             el = self.focused_element
             if el:
                 try:
                     rect = actions.user.el_prop_val(el,"rect")
                     if rect:
+                        rectangle_found = True
                         if el.rect != self.focused_rect:
                             self.focused_rect = el.rect
                             if self.auto_label:
@@ -100,10 +106,10 @@ class element_tracker:
                                 self.focused_label = ""
                                 self.canvas.move(0,0) # this forces canvas redraw
                 except Exception as error:
-                    print(f'error: {error}')
+                    pass
             else:
                 print("FUNCTION check_for_updates: unable to get focused element")
-        else:
+        if not rectangle_found:
             self.focused_rect = None
             self.focused_label = ""
             self.canvas.move(0,0)
@@ -115,13 +121,13 @@ class element_tracker:
         if self.traversal_function != None:
             self.traversal_function()
         # handle auto highlight
-        if self.auto_highlight:    
-            self.update_highlight()
+        self.update_highlight()
 
 el_highlights = element_tracker()
 def handle_focus_change(el):
     el_highlights.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
+
 
 @mod.action_class
 class Actions:
@@ -131,7 +137,6 @@ class Actions:
         el_highlights.update_highlight()
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""
-        el_highlights.auto_highlight = on  
         el_highlights.auto_label = on
         el_highlights.update_highlight()
     def highlight_element(el: ax.Element, lbl: str = ""):

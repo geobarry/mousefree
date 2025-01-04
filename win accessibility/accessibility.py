@@ -329,7 +329,8 @@ class Actions:
                 return child
         return None
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, verbose: bool = False):
-        """Returns the matching descendants of the input element """
+        """Returns the matching descendants of the input element at the given generation, 
+        or continues the search up to the given number of extra generations"""
         if verbose:
             print("FUNCTION matching_descendants...")
         cur_level = 0

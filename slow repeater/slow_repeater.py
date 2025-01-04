@@ -110,7 +110,6 @@ class Actions:
         """Terminate repetition"""
         gui_repeater.hide()
         repeater_object.disable()
-        actions.user.terminate_traversal()
         actions.mode.enable("command")
         actions.mode.disable("user.slow_repeating")
     def hard_stop_repeating():

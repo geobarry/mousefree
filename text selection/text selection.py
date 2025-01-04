@@ -20,7 +20,7 @@ def precise_target_and_position(target: re.Pattern,
                 text_range: ax.TextRange,
                 search_dir: str = "DOWN",
                 ordinal: int = 1):
-    """HELPER FUNCTION FOR find_target"""
+    """HELPER FUNCTION FOR find_target; Searches for target in text_range"""
     # Returns a tuple of (str,int) representing the precise match 
     # and the ordinal rank of that precise match from the beginning, 
     # so that we can transfer information from the regex match 
@@ -65,8 +65,6 @@ def find_target(trg: re.Pattern,
             print("Error in function find_target: focused element does not have text pattern")
             return None
         text_range = el.text_pattern.selection[0]
-    print("FUNCTION: find_target")
-    print(f'text_range: {text_range.text}')
     # Use regex to find exact match text and its position
     precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
     if precise_trg != None:
@@ -109,10 +107,6 @@ def get_scope(scope_dir: str = "DOWN",
         cur_range.move_endpoint_by_unit("End",scope_unit,scope_unit_count)
     if scope_dir.upper() != "DOWN":
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*scope_unit_count)
-    print(f"FUNCTION: get_scope")
-    print(f'scope_dir: {scope_dir}')
-    
-#    print(f"cur_range: {cur_range.text}")
     return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
