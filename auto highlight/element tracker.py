@@ -20,12 +20,10 @@ class element_tracker:
         self.auto_label = False
         self.active_tags = set()
         self.traversal_function = None
-        self.focused_element = winui.focused_element()
+        self.focused_element = None
         self.focused_rect = None
         self.focused_label = ""
-        if self.focused_element != None:
-            self.update_highlight()
-        self.job = cron.interval(f'1000ms', self.check_focused_element)
+        self.job = cron.interval(f'3000ms', self.check_focused_element)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)

@@ -1,7 +1,7 @@
 #precise control over repeat interval	
 <user.key> <number> second repeat$:
 	user.start_key_repeat("{key}",number*1000)
-<user.key> <number> (tic|take) repeat:($
+<user.key> <number> (tic|take) repeat$:
 	user.start_key_repeat("{key}",number*100)
 
 #short cut for common intervals

@@ -7,7 +7,7 @@ ax_units = ["Character","Format","Word","Line","Paragraph","Page","Document"]
 
 mod = Module()
 
-mod.setting("win_selection_distance",type = int,default = 100,
+mod.setting("win_selection_distance",type = int,default = 25,
             desc = "Number of lines to search forward or backwards")
 
 mod.list("text_search_direction","directions from cursor in which text can be searched")
@@ -59,14 +59,19 @@ def find_target(trg: re.Pattern,
         Will handle straight versus curly single quotes and homophones.
         Returns a ax.TextRange object or None"""
     # Handle case of no TextRange input
+    print("FUNCTION: fine_target")
+    print(f'trg: {trg}')
+    print(f'search_dir: {search_dir}')
+    print(f'ordinal: {ordinal}')
     if text_range is None:
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" not in el.patterns:
             print("Error in function find_target: focused element does not have text pattern")
             return None
         text_range = el.text_pattern.selection[0]
     # Use regex to find exact match text and its position
     precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
+
     if precise_trg != None:
         # Iteratively search for precise target using windows accessibility
         back = search_dir.upper() == "UP"
@@ -85,14 +90,15 @@ def find_target(trg: re.Pattern,
         print("Target not found :(")
         return None
 def get_scope(scope_dir: str = "DOWN",
-                scope_unit: str = "Line",
-                scope_unit_count: int = 100):
+                scope_unit: str = "Line"):
     """Returns a text range corresponding to the search scope"""
     # Error Checking
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
         return 
-    el = ui.focused_element()
+    el = winui.focused_element()
+    print(f"FUNCTION: get_scope")
+    print(f'el: {el}')
     if "Text" not in el.patterns:
         print("Error in function get_scope: focused element does not have text pattern")
         return 
@@ -104,14 +110,14 @@ def get_scope(scope_dir: str = "DOWN",
     if scope_dir.upper() == "DOWN":
         cur_range.move_endpoint_by_range("Start","End",target = cur_range)
     if scope_dir.upper() != "UP":
-        cur_range.move_endpoint_by_unit("End",scope_unit,scope_unit_count)
+        cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
     if scope_dir.upper() != "DOWN":
-        cur_range.move_endpoint_by_unit("Start",scope_unit,-1*scope_unit_count)
+        cur_range.move_endpoint_by_unit("Start",scope_unit,-1*settings.get("user.win_selection_distance"))
     return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
     # get textRange so we can return cursor to original position
-    el = ui.focused_element()
+    el = winui.focused_element()
     init_range = None
     if "Text2" in el.patterns:
         init_range = el.text_pattern2.selection[0]
@@ -151,33 +157,40 @@ ctx = Context()
 
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
-    print("FUNCTION: win_dynamic_nav_target")
-    cur_range = get_scope("both","Line",15)
-    return f"""
-    {cur_range.text}
-    """
+    el = winui.focused_element()
+    if el:
+        if "Text" in el.patterns:
+            print("FUNCTION: win_dynamic_nav_target")
+            cur_range = get_scope("both","Line",15)
+            return f"""
+            {cur_range.text}
+            """
 
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
-    print("FUNCTION: win_fwd_dyn_nav_trg")
-    cur_range = get_scope("DOWN","Line",settings.get("user.win_selection_distance"))
-    t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
-    t = re.sub(r"’","'",t)
-    return f"""
-    print(f't: {t}')
-    {t}
-    """
+    el = winui.focused_element()
+    if el:
+        if "Text" in el.patterns:
+            print("FUNCTION: win_fwd_dyn_nav_trg")
+            cur_range = get_scope("DOWN","Line")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+            t = re.sub(r"’","'",t)
+            return f"""
+            {t}
+            """
 
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
-    print("FUNCTION: win_bkwd_dyn_nav_trg")
-    cur_range = get_scope("UP","Line",settings.get("user.win_selection_distance"))
-    t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
-    t = re.sub(r"’","'",t)
-    print(f't: {t}')
-    return f"""
-    {t}
-    """
+    el = winui.focused_element()
+    if el:
+        if "Text" in el.patterns:
+            print("FUNCTION: win_bkwd_dyn_nav_trg")
+            cur_range = get_scope("UP","Line")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+            t = re.sub(r"’","'",t)
+            return f"""
+            {t}
+            """
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
 @mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
 def win_nav_target(m) -> str:
@@ -233,14 +246,13 @@ class Actions:
         """Selects text using windows accessibility pattern if possible"""
         print("FUNCTION: select_text")
         print(f'select_text: scope_dir: {scope_dir}')
-        
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
-        el = ui.focused_element()
+        el = winui.focused_element()
+        print(f"patterns: {el.patterns}")
         if "Text" in el.patterns:
             try:
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                 if r != None:
-                
                     r.select()
                     scroll_to_selection(r)
             except:
@@ -291,7 +303,7 @@ class Actions:
     def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" in el.patterns:
             try:
                 cur_range = el.text_pattern.selection[0]
@@ -317,7 +329,7 @@ class Actions:
     def extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" in el.patterns:
             try:
                 cur_range = el.text_pattern.selection[0]
@@ -333,7 +345,7 @@ class Actions:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
     def move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" in el.patterns:
             cur_range = el.text_pattern.selection[0]
             if scope_dir.upper() == "UP":
@@ -346,7 +358,7 @@ class Actions:
             cur_range.scroll_into_view(True)
     def extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" in el.patterns:
             print(f"Selection Ranges: {len(el.text_pattern.selection)}")
             print(f"Visible Ranges: {len(el.text_pattern.visible_ranges)}")
@@ -364,7 +376,7 @@ class Actions:
     def expand_selection(left: bool = True, right: bool = True, 
             unit: str = "Character", ordinal: int = 1):
         """Expands selection in the specified direction(s)"""
-        el = ui.focused_element()
+        el = winui.focused_element()
         if "Text" in el.patterns:
             cur_range = el.text_pattern.selection[0]
 #            ordinal = -ordinal if scope_dir.upper() == "UP" else ordinal
@@ -378,7 +390,7 @@ class Actions:
         cur_range.scroll_into_view(True)
     def select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
-        el = ui.focused_element() 
+        el = winui.focused_element() 
         if "Text" in el.patterns:
             cur_range = el.text_pattern.selection[0]
             cur_range.expand_to_enclosing_unit(unit)
