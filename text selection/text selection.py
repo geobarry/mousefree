@@ -15,6 +15,7 @@ mod.list("text_search_unit","units of text that can be searched for in windows a
 mod.list("win_dynamic_nav_target")
 mod.list("win_fwd_dyn_nav_trg")
 mod.list("win_bkwd_dyn_nav_trg")
+mod.list("text_special_pattern","patterns to search for with text selection")
 
 def precise_target_and_position(target: re.Pattern, 
                 text_range: ax.TextRange,
@@ -192,12 +193,15 @@ def win_bkwd_dyn_nav_trg(_) -> str:
             {t}
             """
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.text_special_pattern} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     include_homophones = False
     if hasattr(m, "any_alphanumeric_key"):
         return re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
+    if hasattr(m, "text_special_pattern"):
+        t = m.text_special_pattern
+        print(f'DEBUG: t: {t}')
     if hasattr(m, "navigation_target_name"):
         return re.compile(m.navigation_target_name)
     if hasattr(m,"abbreviation"):

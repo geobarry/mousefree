@@ -1,0 +1,11 @@
+list: user.text_special_pattern
+-
+parentheses: \(.*?\)
+square brackets: \[.*?\]
+curly braces: \{.*?\}
+inches: ".*?"
+quotes: ".*?"
+double quotes: ".*?"
+feet: '.*?'
+single quotes: '.*?'
+curly quotes: “.*?”
