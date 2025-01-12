@@ -1,5 +1,6 @@
 os: windows
-#and tag: user.Text_pattern
+os: windows
+and mode: user.zen
 -
 
 # NAVIGATION
@@ -8,6 +9,7 @@ os: windows
 	#	go after second previous letter cap
 	#	up four lines
 	#	down two paragraphs
+	#	go up to hippopotamus
 
 go {user.before_or_after} [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$:
 	user.go_text(win_fwd_dyn_nav_trg,"DOWN",before_or_after,ordinals or 1)
@@ -17,6 +19,11 @@ go {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <user.w
 	user.go_text(win_nav_target,text_search_direction,before_or_after,ordinals or 1)
 {user.text_search_direction} <number_small> {user.text_search_unit}$: 
 	user.move_by_unit(text_search_unit,text_search_direction,number_small)
+
+^go down to {user.win_fwd_dyn_nav_trg}$:
+	user.go_text(win_fwd_dyn_nav_trg,"DOWN","after",1)
+^go up to {user.win_bkwd_dyn_nav_trg}$:
+	user.go_text(win_bkwd_dyn_nav_trg,"UP","before",1)
 
 
 # SELECTION
