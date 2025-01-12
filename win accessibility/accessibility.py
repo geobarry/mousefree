@@ -92,9 +92,13 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
         print(f"No matching property found (looking for property: {prop})")
         print(prop_list)
         return True
+    
     # handle case that property list is a simple string
     if type(prop_list) == str:
         prop_list = [("name",prop_list)]
+    # handle case that property list is an empty list
+    if len(prop_list) == 0:
+        return True
     # handle case that property list is of the form [conjunction,list]
     if prop_list[0] in ["AND","OR","and","or","And","Or"]:
         r = match(el,prop_list[1],prop_list[0])
@@ -361,28 +365,32 @@ class Actions:
             if len(el_list) > 0:
                 return el_list[0]
         return None
-    def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, verbose: bool = False):
+    def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, verbose: bool = False):
         """Finds element by working down from root"""
         if verbose:
             print("FUNCTION: actions.user.find_el_by_prop_seq()")
         if root == None:
             root = winui.active_window().element
         el_list = [root]
-        gen = 0
+        def perform_search(el_list,level):
+            valid_matches = []        
+            for el in el_list:
+                valid_matches += actions.user.matching_descendants(el,prop_list,level)
+            return valid_matches
         for prop_list in prop_seq:
-            valid_matches = []
-            if prop_list == []:
-                    gen += 1
+            extra_levels = 0
+            valid_matches = perform_search(el_list,extra_levels)
+            while len(valid_matches) == 0 and extra_levels < extra_search_levels:
+                extra_levels += 1
+                valid_matches = perform_search(el_list,extra_levels)
+            if len(valid_matches) == 0:
+                if verbose:
+                    print(f"Could not find {prop_list}")
+                break        
             else:
-                for el in el_list:
-                   valid_matches += actions.user.matching_descendants(el,prop_list,gen)
-                   gen = 0
-                if len(valid_matches) == 0:
-                    if verbose:
-                        print(f"Could not find {prop_list}")
-                    break        
-                else:
-                    el_list = valid_matches
+                el_list = valid_matches
+        if verbose:
+            print(f"found {len(el_list) matches}")
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""

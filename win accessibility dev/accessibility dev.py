@@ -79,7 +79,7 @@ class Actions:
         else:
             # Get property values, removing line breaks
             return  "\t".join([" ".join(str(actions.user.el_prop_val(el,prop,as_text = True)).splitlines()) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = True):
+    def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = False):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
         el = winui.focused_element()
@@ -108,8 +108,8 @@ class Actions:
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
         el = winui.focused_element()
-        msg = actions.user.element_information(el, headers = True, verbose = True)
-        msg += "\n" + actions.user.element_information(el, verbose = True)
+        msg = actions.user.element_information(el, headers = True, verbose = False)
+        msg += "\n" + actions.user.element_information(el, verbose = False)
         clip.set_text(msg)
     def copy_focused_element_descendants(levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
@@ -161,14 +161,14 @@ class Actions:
     def copy_focused_element_sequence(props: str):
         """Copy python code for focused element's property sequence to clipboard"""
         actions.user.copy_element_sequence_to_clipboard(winui.focused_element(),props)
-    def copy_mouse_element_ancestors(verbose: bool = True):
+    def copy_mouse_element_ancestors(verbose: bool = False):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        
         el = winui.element_at(pos[0],pos[1])
         print("FUNCTION: copy_mouse_element_ancestors")
         print(f'el: {el}')
         actions.user.copy_element_ancestors(el,verbose)
-    def copy_focused_element_ancestors(verbose: bool = True):
+    def copy_focused_element_ancestors(verbose: bool = False):
         """Retrieves list of ancestors of currently focused element"""
         el = winui.focused_element()
         print("FUNCTION: copy_focused_element_ancestors")
