@@ -390,7 +390,7 @@ class Actions:
             else:
                 el_list = valid_matches
         if verbose:
-            print(f"found {len(el_list) matches}")
+            print(f"found {len(el_list)} matches")
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
@@ -591,3 +591,4 @@ class Actions:
         el = actions.user.matching_element(prop_list,max_level = max_level)
         actions.user.act_on_element(el,"invoke")
 
+#
