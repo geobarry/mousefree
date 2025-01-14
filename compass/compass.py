@@ -44,7 +44,7 @@ class compass:
         cron.cancel(self.job)
         self.canvas.close()
         self.canvas = None
-        actions.user.zoom_close()
+#        actions.user.zoom_close()
         actions.user.grid_close()
         actions.mode.enable("command")
         actions.mode.disable("user.compass")
@@ -88,6 +88,7 @@ class compass:
         # distance is minimum of vertical and horizontal distances
         return min(vrt_dist,hz_dist)
     def draw_canvas(self, canvas):
+        print(f"FUNCTION: draw_canvas")
         paint = canvas.paint
         paint.antialias = True
         paint.color = 'fff'
@@ -297,6 +298,7 @@ class compass:
         if compass_object.canvas != None:
             compass_object.canvas.move(0,0) # this forces canvas redraw
     def check_for_updates(self):
+        print(f"FUNCTION: check_for_updates; elapsed: {self.elapsed_ms} update interval: {update_interval} fade_time: {fade_time}")
         if self.display_mode == resting_display_mode:
             actions.user.compass_disable()
             return 
@@ -342,6 +344,7 @@ def bearing(m) -> float:
 class Actions:
     def compass_enable(bearing: float = -999,display_mode: int = -1):
         """Enable relative mouse guide"""
+        print("FUNCTION: compass_enable")
         if display_mode == -1:
             display_mode = compass_object.active_display_mode
         if bearing == -999:
