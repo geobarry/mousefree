@@ -20,14 +20,12 @@ and mode: user.zen
 	x = ordinals or 1
 	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
 	
-^{user.nav_key} {user.ui_action}$:
-	key("{nav_key}")
-	user.act_on_focused_element(ui_action)
-
-next {user.ui_action}$:
-	key(tab)
-	user.act_on_focused_element(ui_action)
+^{user.nav_key} includes [<user.ordinals>] <user.ax_target>$:
+	x = ordinals or 1
+	user.key_to_elem_by_val(nav_key,".*{ax_target}.*","name",ordinals or 1)
 	
+	
+
 # CURRENT ELEMENTS
 
 ^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 

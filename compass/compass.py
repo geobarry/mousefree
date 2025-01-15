@@ -88,7 +88,6 @@ class compass:
         # distance is minimum of vertical and horizontal distances
         return min(vrt_dist,hz_dist)
     def draw_canvas(self, canvas):
-        print(f"FUNCTION: draw_canvas")
         paint = canvas.paint
         paint.antialias = True
         paint.color = 'fff'
@@ -101,7 +100,6 @@ class compass:
                 start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
                 finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
                 canvas.draw_line(start_x, start_y, finish_x, finish_y)
-
         def line_thick_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
             offsets = [2,-2,1.5,-1.5,1,-1,0.5,-0.5,0]
             colors = [color_alias] * 4 + [color_main] * 5
@@ -110,7 +108,6 @@ class compass:
                 start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
                 finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
                 canvas.draw_line(start_x, start_y, finish_x, finish_y)
-
         def text_aliased(label,x,y,font_size):
                 paint.font.size = font_size
                 limit = 2
@@ -124,12 +121,10 @@ class compass:
                 paint.color = 'ffffffee'
                 canvas.draw_text(label,x,y)
                 canvas.draw_text(label,x+1,y-1)
-
         def left_cardinal(b):
             b = b % 360
             r = 'W' if b<45 else 'N' if b<135 else 'E' if b<225 else 'S' if b<315 else 'W'
             return r
-
         def right_cardinal(b):
             b = b % 360
             r = 'E' if b<45 else 'S' if b<135 else 'W' if b<225 else 'N' if b<315 else 'E'
@@ -357,11 +352,9 @@ class Actions:
             actions.mode.disable("command")
         else:
             actions.mode.enable("command")
-      
     def compass_disable():
         """Disable relative mouse guide"""
         compass_object.disable()
-
     def move_cardinal(move_degrees: float, target: float):
         """move the bearing direction a certain number of degrees towards a cardinal direction"""
         # determine difference between current bearing and target bearing
@@ -374,7 +367,6 @@ class Actions:
             move_degrees = -move_degrees            
         # initialize compass compass
         actions.user.compass_enable((compass_object.bearing + move_degrees) % 360)
-
     def fly_out(distance: int, max_ms: int = -1):
         """move out the specified number of pixels"""
         pos = ctrl.mouse_pos()
@@ -384,18 +376,15 @@ class Actions:
         if max_ms > 0:
             compass_object.max_ms = max_ms
         actions.user.compass_enable()
-
     def reverse():
         """reverse direction"""
         actions.user.compass_enable((compass_object.bearing + 180) % 360)
-
     def fly_back(distance: int):
         """turn around and move back the specified number of pixels"""
         compass_object.bearing = (compass_object.bearing + 180) % 360
         actions.user.fly_out(distance)
         compass_object.bearing = (compass_object.bearing + 180) % 360
         actions.user.compass_enable()
-
     def compass_jiggle(max_dist: int = 15):
         """move the mouse around a little"""
         actions.user.compass_enable(-999,1)
@@ -409,7 +398,6 @@ class Actions:
             print(f'trg: {trg}')
             actions.sleep("50ms")
         actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
-
     def compass_set_default_display_mode(mode: str):
         """change how much information is displayed in the compass grid"""
         compass_object.active_display_mode = mode

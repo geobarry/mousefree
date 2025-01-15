@@ -114,3 +114,18 @@ class Actions:
         x = pos[0]
         y = pos[1]
         actions.user.slow_mouse(x + dx,y + dy,ms,callback)
+    def drag_window_center (bearing: float, d: float):
+        """Drags the given bearing and distance in pixels is on the center of the active window"""
+        w = winui.active_window()
+        rect = w.rect
+        print(f'rect: {rect}')
+        x = rect.x + rect.width/2
+        y = rect.y + rect.height / 2
+        dx = math.sin(math.radians(bearing))
+        dy = math.cos(math.radians(bearing))
+        actions.user.slow_mouse(x + dx * d / 2,y - dy * d / 2,100)
+        actions.sleep(0.2)
+        actions.user.mouse_drag(0)
+        actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,500)
+        actions.sleep(0.6)
+        actions.user.mouse_drag_end()
