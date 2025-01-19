@@ -9,6 +9,7 @@ from io import StringIO
 from contextlib import redirect_stdout
 import io
 from copy import deepcopy
+import typing
 
 # list for tracking a set of clickable points
 marked_elements = []
@@ -37,7 +38,11 @@ def ax_target(m) -> str:
             t = t.replace(w,"(" + '|'.join(phone_list) + ")")
     return t
 
-def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool = False):
+def match(el: ax.Element, 
+            prop_list: list, 
+            conjunction: str="AND", 
+            mod_func: typing.Callable = None, 
+            verbose: bool = False):
     """Returns true if the element matches all of the properties in the property dictionary"""
     # prop_list is either a list of form [(property, trg_val),...]
     #     where trg_val is either a string (for case-insensitive match at start of string)
@@ -45,6 +50,7 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
     # or a list of ["OR",list] or ["AND",list]
     # or just a string, in which case property will be "name"
     # Conditions in the top level list are connected with an AND conjunction
+    # Modifier function should take input parameters prop_name:str,val: str and return a replacement value
     def eval_cond(prop,trg_val):
         if verbose:
             print(f'prop: {prop}')
@@ -82,6 +88,8 @@ def match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool
                 return trg_val == clickable
         else:
             prop_val = actions.user.el_prop_val(el, prop, as_text = True)
+            if mod_func:
+                prop_val = mod_func(prop,prop_val)
             if verbose:
                 print(f'prop_val: {prop_val}')
                 print(f"type: {type(prop_val)}")
@@ -279,9 +287,9 @@ class Actions:
             except:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
-    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", verbose: bool = False):
+    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: typing.Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
-        return match(el,prop_list,conjunction,verbose)
+        return match(el,prop_list,conjunction,mod_func,verbose)
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
         root = winui.active_window().element
@@ -488,10 +496,11 @@ class Actions:
                                 limit: int=20, 
                                 escape_key: str=None, 
                                 delay: float = 0.09, 
+                                mod_func: typing.Callable = None,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
         # TO-DO:
-        # Modifyh so this goes one element at a time and is integrated with slow repeater,
+        # Modify so this goes one element at a time and is integrated with slow repeater,
         # so cycle can be stopped with "Stop" or "Stop It"
         # ---
         # if the previous action has not completed an error can occur
@@ -526,7 +535,7 @@ class Actions:
                         actions.sleep(delay)
                     el = focused_element()
                     if el:
-                        if actions.user.element_match(el,prop_list,verbose = False):
+                        if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
                             matches += 1
                         if verbose:
                             print(f"ELEMENT: {el.name}")      
@@ -548,7 +557,7 @@ class Actions:
                         break
             except Exception as error:
                 print(error)
-            if actions.user.element_match(el,prop_list):
+            if actions.user.element_match(el,prop_list,mod_func = mod_func):
                 return el
             else:
                 print(f"Element doesn't match property list... :(")

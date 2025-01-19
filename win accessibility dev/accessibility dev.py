@@ -54,7 +54,7 @@ class Actions:
         prop_list = ["name","class_name",
                         "help_text","automation_id",
                         "printout",
-                        "children","patterns",
+                        "children","patterns","access_key","is_keyboard_focusable","is_enabled",
                     ]
         other_prop = [
                         "clickable_point",
@@ -115,6 +115,7 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = winui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,root = el)
+    
     def element_ancestors(el: ax.Element):
         """Returns a list of element ancestors including current element"""
         el_list = [el]
@@ -143,8 +144,8 @@ class Actions:
                 val = actions.user.el_prop_val(el,prop,as_text = True)
                 prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
-        r = "[\n" + ",\n".join(prop_seq) + "\n]"
-        r = f"root = winui.active_window().element\nprop_seq = {r}"
+        r = "[\n" + ",\n".join(prop_seq[2:]) + "\n]"
+        r = f"root = winui.active_window().element\nprop_seq = {r}\nel = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         clip.set_text(r)
 
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
