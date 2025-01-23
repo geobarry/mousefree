@@ -23,7 +23,6 @@ class element_tracker:
         self.focused_element = None
         self.focused_rect = None
         self.focused_label = ""
-        self.job = cron.interval(f'3000ms', self.check_focused_element)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -123,6 +122,7 @@ class element_tracker:
 
 el_highlights = element_tracker()
 def handle_focus_change(el):
+    rect = actions.user.el_prop_val(el,"rect")
     el_highlights.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 

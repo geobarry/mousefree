@@ -227,10 +227,16 @@ class Actions:
                 else:
                     return el.clickable_point
             elif prop_name.lower() == "children":
-                if as_text:
-                    return str(len(el.children))
+                children = elements.children
+                if children == None:
+                    if as_text:
+                        return str(None)
+                    else:
+                        return 0
+                elif as_text:
+                    return str(len(children))
                 else:
-                    return el.children
+                    return children
             elif prop_name.lower() == "item_status":
                 return el.item_status
             elif prop_name.lower() == "patterns":
