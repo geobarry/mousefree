@@ -23,6 +23,7 @@ class element_tracker:
         self.focused_element = None
         self.focused_rect = None
         self.focused_label = ""
+        self.traversal_count = 0
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -164,12 +165,21 @@ class Actions:
     def focused_element():
         """returns currently focused element, as recorded by element_tracker"""
         return el_highlights.focused_element
-    def initialize_traversal(traversal_function: Callable):
-        """initialize a traversal of windows accessibility elements"""
+    def initialize_traversal(traversal_function: Callable, max_iter: int = 30):
+        """initialize a traversal of windows accessibility elements; 
+        traversal_function should guarantee that actions.user.terminate_traversal 
+        will eventually be called or else use max_iter"""     
         
-        el_highlights.traversal_function = traversal_function
+        el_highlights.traversal_count = 0
+        def do_traversal():
+            if el_highlights.traversal_count < max_iter:
+                el_highlights.traversal_count += 1
+                traversal_function()
+            else:
+                actions.user.terminate_traversal()
+        el_highlights.traversal_function = do_traversal
         el_highlights.traversal_function()
     def terminate_traversal():
-    
         """terminate the continued traversal using a key"""
+        el_highlights.traversal_count = 0
         el_highlights.traversal_function = None

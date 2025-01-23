@@ -379,6 +379,23 @@ class Actions:
             if len(el_list) > 0:
                 return el_list[0]
         return None
+    def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25):
+        """Returns the first ancestor that meets prop_list conditions, or None if none is found"""
+        if max_gen == -1:
+            max_gen == 25
+        el_list = [el]
+        i = 0
+        while True:
+            i += 1
+            if i > max_gen:
+                return None
+            try:
+                el = el.parent
+                if actions.user.element_match(el,prop_list):
+                    return el
+            except Exception as error:
+                print(f'error: {error}')
+                return None
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, verbose: bool = False):
         """Finds element by working down from root"""
         if verbose:

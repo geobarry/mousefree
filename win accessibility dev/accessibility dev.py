@@ -45,7 +45,6 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
     r = r + get_children(el,el_id,0,max_level)
     return r
             
-
 @mod.action_class
 class Actions:
     def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, verbose: str = False):
@@ -115,20 +114,22 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = winui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,root = el)
-    
-    def element_ancestors(el: ax.Element):
+    def element_ancestors(el: ax.Element, max_gen: int = -1):
         """Returns a list of element ancestors including current element"""
+        if max_gen == -1:
+            max_gen = 200
         el_list = [el]
         i = 0
+        
         while True:
             i += 1
-            if i > 200:
+            if i > max_gen:
                 break
             try:
                 el = el.parent
                 el_list.append(el)
             except Exception as error:
-                print(f'error: {error}')
+                print(f'FUNCTION element_ancestors - error: {error} (this is probably by design)')
                 break
         return el_list
     def copy_element_sequence_to_clipboard(el: ax.Element, props: str):
@@ -147,7 +148,6 @@ class Actions:
         r = "[\n" + ",\n".join(prop_seq[2:]) + "\n]"
         r = f"root = winui.active_window().element\nprop_seq = {r}\nel = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         clip.set_text(r)
-
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""
         el_list = actions.user.element_ancestors(el)
@@ -175,7 +175,6 @@ class Actions:
         print("FUNCTION: copy_focused_element_ancestors")
         print(f'el: {el}')
         actions.user.copy_element_ancestors(el,verbose)
-        
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
