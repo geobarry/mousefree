@@ -97,14 +97,16 @@ def get_scope(scope_dir: str = "DOWN",
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
         return 
-    el = winui.focused_element()
     print(f"FUNCTION: get_scope")
-    print(f'el: {el}')
+    el = winui.focused_element()
+
+    print(f'get_scope el: {el}')
     if "Text" not in el.patterns:
         print("Error in function get_scope: focused element does not have text pattern")
         return 
     # Get scope as a text range
     cur_range = el.text_pattern.selection[0]
+    
     # avoid selecting anything in current selection#
     if scope_dir.upper() == "UP":
         cur_range.move_endpoint_by_range("End","Start",target = cur_range)
@@ -182,10 +184,10 @@ def win_fwd_dyn_nav_trg(_) -> str:
 
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
+    print("FUNCTION: backwards dynamic navigation target")
     el = winui.focused_element()
     if el:
         if "Text" in el.patterns:
-            print("FUNCTION: win_bkwd_dyn_nav_trg")
             cur_range = get_scope("UP","Line")
             t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
             t = re.sub(r"’","'",t)

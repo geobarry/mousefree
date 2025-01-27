@@ -2,7 +2,9 @@ os: windows
 os: windows
 and mode: user.zen
 -
-
+# NOTE: In old Microsoft Word .doc documents, text is garbled when there are bullets present
+# Please update to .docx; there is no way to fix this from our end
+	
 # NAVIGATION
 	# example spoken forms:
 	#   go before next hippopotamus

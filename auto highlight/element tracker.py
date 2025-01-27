@@ -89,6 +89,8 @@ class element_tracker:
         rectangle_found = False
         if self.auto_highlight or self.auto_label:
             el = self.focused_element
+            if el == None:
+                el = winui.focused_element()
             if el:
                 try:
                     rect = actions.user.el_prop_val(el,"rect")
@@ -106,7 +108,8 @@ class element_tracker:
                 except Exception as error:
                     pass
             else:
-                print("FUNCTION check_for_updates: unable to get focused element")
+                pass
+                # print("FUNCTION check_for_updates: unable to get focused element")
         if not rectangle_found:
             self.focused_rect = None
             self.focused_label = ""
@@ -123,7 +126,6 @@ class element_tracker:
 
 el_highlights = element_tracker()
 def handle_focus_change(el):
-    rect = actions.user.el_prop_val(el,"rect")
     el_highlights.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 

@@ -108,8 +108,9 @@ class Actions:
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
         mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
-    def slow_mouse_relative(dx: int, dy: int, ms: int = None, callback: any = None):
+    def slow_mouse_relative(dx: int, dy: int, ms: int = 300, callback: any = None):
         """Slowly moves the mouse in the given relative direction"""
+        print("FUNCTION: slow_mouse_relative")
         pos = ctrl.mouse_pos()
         x = pos[0]
         y = pos[1]
