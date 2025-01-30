@@ -24,7 +24,9 @@ and mode: user.zen
 	x = ordinals or 1
 	user.key_to_elem_by_val(nav_key,".*{ax_target}.*","name",ordinals or 1)
 	
-	
+stop [(it|repeating)]:
+	user.stop_repeating()
+	user.terminate_traversal()
 
 # CURRENT ELEMENTS
 
