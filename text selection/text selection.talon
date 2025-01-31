@@ -4,8 +4,20 @@ and mode: user.zen
 -
 # NOTE: In old Microsoft Word .doc documents, text is garbled when there are bullets present
 # Please update to .docx; there is no way to fix this from our end
+
+# ABOUT NAVIGATION TARGETS
+# "Dynamic" navigation targets (win_fwd_dyn_nav_trg, win_bkwd_dyn_nav_trg) 
+#	are determined on the fly from text before or after cursor. 
+#	Because talon only has to choose from a limited section of text,
+#	recognition rates are usually very high.
+# "Static" navigation targets (win_nav_target) require talon matching your 
+#	spoken words exactly to the text in the document, so recognition rates can 
+#	be much lower. To distinguish these and favour dynamic navigation targets, 
+#	static targets typically require prefix identifiers, e.g. "word" or "phrase"
+#	Static targets also include alphanumeric characters, optionally prefixed with
+#	"letter" or "character"
 	
-# NAVIGATION
+# NAVIGATION COMMANDS
 	# example spoken forms:
 	#   go before next hippopotamus
 	#	go after second previous letter cap
@@ -97,11 +109,11 @@ replace [<user.ordinals>] previous <user.win_nav_target> with <user.prose>$: use
 
 
 # SELECT A RANGE 
-#	*doesn't use dynamic search so "word" or "phrase" are needed
-#	 and misinterpretations are more likely
-	# examples spoken forms:
-	#   select from previous word rhinoceros to phrase charging at me
-	#	select from next phrase the movie was very to period
+#	select FROM either a dynamic or static search target 
+#	but TO static search target only
+	# example spoken forms:
+	#   select from previous "there is a giant..." to PHRASE "charging at me"
+	#	select from next "the movie was very..." to CHARACTER period
 
 ^select from previous {user.win_bkwd_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
 	user.select_text(win_bkwd_dyn_nav_trg,"UP",1)

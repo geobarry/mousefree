@@ -96,6 +96,7 @@ def init_actions():
     gui_repeater.show()
     actions.mode.enable("user.slow_repeating")
     actions.mode.disable("command")        
+    
 @mod.action_class
 class Actions:
     def start_key_repeat(key: str, ms: str):
