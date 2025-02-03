@@ -1,11 +1,11 @@
 os: windows
 mode: command
-mode: user.compass
+or mode: user.compass
 -
 mouse to screen [{user.handle_position}]:
 	user.mouse_to_screen_handle(handle_position or "center")
 	user.compass_enable(0,1)
-mouse to element [{user.handle_position}]:
+mouse to [focused] element [{user.handle_position}]:
 	user.mouse_to_focused_element_handle(handle_position or "center")
 	user.compass_enable(0,1)
 mouse to window [{user.handle_position}]:

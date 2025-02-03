@@ -293,19 +293,20 @@ class compass:
         if compass_object.canvas != None:
             compass_object.canvas.move(0,0) # this forces canvas redraw
     def check_for_updates(self):
-        print(f"FUNCTION: check_for_updates; elapsed: {self.elapsed_ms} update interval: {update_interval} fade_time: {fade_time}")
-        if self.display_mode == resting_display_mode:
-            actions.user.compass_disable()
-            return 
-        do_redraw = True
-        # increment time since last action
-        self.elapsed_ms += update_interval
-        # fade radial grid
-        if self.elapsed_ms > fade_time:
-            if self.display_mode > resting_display_mode:
-                self.display_mode = self.display_mode - 1
-                self.elapsed_ms = 0
-           
+        if self.enabled:
+            print(f"FUNCTION: check_for_updates; elapsed: {self.elapsed_ms} update interval: {update_interval} fade_time: {fade_time}")
+            if self.display_mode == resting_display_mode:
+                actions.user.compass_disable()
+                return 
+            do_redraw = True
+            # increment time since last action
+            self.elapsed_ms += update_interval
+            # fade radial grid
+            if self.elapsed_ms > fade_time:
+                if self.display_mode > resting_display_mode:
+                    self.display_mode = self.display_mode - 1
+                    self.elapsed_ms = 0
+               
 
 compass_object = compass(5000, 5000)
 # compass_object.enable()
