@@ -1,3 +1,4 @@
+app.name: nonexistent
 -
 # a subset of text selection.talon available without windows accessibility text pattern
 # NAVIGATION
@@ -37,7 +38,7 @@ phones [<user.ordinals>] previous <user.win_nav_target>$: user.phones_text(win_n
 
 # TEXT REPLACEMENT
 replace [<user.ordinals>] next <user.win_nav_target> with <user.prose>$: user.replace_text(prose, win_nav_target,"DOWN",ordinals or 1)
-replace [<user.ordinals>] previous <user.win_nav_target> with <user.prose>$: user.replace_text(prose, win_nav_target,"UP",ordinals or 1)
+replace [<user.ordinals>] previous <user.win_nav_target> with <user.win_nav_target>$: user.replace_text(prose, win_nav_target,"UP",ordinals or 1)
 
 # EXTEND CURRENT SELECTION
 	# examples spoken forms:

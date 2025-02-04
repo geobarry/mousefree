@@ -174,7 +174,6 @@ def win_fwd_dyn_nav_trg(_) -> str:
     el = winui.focused_element()
     if el:
         if "Text" in el.patterns:
-            print("FUNCTION: win_fwd_dyn_nav_trg")
             cur_range = get_scope("DOWN","Line")
             t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
             t = re.sub(r"’","'",t)
@@ -195,15 +194,15 @@ def win_bkwd_dyn_nav_trg(_) -> str:
             {t}
             """
 # Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.text_special_pattern} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable_list} | person {user.person_list} | student {user.student} | module {user.module_list} | function {user.function_list} | keyword {user.keyword_list} | app {user.app_list} | font {user.font}")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person {user.person} | student {user.student} | place {user.place} | module {user.module} | function {user.function} | keyword {user.keyword} | app {user.app_list} | font {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
+    
     include_homophones = False
     if hasattr(m, "any_alphanumeric_key"):
         return re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
-    if hasattr(m, "text_special_pattern"):
-        t = m.text_special_pattern
-        print(f'DEBUG: t: {t}')
+    if hasattr(m, "delimiter_pair"):
+        t = "\\" + m.delimiter_pair.replace(" ",".*?\\")
     if hasattr(m, "navigation_target_name"):
         return re.compile(m.navigation_target_name)
     if hasattr(m,"abbreviation"):
@@ -218,18 +217,20 @@ def win_nav_target(m) -> str:
     if hasattr(m,"text"):
         t = m.text
         include_homophones = True
-    if hasattr(m,"variable_list"):
-        t = m.variable_list
-    if hasattr(m,"person_list"):
-        t = m.person_list
-    if hasattr(m,"student_list"):
-        t = m.student_list
-    if hasattr(m,"module_list"):
-        t = m.module_list
-    if hasattr(m,"function_list"):
-        t = m.function_list
-    if hasattr(m,"keyword_list"):
-        t = m.keyword_list
+    if hasattr(m,"variable"):
+        t = m.variable
+    if hasattr(m,"person"):
+        t = m.person
+    if hasattr(m,"student"):
+        t = m.student
+    if hasattr(m,"place"):
+        t = m.place
+    if hasattr(m,"module"):
+        t = m.module
+    if hasattr(m,"function"):
+        t = m.function
+    if hasattr(m,"keyword"):
+        t = m.keyword
     if hasattr(m,"app_list"):
         t = m.app_list
     if hasattr(m,"font"):
@@ -250,11 +251,8 @@ def win_nav_target(m) -> str:
 class Actions:
     def select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
-        print("FUNCTION: select_text")
-        print(f'select_text: scope_dir: {scope_dir}')
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         el = winui.focused_element()
-        print(f"patterns: {el.patterns}")
         if "Text" in el.patterns:
             try:
                 r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
