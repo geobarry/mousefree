@@ -293,6 +293,20 @@ class Actions:
             except:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
+    def get_property_list(prop_str: str):
+        """creates a property list from a string of the form n = ..., c = ..., a = ..."""
+        print(f"FUNCTION get_property_list (prop_str: {prop_str})")
+        r = []
+        prop_name = {"n":"name","c":"class_name","a":"automation_id"}
+        props = prop_str.split(",")
+        print(f'props: {props}')
+        print(f'len(props): {len(props)}')
+        for prop in props:
+            if prop != '':
+                val = prop.split("=")            
+                r.append((prop_name[val[0].strip()],val[1].strip()))
+        return r
+            
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: typing.Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         return match(el,prop_list,conjunction,mod_func,verbose)

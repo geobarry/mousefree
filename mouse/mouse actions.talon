@@ -11,7 +11,7 @@ mouse to [focused] element [{user.handle_position}]:
 mouse to window [{user.handle_position}]:
 	user.mouse_to_active_window_handle(handle_position or "center")
 	user.compass_enable(0,1)
-^pan <user.bearing>$:
+^pan <user.bearing> [<number>]$:
 	print("{bearing}")
-	user.drag_window_center(bearing,500)
+	user.drag_window_center(bearing,number or 500)
 (mouse|compass) jiggle: user.compass_jiggle()

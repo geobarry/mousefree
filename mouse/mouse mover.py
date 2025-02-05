@@ -63,6 +63,7 @@ class mouse_mover:
             self.completed += 1
             x = round(self.orig[0] + self.interval_x * self.completed)
             y = round(self.orig[1] + self.interval_y * self.completed)
+            print(f'x: {x} y: {y}')
             ctrl.mouse_move(x,y)
 
 def mouse_to_obj_handle(obj,hnd_pos: str, ms: int = 350, x_offset: int = 0, y_offset: int = 0):
@@ -107,6 +108,7 @@ class Actions:
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
+        print(f"FUNCTION slow_mouse: moving to {x},{y} ({ms}ms)")
         mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
     def slow_mouse_relative(dx: int, dy: int, ms: int = 300, callback: any = None):
         """Slowly moves the mouse in the given relative direction"""

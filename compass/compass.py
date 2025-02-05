@@ -1,11 +1,12 @@
 # module to control mouse using directions and distances
+
 from typing import Tuple
 from talon import Context, Module, canvas, cron, ctrl, cron, screen, ui, actions
 import math, time, random
 mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
-update_interval = 30
+update_interval = 75
 fade_time = 5000 # five seconds
 
 def f_distance(from_pos,to_pos):
@@ -93,7 +94,6 @@ class compass:
         paint.color = 'fff'
         paint.font.size = 36
         rect = canvas.rect
-
         def line_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
             for off, color in ((1, color_alias),(-1, color_alias),(0.5, color_main),(-0.5, color_main),(0, color_main)):
                 paint.color = color
@@ -294,11 +294,12 @@ class compass:
             compass_object.canvas.move(0,0) # this forces canvas redraw
     def check_for_updates(self):
         if self.enabled:
-            print(f"FUNCTION: check_for_updates; elapsed: {self.elapsed_ms} update interval: {update_interval} fade_time: {fade_time}")
             if self.display_mode == resting_display_mode:
+                print("back to resting display mode")
                 actions.user.compass_disable()
                 return 
             do_redraw = True
+
             # increment time since last action
             self.elapsed_ms += update_interval
             # fade radial grid

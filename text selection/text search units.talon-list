@@ -1,0 +1,16 @@
+list: user.text_search_unit
+-
+Character
+Format
+#Word
+Line
+Paragraph
+Page
+Document
+characters:Character
+formats:Format
+#words:Word
+lines:Line
+paragraphs:Paragraph
+pages:Page
+documents:Document
