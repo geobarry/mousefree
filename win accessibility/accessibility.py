@@ -546,6 +546,8 @@ class Actions:
         # print("FUNCTION: key_to_matching_element")
 
         # Function to get next element, sometimes need to be persistent
+        if limit < 0:
+            limit = 20
         def focused_element():
             n = 0
             while n < 3:
@@ -599,11 +601,11 @@ class Actions:
             else:
                 print(f"Element doesn't match property list... :(")
                 return None
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.09):
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
         actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
-    def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=99,delay: float = 0.03):
+    def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=-1,delay: float = 0.03):
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
