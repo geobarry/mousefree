@@ -119,15 +119,21 @@ def match(el: ax.Element,
     if verbose:
         print(f"{r} | element: {el.name[:25]} | rule: {prop_list}")
     return r
-
-def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 7):
+n = 0
+def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 11, max_n: int = 200, reset = True):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
     if cur_level <= max_level:
-        if el:
-            yield el
-            for child in el.children:
-                yield from get_every_child(child,cur_level + 1,max_level)
+        global n
+        if n < max_n:
+            if el:
+                if reset:
+                    n = 0
+                n += 1
+                print(f"FUNCTION la: get_every_child (n = {n}/{max_n})")
+                yield el
+                for child in el.children:
+                    yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)
 def identity(el: ax.Element):
     r = []
     prop = ["name","class_name","automation_id"]
