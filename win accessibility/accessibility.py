@@ -130,7 +130,6 @@ def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 11, max
                 if reset:
                     n = 0
                 n += 1
-                print(f"FUNCTION la: get_every_child (n = {n}/{max_n})")
                 yield el
                 for child in el.children:
                     yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)
@@ -343,15 +342,15 @@ class Actions:
         # get list of elements
         if root == None:
             root = winui.active_window().element
-        elements = list(get_every_child(root,max_level = max_level))
+        elements = list(get_every_child(root,max_level = max_level))       
         # search for match
         for el in elements:
             # print(el.class_name)
             try:
                 if actions.user.element_match(el,prop_list):
                     r.append(el)
-            except:
-                pass
+            except Exception as error:
+                print(f'error: {error}')
         return r  
     def count_matching_children(el: ax.Element,prop_list: list):
         """Returns the number of children matching the property list conditions"""
