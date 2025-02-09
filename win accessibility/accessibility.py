@@ -130,6 +130,7 @@ def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 11, max
                 if reset:
                     n = 0
                 n += 1
+#                print(f'{n} el: {el}')
                 yield el
                 for child in el.children:
                     yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)

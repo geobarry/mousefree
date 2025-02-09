@@ -264,10 +264,13 @@ class Actions:
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
     def replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    
         """Replaces target with the new text"""
+        print(f"FUNCTION: replace_text new_text: {new_text}, trg: {trg}")
         def replace_process():
             with clip.revert():
                 clip.set_text(new_text)
+                actions.sleep(0.1)
                 actions.edit.paste()
                 actions.sleep(0.15)
         process_selection(replace_process,trg,scope_dir,ordinal)
