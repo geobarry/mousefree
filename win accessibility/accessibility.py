@@ -123,17 +123,20 @@ n = 0
 def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 11, max_n: int = 200, reset = True):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
+    global n
+    # print(f"***FUNCTION get_every_child cur_level: {cur_level} n: {n} el: {el}")
     if cur_level <= max_level:
-        global n
+
         if n < max_n:
             if el:
                 if reset:
                     n = 0
                 n += 1
-#                print(f'{n} el: {el}')
+                # print(f'{n} el: {el}')
                 yield el
                 for child in el.children:
                     yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)
+        
 def identity(el: ax.Element):
     r = []
     prop = ["name","class_name","automation_id"]
@@ -159,6 +162,7 @@ def dynamic_element(_) -> dict[str,str]:
     elements = list(get_every_child(root))
     out = {}
     for el in elements:
+        # print(f'el: {el.name}')
         alias = str(el.name)
         if alias == "":
             alias = str(el.help_text)
@@ -171,6 +175,11 @@ def dynamic_element(_) -> dict[str,str]:
             # add double word command to dictionary
             if len(singles) > 1:
                 out[" ".join(singles[:2])] = str(el.name)
+    # print("FUNCTION dynamic_element")
+    # print(f'window: {win}')
+    # print(f"ui window: {ui.active_window()}")
+    # print(f'root: {root}')
+    # print(f'out: {out}')
     return out
 
 @mod.action_class
@@ -445,9 +454,11 @@ class Actions:
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
+        print(f'FUNCTION act_on_element action: {action}')
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
+                print(f'loc: {loc}')
                 actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
                 actions.sleep(f"{delay_after_ms + 50}ms")
                 if action == "click":
