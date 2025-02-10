@@ -1,6 +1,6 @@
 from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings
 from talon.windows import ax as ax, ui as winui
-from talon.types import Point2d as Point2d
+from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
 from typing import Callable
 import time
@@ -146,6 +146,9 @@ class Actions:
         if len(lbl) > 50:
             lbl = lbl[:50]
         el_highlights.add_element(rect,lbl)
+    def highlight_rectangle(rect: rect):
+        """Highlights input rectangle without associated element"""
+        el_highlights.add_element(rect,"")
     def remove_highlight(el: ax.Element):
         """Remove element from highlights"""
         try:
