@@ -24,6 +24,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
+        self.job = cron.interval("100ms", self.force_canvas_update)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -45,29 +46,27 @@ class element_tracker:
         paint = canvas.paint
         paint.color = 'f3f'
         paint.style = paint.Style.STROKE
-        paint.stroke_width = 7
+        paint.stroke_width = 5
         def highlight_element(rect,lbl,paint):
-            if self.auto_highlight:
+            if rect != None:
+                canvas.draw_round_rect(rect,11,11,paint)
+            if lbl != '':
                 if rect != None:
-                    canvas.draw_round_rect(rect,25,25,paint)
-            if self.auto_label:
-                if lbl != '':
-                    if rect != None:
-                        paint.stroke_width = 2
-                        if len(lbl) > 50:
-                            lbl = lbl[:50]
-                        # determine label placement
-                        # assume text dimensions
-                        lbl_wd = 600
-                        lbl_ht = 30
-                        top_margin = rect.y
-                        btm_margin = canvas.height - rect.y - rect.height
-                        if top_margin > btm_margin:
-                            y = max(rect.y - lbl_ht, 0)
-                        else:
-                            y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
-                        x = min(rect.x,canvas.width - lbl_wd)
-                        actions.user.text_aliased(lbl,x,y,46,canvas)        
+                    paint.stroke_width = 2
+                    if len(lbl) > 50:
+                        lbl = lbl[:50]
+                    # determine label placement
+                    # assume text dimensions
+                    lbl_wd = 600
+                    lbl_ht = 30
+                    top_margin = rect.y
+                    btm_margin = canvas.height - rect.y - rect.height
+                    if top_margin > btm_margin:
+                        y = max(rect.y - lbl_ht, 0)
+                    else:
+                        y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
+                    x = min(rect.x,canvas.width - lbl_wd)
+                    actions.user.text_aliased(lbl,x,y,46,canvas)        
         if len(self.rectangles) > 0:
             for idx in range(len(self.rectangles)):
                 rect = self.rectangles[idx]
@@ -85,6 +84,8 @@ class element_tracker:
     def check_focused_element(self):
         if self.auto_highlight or self.auto_label:
             self.update_highlight()
+    def force_canvas_update(self):
+        self.canvas.move(0,0) # this forces canvas redraw
     def update_highlight(self):
         rectangle_found = False
         if self.auto_highlight or self.auto_label:

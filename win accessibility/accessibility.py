@@ -10,6 +10,10 @@ from contextlib import redirect_stdout
 import io
 from copy import deepcopy
 import typing
+import time
+
+n = 0
+start_time = None
 
 # list for tracking a set of clickable points
 marked_elements = []
@@ -119,16 +123,25 @@ def match(el: ax.Element,
     if verbose:
         print(f"{r} | element: {el.name[:25]} | rule: {prop_list}")
     return r
-n = 0
-def get_every_child(el: ax.Element, cur_level: int = 0, max_level: int = 11, max_n: int = 200, reset = True):
+
+def get_every_child(el: ax.Element, 
+        cur_level: int = 0, 
+        max_level: int = 11, 
+        max_n: int = 50, 
+        max_sec: float = 5,
+        reset = True):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
     global n
+    global start_time
+    if n == 0:
+        start_time = time.time()
     # print(f"***FUNCTION get_every_child cur_level: {cur_level} n: {n} el: {el}")
     if cur_level <= max_level:
-
         if n < max_n:
-            if el:
+            cur_time = time.time()
+            elapsed = cur_time - start_time
+            if elapsed < max_sec:
                 if reset:
                     n = 0
                 n += 1
@@ -175,10 +188,10 @@ def dynamic_element(_) -> dict[str,str]:
             # add double word command to dictionary
             if len(singles) > 1:
                 out[" ".join(singles[:2])] = str(el.name)
-    # print("FUNCTION dynamic_element")
-    # print(f'window: {win}')
-    # print(f"ui window: {ui.active_window()}")
-    # print(f'root: {root}')
+    print("FUNCTION dynamic_element")
+    print(f'window: {win}')
+    print(f"ui window: {ui.active_window()}")
+    print(f'root: {root}')
     # print(f'out: {out}')
     return out
 
@@ -539,7 +552,7 @@ class Actions:
         
         actions.user.initialize_traversal(key_continue)
         
-    def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=99, escape_key: str=None, delay: float = 0.09):
+    def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
         actions.user.new_key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
@@ -547,7 +560,7 @@ class Actions:
     def key_to_matching_element(key: str, 
                                 prop_list: list, 
                                 ordinal: int=1, 
-                                limit: int=20, 
+                                limit: int=200, 
                                 escape_key: str=None, 
                                 delay: float = 0.09, 
                                 mod_func: typing.Callable = None,
@@ -563,8 +576,9 @@ class Actions:
         # print("FUNCTION: key_to_matching_element")
 
         # Function to get next element, sometimes need to be persistent
+        print(f'limit: {limit}')
         if limit < 0:
-            limit = 20
+            limit = 200
         def focused_element():
             n = 0
             while n < 3:
@@ -585,7 +599,14 @@ class Actions:
             try:
                 first_el_id = identity(el)
                 # print(f"1st element: {first_el_id}")
+                start_time = time.time()
+                max_sec = 5
                 while True:
+                    cur_time = time.time()
+                    elapsed_sec = cur_time - start_time
+                    if elapsed_sec > max_sec:
+                        print("break due to time overage")
+                        break
                     actions.key(key)
                     if delay > 0:
                         actions.sleep(delay)
@@ -603,7 +624,7 @@ class Actions:
                             # print(f"Found #{ordinal} matching element!")
                             break
                         if i == limit:
-                            print(f"Reached limit... :(")
+                            print(f"Reached limit... (i={i}) :(")
                             break
                         if identity(el) == first_el_id:
                             print(f"Cycled back to first element... :(")
