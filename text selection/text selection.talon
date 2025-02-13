@@ -83,10 +83,14 @@ format <user.formatters> <user.formatters> [<user.ordinals>] previous <user.win_
 
 
 # TEXT REPLACEMENT
-replace [<user.ordinals>] next {user.win_fwd_dyn_nav_trg} with <user.win_nav_target>$: user.replace_text(win_nav_target, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
-replace [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg} with <user.win_nav_target>$: user.replace_text(win_nav_target, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
-replace [<user.ordinals>] next <user.win_nav_target> with <user.win_nav_target>$: user.replace_text(win_nav_target_2, win_nav_target_1,"DOWN",ordinals or 1)
-replace [<user.ordinals>] previous <user.win_nav_target> with <user.win_nav_target>$: user.replace_text(win_nav_target_2, win_nav_target_1,"UP",ordinals or 1)
+replace [<user.ordinals>] next {user.win_fwd_dyn_nav_trg} with <user.constructed_text>$:
+	user.replace_text(constructed_text, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+replace [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg} with <user.constructed_text>$:
+	user.replace_text(constructed_text, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+replace [<user.ordinals>] next <user.win_nav_target> with <user.constructed_text>$:
+	user.replace_text(constructed_text, win_nav_target,"DOWN",ordinals or 1)
+replace [<user.ordinals>] previous <user.win_nav_target> with <user.constructed_text>$:
+	user.replace_text(constructed_text, win_nav_target,"UP",ordinals or 1)
 
 
 # EXTEND CURRENT SELECTION

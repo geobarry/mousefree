@@ -194,19 +194,17 @@ def win_bkwd_dyn_nav_trg(_) -> str:
             {t}
             """
 
-
-# Note: the windows dynamic navigation target will take precedence over the following capture, according to observed behavior (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font}")
-def win_nav_target(m) -> str:
-    """A target to navigate to. Returns a regular expression."""
-    
+def process_text_capture(m) -> (str,bool):
+    """Takes either a navigation target or spoken output capture
+        and returns tuple of 
+        (text without homophone processing, bool=homophones_allowed)"""
     include_homophones = False
-    if hasattr(m, "any_alphanumeric_key"):
-        return re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
-    if hasattr(m, "delimiter_pair"):
+    if hasattr(m,"any_alphanumeric_key"):
+        t = re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
+    if hasattr(m,"delimiter_pair"):
         t = "\\" + m.delimiter_pair.replace(" ",".*?\\")
-    if hasattr(m, "navigation_target_name"):
-        return re.compile(m.navigation_target_name)
+    if hasattr(m,"navigation_target_name"):
+        t = re.compile(m.navigation_target_name)
     if hasattr(m,"abbreviation"):
         t = m.abbreviation
     if hasattr(m,"real_number"):
@@ -237,6 +235,26 @@ def win_nav_target(m) -> str:
         t = m.app_list
     if hasattr(m,"font"):
         t = m.font
+    return (t,include_homophones)        
+        
+# This capture rule should match win_nav_target exactly for
+# spoke in form consistency; the only difference
+# is that this should return text to paste into a document, 
+# rather than text to search for. So no regular expressions.
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font}")
+def constructed_text(m) -> str:
+    """Output of spoken text construction for windows text selection"""
+    t, include_homophones = process_text_capture(m)
+    return t
+        
+        
+# Note: the windows dynamic navigation target will take precedence
+# over the following capture, according to observed behavior 
+# (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font}")
+def win_nav_target(m) -> str:
+    """A target to navigate to. Returns a regular expression."""
+    t, include_homophones = process_text_capture(m)
     if include_homophones:
         # include homophones
         word_list = re.findall(r"\w+",t)
