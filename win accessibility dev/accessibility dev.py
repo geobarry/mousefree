@@ -110,71 +110,10 @@ class Actions:
         msg = actions.user.element_information(el, headers = True, verbose = False)
         msg += "\n" + actions.user.element_information(el, verbose = False)
         clip.set_text(msg)
-    def copy_focused_element_descendants(levels: int = 12):
-        """Copies information about currently focused element and children to the clipboard"""
-        el = winui.focused_element()
-        actions.user.copy_elements_to_clipboard(levels,root = el)
-    def element_ancestors(el: ax.Element, max_gen: int = -1):
-        """Returns a list of element ancestors including current element"""
-        if max_gen == -1:
-            max_gen = 200
-        el_list = [el]
-        i = 0
-        
-        while True:
-            i += 1
-            if i > max_gen:
-                break
-            try:
-                el = el.parent
-                el_list.append(el)
-            except Exception as error:
-                print(f'FUNCTION element_ancestors - error: {error} (this is probably by design)')
-                break
-        return el_list
-    def copy_element_sequence_to_clipboard(el: ax.Element, props: str):
-        """copies python code for property sequence to access element to clipboard"""
-        el_list = actions.user.element_ancestors(el)
-        el_list.reverse()
-        props = props.split(",")
-        props = [x.strip() for x in props]
-        prop_seq = []
-        for el in el_list:
-            prop_list = []
-            for prop in props:
-                val = actions.user.el_prop_val(el,prop,as_text = True)
-                prop_list.append(f'("{prop}","{val}")')
-            prop_seq.append(f'\t[{",".join(prop_list)}]')
-        r = "[\n" + ",\n".join(prop_seq[2:]) + "\n]"
-        r = f"root = winui.active_window().element\nprop_seq = {r}\nel = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
-        clip.set_text(r)
-    def copy_element_ancestors(el: ax.Element, verbose: bool = False):
-        """Copies information on element ancestors to clipboard"""
-        el_list = actions.user.element_ancestors(el)
-        hdr = actions.user.element_information(el,verbose = False,headers = True)
-        msg = "\n".join([actions.user.element_information(x,verbose = False) for x in el_list])
-        msg = hdr + "\n" + msg
-        clip.set_text(msg)
-    def copy_mouse_element_sequence(props: str):
-        """Copies python code for property sequence to access element under mouse position to clipboard"""
-        pos = ctrl.mouse_pos()        
-        actions.user.copy_element_sequence_to_clipboard(ui.element_at(pos[0],pos[1]),props)
-    def copy_focused_element_sequence(props: str):
-        """Copy python code for focused element's property sequence to clipboard"""
-        actions.user.copy_element_sequence_to_clipboard(winui.focused_element(),props)
-    def copy_mouse_element_ancestors(verbose: bool = False):
-        """Retrieves list of ancestors of current mouse element"""
-        pos = ctrl.mouse_pos()        
-        el = winui.element_at(pos[0],pos[1])
-        print("FUNCTION: copy_mouse_element_ancestors")
-        print(f'el: {el}')
-        actions.user.copy_element_ancestors(el,verbose)
-    def copy_focused_element_ancestors(verbose: bool = False):
-        """Retrieves list of ancestors of currently focused element"""
-        el = winui.focused_element()
-        print("FUNCTION: copy_focused_element_ancestors")
-        print(f'el: {el}')
-        actions.user.copy_element_ancestors(el,verbose)
+    def element_descendant_tree(el: ax.Element, max_level: int = 7):
+        """Returns a list of [level,cur_id,parent_id,el]"""
+        el_info = breadth_first_tree(el,max_level = max_level)
+        return el_info
     def copy_elements_to_clipboard(max_level: int = 7, breadth_first: bool = True, root: ax.Element = None):
         """Attempts to retrieve all properties from all elements"""
         print("INSIDE FUNCTION COPY ELEMENTS TO CLIPBOARD")
@@ -215,6 +154,72 @@ class Actions:
         msg = "status\tlevel\tid\tparent_id\t" + actions.user.element_information(root,headers = True)
         messages = [el_data(level,cur_id,parent_id,el) for level,cur_id,parent_id,el in el_info]
         clip.set_text(msg + "\n" + "\n".join(messages))
+    def copy_focused_element_descendants(levels: int = 12):
+        """Copies information about currently focused element and children to the clipboard"""
+        el = winui.focused_element()
+        actions.user.copy_elements_to_clipboard(levels,root = el)
+    def element_ancestors(el: ax.Element, max_gen: int = -1):
+        """Returns a list of element ancestors including current element"""
+        if max_gen == -1:
+            max_gen = 200
+        el_list = [el]
+        i = 0
+        
+        while True:
+            i += 1
+            if i > max_gen:
+                break
+            try:
+                el = el.parent
+                el_list.append(el)
+            except Exception as error:
+                print(f'FUNCTION element_ancestors - error: {error}\n   (this is probably by design)')
+                break
+        return el_list
+    def copy_element_sequence_to_clipboard(el: ax.Element, props: str):
+        """copies python code for property sequence to access element to clipboard"""
+        el_list = actions.user.element_ancestors(el)
+        el_list.reverse()
+        props = props.split(",")
+        props = [x.strip() for x in props]
+        prop_seq = []
+        for el in el_list:
+            prop_list = []
+            for prop in props:
+                val = actions.user.el_prop_val(el,prop,as_text = True)
+                prop_list.append(f'("{prop}","{val}")')
+            prop_seq.append(f'\t[{",".join(prop_list)}]')
+        r = "[\n\t\t" + ",\n\t\t".join(prop_seq[2:]) + "\n\t]"
+        r = f"\troot = winui.active_window().element\nprop_seq = {r}\nel = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        clip.set_text(r)
+    def copy_element_ancestors(el: ax.Element, verbose: bool = False):
+        """Copies information on element ancestors to clipboard"""
+        el_list = actions.user.element_ancestors(el)
+        hdr = actions.user.element_information(el,verbose = False,headers = True)
+        msg = "\n".join([actions.user.element_information(x,verbose = False) for x in el_list])
+        msg = hdr + "\n" + msg
+        clip.set_text(msg)
+    def copy_mouse_element_sequence(props: str):
+        """Copies python code for property sequence to access element under mouse position to clipboard"""
+        pos = ctrl.mouse_pos()        
+        actions.user.copy_element_sequence_to_clipboard(ui.element_at(pos[0],pos[1]),props)
+    def copy_focused_element_sequence(props: str):
+        """Copy python code for focused element's property sequence to clipboard"""
+        actions.user.copy_element_sequence_to_clipboard(winui.focused_element(),props)
+    def copy_mouse_element_ancestors(verbose: bool = False):
+        """Retrieves list of ancestors of current mouse element"""
+        pos = ctrl.mouse_pos()        
+        el = winui.element_at(pos[0],pos[1])
+        print("FUNCTION: copy_mouse_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
+    def copy_focused_element_ancestors(verbose: bool = False):
+        """Retrieves list of ancestors of currently focused element"""
+        el = winui.focused_element()
+        print("FUNCTION: copy_focused_element_ancestors")
+        print(f'el: {el}')
+        actions.user.copy_element_ancestors(el,verbose)
+
     def copy_ribbon_elements_as_talon_list():
         """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
             assumes menu heading is selected with rectangle around it, and ribbon is expanded"""

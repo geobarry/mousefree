@@ -55,6 +55,10 @@ def match(el: ax.Element,
     # or just a string, in which case property will be "name"
     # Conditions in the top level list are connected with an AND conjunction
     # Modifier function should take input parameters prop_name:str,val: str and return a replacement value
+    if verbose:
+        print("FUNCTION: match")
+        print(f'prop_list: {prop_list}')
+        print(f'conjunction: {conjunction}')
     def eval_cond(prop,trg_val):
         if verbose:
             print(f'prop: {prop}')
@@ -65,7 +69,7 @@ def match(el: ax.Element,
                 print("inside value_match sub function")
             if type(trg_val) != re.Pattern:
 #            if type(trg_val) == str:
-                trg_val = str(trg_val)
+                trg_val = str(trg_val).replace("(","\\(").replace(")","\\)")
                 trg_val = re.compile(trg_val,re.IGNORECASE)
             if verbose:
                 print(f'trg_val: {trg_val}')
@@ -127,8 +131,8 @@ def match(el: ax.Element,
 def get_every_child(el: ax.Element, 
         cur_level: int = 0, 
         max_level: int = 11, 
-        max_n: int = 50, 
-        max_sec: float = 5,
+        max_n: int = 500, 
+        max_sec: float = 10,
         reset = True):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
@@ -136,30 +140,26 @@ def get_every_child(el: ax.Element,
     global start_time
     if n == 0:
         start_time = time.time()
-    # print(f"***FUNCTION get_every_child cur_level: {cur_level} n: {n} el: {el}")
-    if cur_level <= max_level:
-        if n < max_n:
+    if cur_level > max_level:
+        print(f"Windows accessibility element traversal reached max level {max_level}")
+    else:
+        if n > max_n:
+            print(f"Windows accessibility element traversal reached max count {max_n}")
+        else:
             cur_time = time.time()
             elapsed = cur_time - start_time
-            if elapsed < max_sec:
+            if elapsed > max_sec:
+                print(f"Windows accessibility element traversal reached max seconds {max_sec}")
+                print(f'cur_time: {cur_time}')
+                print(f'start_time: {start_time}')
+            else:
                 if reset:
                     n = 0
                 n += 1
-                # print(f'{n} el: {el}')
                 yield el
                 for child in el.children:
                     yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)
         
-def identity(el: ax.Element):
-    r = []
-    prop = ["name","class_name","automation_id"]
-    for p in prop:
-        val = actions.user.el_prop_val(el,p)
-        if val != '':
-            r.append(f"{p}: {val}")
-    r = ";".join(r)
-    return r
-
 mod.list("dynamic_element", desc="List of children of the active window")
 
 @ctx.dynamic_list("user.dynamic_element")
@@ -321,20 +321,26 @@ class Actions:
             except:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
+    def get_property_string(el: ax.Element):
+        """creates a property string that can be converted into a property list"""
+        prop_name = {"n":"name","c":"class_name","a":"automation_id"}
+        r = []
+        for prop_code in ["n","c","a"]:
+            prop = prop_name[prop_code]
+            val = actions.user.el_prop_val(el,prop)
+            if val != '':
+                r.append(f"{prop_code}={val}")
+        return ",".join(r)
     def get_property_list(prop_str: str):
         """creates a property list from a string of the form n = ..., c = ..., a = ..."""
-        print(f"FUNCTION get_property_list (prop_str: {prop_str})")
         r = []
         prop_name = {"n":"name","c":"class_name","a":"automation_id"}
         props = prop_str.split(",")
-        print(f'props: {props}')
-        print(f'len(props): {len(props)}')
         for prop in props:
             if prop != '':
                 val = prop.split("=")            
                 r.append((prop_name[val[0].strip()],val[1].strip()))
         return r
-            
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: typing.Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         return match(el,prop_list,conjunction,mod_func,verbose)
@@ -388,11 +394,14 @@ class Actions:
             if actions.user.element_match(child,prop_list):
                 return child
         return None
+    def element_descendants(el: ax.Element, max_gen: int = -1):
+        """obtain a list of all descendants of current element"""
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, verbose: bool = False):
         """Returns the matching descendants of the input element at the given generation, 
         or continues the search up to the given number of extra generations"""
         if verbose:
             print("FUNCTION matching_descendants...")
+            print(f'prop_list: {prop_list}')
         cur_level = 0
         el_id = -1
         parent_id = -1
@@ -406,10 +415,15 @@ class Actions:
                 try:
                     for child in el.children:
                         if verbose:
-                            print(f'child: {child}')
+                            print("|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list]))
+                            print(f'cur_level: {cur_level} generation: {generation}')
                         Q.append((cur_level+1,el_id,child))        
-                        if cur_level+1  >= generation:
-                            if actions.user.element_match(child,prop_list):
+                        if cur_level+1 >= generation:
+                            if verbose:
+                                print("level is okay...")
+                            if actions.user.element_match(child,prop_list,verbose = verbose):
+                                if verbose:
+                                    print("element matches...")
                                 r.append(child)
                 except Exception as error:
                     print(f'error: {error}')
@@ -445,10 +459,10 @@ class Actions:
         if root == None:
             root = winui.active_window().element
         el_list = [root]
-        def perform_search(el_list,level):
+        def perform_search(el_list,level,verbose = False):
             valid_matches = []        
             for el in el_list:
-                valid_matches += actions.user.matching_descendants(el,prop_list,level)
+                valid_matches += actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
             return valid_matches
         for prop_list in prop_seq:
             extra_levels = 0
@@ -459,6 +473,7 @@ class Actions:
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
+                    perform_search(el_list,0,True)
                 break        
             else:
                 el_list = valid_matches
@@ -591,13 +606,13 @@ class Actions:
         # initialize
         print("FUNCTION: key_to_matching_element")
         el = focused_element()
+        first_el = el
             # print(f'el: {el}')
         last_el = el
         i = 1
         matches = 0
         if el:
             try:
-                first_el_id = identity(el)
                 # print(f"1st element: {first_el_id}")
                 start_time = time.time()
                 max_sec = 5
@@ -612,10 +627,10 @@ class Actions:
                         actions.sleep(delay)
                     el = focused_element()
                     if el:
-                        if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
-                            matches += 1
                         if verbose:
                             print(f"ELEMENT: {el.name}")      
+                        if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
+                            matches += 1
                         if (last_el == el) and (escape_key != None):
                             actions.key(escape_key)
                         last_el = el
@@ -626,7 +641,10 @@ class Actions:
                         if i == limit:
                             print(f"Reached limit... (i={i}) :(")
                             break
-                        if identity(el) == first_el_id:
+                        if first_el == None:
+                            print(f"First element no longer exists...")
+                            break
+                        if first_el.__eq__(el):
                             print(f"Cycled back to first element... :(")
                             break
                     else:
