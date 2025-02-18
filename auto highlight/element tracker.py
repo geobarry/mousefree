@@ -24,7 +24,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("100ms", self.force_canvas_update)
+        self.job = cron.interval("5000ms", self.update_highlight)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
