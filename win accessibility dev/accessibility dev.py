@@ -288,7 +288,40 @@ class Actions:
                 access_key = actions.user.el_prop_val(el,"access_key")
                 r[name] = clean(access_key)
         clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
-
+    def copy_descendant_sequences(root: ax.Element, 
+                                props: list = ["name","class_name"],
+                                stop_patterns: list = ["Invoke","ExpandCollapse"],
+                                require_name: bool = True):
+        """Returns a list of property strings to get from the root to each 
+            element with a matching stop pattern"""
+        def walk_children(el, prop_str_list):
+            prop_str_list.append(actions.user.get_property_string(el))
+            stop = False
+            for pattern in stop_patterns:
+                if pattern in el.patterns:
+                    stop = True
+            if require_name:
+                if el.name == '':
+                    stop = False
+            if stop:
+                return [f"{el.name}: " + ";".join(prop_str_list)]
+            else:
+                print("walking children...")
+                r = []
+                for child in el.children:
+                    r += walk_children(child,prop_str_list)
+            return r
+        r = []
+        for child in root.children:
+            r += walk_children(child,[])
+        clip.set_text("\n".join(r))
+    def copy_focused_element_descendant_sequences(props: list = ["name","class_name"],
+                                stop_patterns: list = ["Invoke","ExpandCollapse"],
+                                require_name: bool = True):
+        """copy text version of property tests of focused element descendants to clipboard"""
+        el = winui.focused_element()
+        actions.user.copy_descendant_sequences(el,props,stop_patterns,require_name)
+        
 def clean(t):
     t = t.lower()
     regex = re.compile('[^a-zA-Z0-9]')
