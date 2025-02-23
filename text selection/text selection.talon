@@ -46,7 +46,7 @@ go up to {user.win_bkwd_dyn_nav_trg}$:
 	#	select previous letter cap
 	#	select next bang
 	#   select third previous brief exponent
-	#	select unit paragraph
+	#	select paragraph
 select [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.select_text(win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
 select [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.select_text(win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
 select [<user.ordinals>] next <user.win_nav_target>$: user.select_text(win_nav_target,"DOWN",ordinals or 1)

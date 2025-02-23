@@ -473,7 +473,6 @@ class Actions:
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
-                    perform_search(el_list,0,True)
                 break        
             else:
                 el_list = valid_matches
@@ -545,27 +544,26 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def new_key_to_matching_element(key: str, 
-                                prop_list: list, 
+    def key_to_el_by_prop_str(key: str, 
+                                prop_str: str, 
                                 ordinal: int=1, 
-                                limit: int=20, 
                                 escape_key: str=None, 
                                 delay: float = 0.09, 
+                                sec_lim: float = 1,
+                                iter_limit: int=-1, 
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
+        prop_list = actions.user.get_property_list(prop_str)
         def key_continue():
             if actions.user.focused_element() != None:
                 if actions.user.element_match(actions.user.focused_element(),prop_list):
                     actions.user.terminate_traversal()
-                    actions.mode.enable("command")
-                    actions.mode.disable("user.slow_repeating")
                 else:
                     actions.key(key)
-        actions.mode.enable("user.slow_repeating")
-        actions.mode.disable("command")
+#
         print("initializing traversal function...")
         
-        actions.user.initialize_traversal(key_continue)
+        actions.user.initialize_traversal(key_continue,sec_lim,iter_limit)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
@@ -579,6 +577,7 @@ class Actions:
                                 escape_key: str=None, 
                                 delay: float = 0.09, 
                                 mod_func: typing.Callable = None,
+                                sec_lim: float = 5,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
         # TO-DO:
@@ -607,19 +606,16 @@ class Actions:
         print("FUNCTION: key_to_matching_element")
         el = focused_element()
         first_el = el
-            # print(f'el: {el}')
         last_el = el
         i = 1
         matches = 0
         if el:
             try:
                 # print(f"1st element: {first_el_id}")
-                start_time = time.time()
-                max_sec = 5
+                stopper = actions.user.stopper(sec_lim)
                 while True:
-                    cur_time = time.time()
-                    elapsed_sec = cur_time - start_time
-                    if elapsed_sec > max_sec:
+                   # if elapsed_sec > max_sec:
+                    if stopper.over():
                         print("break due to time overage")
                         break
                     actions.key(key)
