@@ -9,6 +9,9 @@ class time_stopper:
         cur_time = time.perf_counter()
         elapsed_sec = cur_time - self.start_time
         if elapsed_sec > self.sec_lim:
+            print(f'start_time: {self.start_time}')
+            print(f'cur_time: {cur_time}')
+            print(f'elapsed_sec: {elapsed_sec}')
             return True
         else:
             return False
