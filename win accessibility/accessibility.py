@@ -545,15 +545,13 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_element(key: str, 
-                        prop_str: str, 
+    def key_to_element_by_prop_list(key: str, 
+                        prop_list: str, 
                         escape_key: str=None, 
                         sec_lim: float = 5,
                         iter_limit: int = -1,
                         avoid_cycles: bool = True,
                         verbose: bool = False):
-        """press given key until the first matching element is reached"""
-        prop_list = actions.user.get_property_list(prop_str)
         def key_continue(prop_list,first_el):
             el = winui.focused_element()
             if el:
@@ -571,6 +569,16 @@ class Actions:
                     lambda: key_continue(prop_list,first_el),
                     sec_lim,
                     iter_limit)
+    def key_to_element(key: str, 
+                        prop_str: str, 
+                        escape_key: str=None, 
+                        sec_lim: float = 5,
+                        iter_limit: int = -1,
+                        avoid_cycles: bool = True,
+                        verbose: bool = False):
+        """press given key until the first matching element is reached"""
+        prop_list = actions.user.get_property_list(prop_str)
+        key_to_element_by_prop_list(key,prop_list,key,sec_lim,iter_limit,avoid_cycles,verbose)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
