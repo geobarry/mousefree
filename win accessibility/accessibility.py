@@ -49,7 +49,7 @@ def match(el: ax.Element,
             verbose: bool = False):
     """Returns true if the element matches all of the properties in the property dictionary"""
     # prop_list is either a list of form [(property, trg_val),...]
-    #     where trg_val is either a string (for case-insensitive match at start of string)
+    #     where trg_val is either a string ready to be compiled into a regex expression
     #     or a regex expression
     # or a list of ["OR",list] or ["AND",list]
     # or just a string, in which case property will be "name"
@@ -69,7 +69,8 @@ def match(el: ax.Element,
                 print("inside value_match sub function")
             if type(trg_val) != re.Pattern:
 #            if type(trg_val) == str:
-                trg_val = str(trg_val).replace("(","\\(").replace(")","\\)")
+#               FOLLOWING MUST BE DONE BY CALLING FUNCTION
+#                trg_val = str(trg_val).replace("(","\\(").replace(")","\\)")
                 trg_val = re.compile(trg_val,re.IGNORECASE)
             if verbose:
                 print(f'trg_val: {trg_val}')
@@ -561,9 +562,10 @@ class Actions:
                     actions.user.terminate_traversal()
                 else:
                     actions.key(key)
-#
+
         print("initializing traversal function...")
         print(f'prop_list: {prop_list}')
+
         actions.user.initialize_traversal(lambda: key_continue(prop_list),sec_lim,iter_limit)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
