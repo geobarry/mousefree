@@ -16,7 +16,7 @@ and mode: user.zen
 # user.ax_target is just any spoken phrase. It will be translated 
 #  into regex for continuation and catching homophones
 ^{user.nav_key} until <user.ax_target>$:
-	user.key_to_el_by_prop_str(nav_key,"n={ax_target}.*")
+	user.key_to_element(nav_key,"n={ax_target}.*")
 
 ^{user.nav_key} until <user.ordinals> <user.ax_target>$:
 	x = ordinals or 1

@@ -545,28 +545,32 @@ class Actions:
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_el_by_prop_str(key: str, 
-                                prop_str: str, 
-                                ordinal: int=1, 
-                                escape_key: str=None, 
-                                delay: float = 0.09, 
-                                sec_lim: float = 5,
-                                iter_limit: int=-1, 
-                                verbose: bool = False):
+    def key_to_element(key: str, 
+                        prop_str: str, 
+                        escape_key: str=None, 
+                        sec_lim: float = 5,
+                        iter_limit: int = -1,
+                        avoid_cycles: bool = True,
+                        verbose: bool = False):
         """press given key until the first matching element is reached"""
         prop_list = actions.user.get_property_list(prop_str)
-        def key_continue(prop_list):
+        def key_continue(prop_list,first_el):
             el = winui.focused_element()
-            if el:            
-                if actions.user.element_match(el,prop_list):
+            if el:
+                if el.__eq__(first_el):
+                    actions.user.terminate_traversal()
+                elif actions.user.element_match(el,prop_list):
                     actions.user.terminate_traversal()
                 else:
                     actions.key(key)
-
-        print("initializing traversal function...")
-        print(f'prop_list: {prop_list}')
-
-        actions.user.initialize_traversal(lambda: key_continue(prop_list),sec_lim,iter_limit)
+            else:
+                actions.user.terminate_traversal()
+        first_el = winui.focused_element() if avoid_cycles else None
+        actions.key(key)
+        actions.user.initialize_traversal(
+                    lambda: key_continue(prop_list,first_el),
+                    sec_lim,
+                    iter_limit)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
