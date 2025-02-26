@@ -595,6 +595,7 @@ class Actions:
                                 delay: float = 0.09, 
                                 mod_func: typing.Callable = None,
                                 sec_lim: float = 5,
+                                avoid_cycles: bool = False,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
         # TO-DO:
@@ -654,18 +655,19 @@ class Actions:
                         if i == limit:
                             print(f"Reached limit... (i={i}) :(")
                             break
-                        if first_el == None:
-                            print(f"First element no longer exists...")
-                            break
-                        if first_el.__eq__(el):
-                            print(f"Cycled back to first element... :(")
-                            break
+                        if avoid_cycles:
+                            if first_el == None:
+                                print(f"First element no longer exists...")
+                                break
+                            if first_el.__eq__(el):
+                                print(f"Cycled back to first element... :(")
+                                break
                     else:
                         print(f"Element is not... :(")
                         break
             except Exception as error:
                 print(error)
-            if actions.user.element_match(el,prop_list,mod_func = mod_func):
+            if. actions.user.element_match(el,prop_list,mod_func = mod_func):
                 return el
             else:
                 print(f"Element doesn't match property list... :(")

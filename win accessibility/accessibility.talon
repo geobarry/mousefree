@@ -18,6 +18,9 @@ and mode: user.zen
 ^{user.nav_key} until <user.ax_target>$:
 	user.key_to_element(nav_key,"n={ax_target}.*")
 
+^grab{user.nav_key} next <user.ax_target>$:
+	user.key_to_matching_element(nav_key,ax_target)
+
 ^{user.nav_key} until <user.ordinals> <user.ax_target>$:
 	x = ordinals or 1
 	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
