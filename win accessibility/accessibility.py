@@ -609,6 +609,7 @@ class Actions:
 
         # Function to get next element, sometimes need to be persistent
         print(f'limit: {limit}')
+        print(f'avoid_cycles: {avoid_cycles}')
         if limit < 0:
             limit = 200
         def focused_element():
@@ -667,7 +668,7 @@ class Actions:
                         break
             except Exception as error:
                 print(error)
-            if. actions.user.element_match(el,prop_list,mod_func = mod_func):
+            if actions.user.element_match(el,prop_list,mod_func = mod_func):
                 return el
             else:
                 print(f"Element doesn't match property list... :(")
