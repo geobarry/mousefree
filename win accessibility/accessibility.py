@@ -482,11 +482,9 @@ class Actions:
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
-        print(f'FUNCTION act_on_element action: {action}')
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
-                print(f'loc: {loc}')
                 actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
                 actions.sleep(f"{delay_after_ms + 50}ms")
                 if action == "click":
@@ -503,7 +501,6 @@ class Actions:
             else:
                 print(f"Error in accessibility.py function act_on_element: Element has no location.")
         elif action == "highlight":
-            print("HIGHLIGHTING...")
             actions.user.highlight_element(el)
         elif action == "label":
             actions.user.highlight_element(el,el.name)
