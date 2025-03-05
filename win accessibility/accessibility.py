@@ -622,6 +622,7 @@ class Actions:
         print("FUNCTION: key_to_matching_element")
         el = focused_element()
         first_el = el
+        print(f'first_el: {first_el}')
         last_el = el
         i = 1
         matches = 0
@@ -665,6 +666,7 @@ class Actions:
                         break
             except Exception as error:
                 print(error)
+                print(f'error stopped key to matching element at el:\n {el}')
             if actions.user.element_match(el,prop_list,mod_func = mod_func):
                 return el
             else:
