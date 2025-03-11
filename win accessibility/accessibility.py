@@ -453,7 +453,10 @@ class Actions:
             except Exception as error:
                 print(f'error: {error}')
                 return None
-    def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, verbose: bool = False):
+    def find_el_by_prop_seq(prop_seq: list, 
+            root: ax.Element = None, 
+            extra_search_levels: int = 2, 
+            verbose: bool = False):
         """Finds element by working down from root"""
         if verbose:
             print("FUNCTION: actions.user.find_el_by_prop_seq()")
@@ -482,6 +485,7 @@ class Actions:
         return el_list[0]
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
+        action = action.lower()
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
@@ -522,6 +526,9 @@ class Actions:
         elif action == "expand":
             if "ExpandCollapse" in el.patterns:
                 el.expandcollapse_pattern.expand()
+        elif action == "collapse":
+            if "ExpandCollapse" in el.patterns:
+                el.expandcollapse_pattern.collapse()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
