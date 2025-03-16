@@ -174,9 +174,11 @@ class Actions:
         """manages windows focused element retrieval;
            places request only if there is no other request in process;
            returns currently focused element"""
-        if el_track.retrieving:
-            return None
+        el_track.check_focused_element()
         return el_track.focused_element
+    def retrieving_focus_element():
+        """if true, you should not request a focused element because we are probably waiting for windows to respond to a previous request"""
+        return el_track.retrieving
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,
         max_iter: int = 500):

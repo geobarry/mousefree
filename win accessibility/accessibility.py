@@ -596,90 +596,63 @@ class Actions:
                                 ordinal: int=1, 
                                 limit: int=200, 
                                 escape_key: str=None, 
-                                delay: float = 0.09, 
+                                delay: float = 0.03, 
                                 mod_func: typing.Callable = None,
                                 sec_lim: float = 5,
                                 avoid_cycles: bool = False,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
-        # TO-DO:
-        # Modify so this goes one element at a time and is integrated with slow repeater,
-        # so cycle can be stopped with "Stop" or "Stop It"
-        # ---
-        # if the previous action has not completed an error can occur
-        # (e.g. PowerPoint accessing format panel from context menu)
-        # to avoid this, wrap in try except clause 
-        # print("FUNCTION: key_to_matching_element")
-
-        # Function to get next element, sometimes need to be persistent
-        print(f'limit: {limit}')
-        print(f'avoid_cycles: {avoid_cycles}')
-        if limit < 0:
-            limit = 200
-        def focused_element():
-            n = 0
-            while n < 3:
-                try:
-                    return winui.focused_element()
-                except:
-                    n += 1
-                    actions.sleep(delay)
-            return None
-        # initialize
-        print("FUNCTION: key_to_matching_element")
-        el = focused_element()
+        if verbose:
+            print(f"FUNCTION: key_to_matching_element limit: {limit} delay: {delay} avoids_cycles: {avoid_cycles}")
+        el = actions.user.focused_element()
         first_el = el
-        print(f'first_el: {first_el}')
+        if verbose:
+            print(f'first_el: {first_el}')
         last_el = el
         i = 1
         matches = 0
         if el:
-            try:
-                # print(f"1st element: {first_el_id}")
-                stopper = actions.user.stopper(sec_lim)
-                while True:
-                   # if elapsed_sec > max_sec:
-                    if stopper.over():
-                        print("break due to time overage")
+            stopper = actions.user.stopper(sec_lim)
+            while True:
+               # if elapsed_sec > max_sec:
+                if stopper.over():
+                    print("break due to time overage")
+                    break
+                actions.key(key)
+                if delay > 0:
+                    actions.sleep(delay)
+                el = actions.user.focused_element()
+                if el:
+                    if verbose:
+                        print(f"ELEMENT: {el.name}")      
+                    if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
+                        matches += 1
+                    if (escape_key != None) and (last_el == el):
+                        actions.key(escape_key)
+                    last_el = el
+                    i += 1
+                    if matches == ordinal:
+                        # print(f"Found #{ordinal} matching element!")
                         break
-                    actions.key(key)
-                    if delay > 0:
-                        actions.sleep(delay)
-                    el = focused_element()
-                    if el:
-                        if verbose:
-                            print(f"ELEMENT: {el.name}")      
-                        if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
-                            matches += 1
-                        if (last_el == el) and (escape_key != None):
-                            actions.key(escape_key)
-                        last_el = el
-                        i += 1
-                        if matches == ordinal:
-                            # print(f"Found #{ordinal} matching element!")
-                            break
-                        if i == limit:
-                            print(f"Reached limit... (i={i}) :(")
-                            break
-                        if avoid_cycles:
-                            if first_el == None:
-                                print(f"First element no longer exists...")
-                                break
-                            if first_el.__eq__(el):
-                                print(f"Cycled back to first element... :(")
-                                break
-                    else:
-                        print(f"Element is not... :(")
+                    if i == limit:
+                        print(f"Reached limit... (i={i}) :(")
                         break
-            except Exception as error:
-                print(error)
-                print(f'error stopped key to matching element at el:\n {el}')
+                    if avoid_cycles:
+                        if first_el == None:
+                            print(f"First element no longer exists...")
+                            break
+                        if first_el.__eq__(el):
+                            print(f"Cycled back to first element... :(")
+                            break
+                else:
+                    print(f"Element is None... :(")
+                    break
             if actions.user.element_match(el,prop_list,mod_func = mod_func):
                 return el
             else:
                 print(f"Element doesn't match property list... :(")
                 return None
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
         actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
