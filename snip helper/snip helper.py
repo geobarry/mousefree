@@ -17,7 +17,7 @@ class Actions:
         actions.key("super-shift-s")
         actions.sleep(1.0)
         actions.user.mouse_drag(0)
-        actions.user.slow_mouse(rect.x + rect.width,rect.y + rect.height, ms=300, callback = lambda: actions.mouse_release(0))
+        actions.user.slow_mouse(rect.x + rect.width-1,rect.y + rect.height-1, ms=300, callback = lambda: actions.mouse_release(0))
     def snip_screen():
         """copies current screen capture to clipboard"""
         actions.user.snip_rect(winui.main_screen().rect)

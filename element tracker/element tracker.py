@@ -29,20 +29,20 @@ class element_tracker:
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
-        self.canvas.move(0,0) # this forces canvas redraw
+        self.canvas.freeze() # this forces canvas redraw
     def remove_element(self,rect):
         try:
             idx = self.rectangles.index(rect)
             del self.rectangles[idx]
             del self.labels[idx]
-            self.canvas.move(0,0) # this forces canvas redraw
+            self.canvas.freeze() # this forces canvas redraw
         except:
             pass
         print(f"There are now {len(self.rectangles)} elements in highlight list")
     def clear_elements(self):
         self.rectangles = []
         self.labels = []
-        self.canvas.move(0,0) # this forces canvas redraw
+        self.canvas.freeze() # this forces canvas redraw
     def draw_canvas(self, canvas):
         paint = canvas.paint
         paint.color = 'f3f'
@@ -104,11 +104,11 @@ class element_tracker:
                             self.focused_rect = el.rect
                             if self.auto_label:
                                 self.focused_label = el.name
-                            self.canvas.move(0,0) # this forces canvas redraw
+                            self.canvas.freeze() # this forces canvas redraw
                         if not self.auto_label:
                             if self.focused_label != "":
                                 self.focused_label = ""
-                                self.canvas.move(0,0) # this forces canvas redraw
+                                self.canvas.freeze() # this forces canvas redraw
                 except Exception as error:
                     pass
             else:
@@ -116,7 +116,7 @@ class element_tracker:
         if not rectangle_found:
             self.focused_rect = None
             self.focused_label = ""
-        self.canvas.move(0,0)
+        self.canvas.freeze()
 
     def handle_focus_change(self,el):
         if el:

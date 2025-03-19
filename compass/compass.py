@@ -6,7 +6,7 @@ import math, time, random
 mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
-update_interval = 75
+update_interval = 60
 fade_time = 5000 # five seconds
 
 def f_distance(from_pos,to_pos):
@@ -291,7 +291,7 @@ class compass:
                                 label = "{}{}".format(str(abs(brg_adj)), cardinal)
                                 text_aliased(label,text_x,text_y,18)
         if compass_object.canvas != None:
-            compass_object.canvas.move(0,0) # this forces canvas redraw
+            compass_object.canvas.freeze() # this forces canvas redraw
     def check_for_updates(self):
         if self.enabled:
             if self.display_mode == resting_display_mode:

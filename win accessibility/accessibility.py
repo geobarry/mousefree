@@ -249,7 +249,7 @@ class Actions:
                 return el.item_type
             elif prop_name.lower() == "is_offscreen":
                 return el.is_offscreen
-            elif prop_name.lower() == "clickable_.":
+            elif prop_name.lower() == "clickable":
                 if as_text:
                     loc = el.clickable_point
                     return f"x: {loc.x}   y: {loc.y}"
@@ -489,8 +489,11 @@ class Actions:
         if action == "click" or action == "right-click":
             loc = actions.user.element_location(el)
             if loc != None:            
-                actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                actions.sleep(f"{delay_after_ms + 50}ms")
+                if delay_after_ms > 0:
+                    actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
+                    actions.sleep(f"{delay_after_ms + 75}ms")
+                else:
+                    ctrl.mouse_move(loc.x,loc.y)
                 if action == "click":
                     ctrl.mouse_click()
                 elif action == "right-click":

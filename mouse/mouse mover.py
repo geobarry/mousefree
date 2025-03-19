@@ -23,10 +23,10 @@ class mouse_mover:
             totT = ms
         else:
             totT = self.get_move_time(totD)
-        self.num_intervals = max(1,math.ceil(totT / 30))
+        self.num_intervals = max(1,math.ceil(totT / 60))
         self.interval_x = dx / self.num_intervals
         self.interval_y = dy / self.num_intervals
-        self.job = cron.interval('30ms', self.move_next)
+        self.job = cron.interval('60ms', self.move_next)
         self.completed = 0
     def get_move_time(self,d):
         """Calculates the total time to move the mouse based on distance in pixels"""
@@ -63,7 +63,6 @@ class mouse_mover:
             self.completed += 1
             x = round(self.orig[0] + self.interval_x * self.completed)
             y = round(self.orig[1] + self.interval_y * self.completed)
-            print(f'x: {x} y: {y}')
             ctrl.mouse_move(x,y)
 
 @mod.action_class
