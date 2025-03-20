@@ -132,6 +132,7 @@ def handle_focus_change(el):
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
+traversal_termination_function = None
 
 @mod.action_class
 class Actions:
@@ -181,11 +182,14 @@ class Actions:
         return el_track.retrieving
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,
-        max_iter: int = 500):
+        max_iter: int = 500, 
+        finish_function: Callable = None):
         """initialize a traversal of windows accessibility elements; 
         traversal_function should guarantee that actions.user.terminate_traversal 
         will eventually be called or else use max_iter"""     
         stopper = actions.user.stopper(sec_lim)        
+        global traversal_termination_function
+        traversal_termination_function = finish_function
         def do_traversal(stopper):
             if stopper.over():
                 del stopper
@@ -211,3 +215,7 @@ class Actions:
         el_track.traversal_function = None
         actions.mode.enable("command")
         actions.mode.disable("user.slow_repeating")
+        global traversal_termination_function
+        if traversal_termination_function:
+            traversal_termination_function()
+            traversal_termination_function = None

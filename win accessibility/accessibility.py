@@ -9,8 +9,8 @@ from io import StringIO
 from contextlib import redirect_stdout
 import io
 from copy import deepcopy
-import typing
 import time
+from typing import Callable
 
 n = 0
 start_time = None
@@ -45,7 +45,7 @@ def ax_target(m) -> str:
 def match(el: ax.Element, 
             prop_list: list, 
             conjunction: str="AND", 
-            mod_func: typing.Callable = None, 
+            mod_func: Callable = None, 
             verbose: bool = False):
     """Returns true if the element matches all of the properties in the property dictionary"""
     # prop_list is either a list of form [(property, trg_val),...]
@@ -133,7 +133,7 @@ def get_every_child(el: ax.Element,
         cur_level: int = 0, 
         max_level: int = 11, 
         max_n: int = 500, 
-        max_sec: float = 10,
+        max_sec: float = 3,
         reset = True):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
@@ -342,7 +342,7 @@ class Actions:
                 val = prop.split("=")            
                 r.append((prop_name[val[0].strip()],val[1].strip()))
         return r
-    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: typing.Callable = None, verbose: bool = False):
+    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         return match(el,prop_list,conjunction,mod_func,verbose)
     def element_exists(prop_list: list,max_level: int = 7):
@@ -558,6 +558,7 @@ class Actions:
                         sec_lim: float = 5,
                         iter_limit: int = -1,
                         avoid_cycles: bool = True,
+                        final_func: Callable = None,
                         verbose: bool = False):
         """press give him key until matching element is reached"""
         def key_continue(prop_list,first_el):
@@ -575,19 +576,20 @@ class Actions:
         actions.key(key)
         actions.user.initialize_traversal(
                     lambda: key_continue(prop_list,first_el),
-                    sec_lim,
-                    iter_limit)
+                    sec_lim, iter_limit,final_func)
     def key_to_element(key: str, 
                         prop_str: str, 
                         escape_key: str=None, 
                         sec_lim: float = 5,
                         iter_limit: int = -1,
                         avoid_cycles: bool = True,
+                        mod_func: Callable = None,
+                        final_func: Callable = None,
                         verbose: bool = False):
         """press given key until the first matching element is reached"""
         prop_list = actions.user.get_property_list(prop_str)
         actions.user.key_to_element_by_prop_list(
-            key,prop_list,key,sec_lim,iter_limit,avoid_cycles,verbose)
+            key,prop_list,key,sec_lim,iter_limit,avoid_cycles,final_func,verbose)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
@@ -600,9 +602,9 @@ class Actions:
                                 limit: int=200, 
                                 escape_key: str=None, 
                                 delay: float = 0.03, 
-                                mod_func: typing.Callable = None,
                                 sec_lim: float = 5,
                                 avoid_cycles: bool = False,
+                                mod_func: Callable = None,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
         if verbose:

@@ -6,7 +6,7 @@ import math, time, random
 mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
-update_interval = 60
+update_interval = 30
 fade_time = 5000 # five seconds
 
 def f_distance(from_pos,to_pos):
@@ -28,6 +28,8 @@ class compass:
         self.target_ms = 1500
         self.max_ms = 1500
         self.min_ms = 100
+        
+        
     def enable(self, bearing = 0):
         self.bearing = bearing
         if self.enabled:
@@ -45,7 +47,6 @@ class compass:
         cron.cancel(self.job)
         self.canvas.close()
         self.canvas = None
-#        actions.user.zoom_close()
         actions.user.grid_close()
         actions.mode.enable("command")
         actions.mode.disable("user.compass")
@@ -89,22 +90,23 @@ class compass:
         # distance is minimum of vertical and horizontal distances
         return min(vrt_dist,hz_dist)
     def draw_canvas(self, canvas):
+
         paint = canvas.paint
-        paint.antialias = True
+#        paint.antialias = True
         paint.color = 'fff'
         paint.font.size = 36
         rect = canvas.rect
         def line_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
-            for off, color in ((1, color_alias),(-1, color_alias),(0.5, color_main),(-0.5, color_main),(0, color_main)):
+            for off, color,width in ((0, color_alias,3),(0, color_main,2)):
                 paint.color = color
+                paint.stroke_width = width
                 start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
                 finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
                 canvas.draw_line(start_x, start_y, finish_x, finish_y)
         def line_thick_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
-            offsets = [2,-2,1.5,-1.5,1,-1,0.5,-0.5,0]
-            colors = [color_alias] * 4 + [color_main] * 5
-            for off, color in zip(offsets,colors):
+            for off, color,width in ((0, color_alias,5),(0, color_main,3)):
                 paint.color = color
+                paint.stroke_width = width
                 start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
                 finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
                 canvas.draw_line(start_x, start_y, finish_x, finish_y)
@@ -290,16 +292,14 @@ class compass:
                                 text_x,text_y = self.pot_of_gold(start_x,start_y,buffer+hash_len,b)
                                 label = "{}{}".format(str(abs(brg_adj)), cardinal)
                                 text_aliased(label,text_x,text_y,18)
-        if compass_object.canvas != None:
-            compass_object.canvas.freeze() # this forces canvas redraw
     def check_for_updates(self):
         if self.enabled:
             if self.display_mode == resting_display_mode:
                 print("back to resting display mode")
                 actions.user.compass_disable()
                 return 
-            do_redraw = True
-
+            do_redraw = True           
+            compass_object.canvas.freeze()
             # increment time since last action
             self.elapsed_ms += update_interval
             # fade radial grid
