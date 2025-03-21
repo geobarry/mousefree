@@ -235,13 +235,20 @@ def process_text_capture(m) -> (str,bool):
         t = m.app_list
     if hasattr(m,"font"):
         t = m.font
+    if hasattr(m,"prose_formatter"):
+        t = actions.user.formatted_text(m.prose,m.prose_formatter)
+        # later should change this to True to allow for searching by
+        # formatter, but that will probably entail returning the formatter
+        # to be processed by the final function into a regex expression
+        # that distinguishes the same set of words formatted in different ways
+        include_homophones = False
     return (t,include_homophones)        
         
 # This capture rule should match win_nav_target exactly for
-# spoke in form consistency; the only difference
+# spoken form consistency; the only difference
 # is that this should return text to paste into a document, 
-# rather than text to search for. So no regular expressions.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font}")
+# rather than text to search for. So no Regular Expressions.
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
 def constructed_text(m) -> str:
     """Output of spoken text construction for windows text selection"""
     t, include_homophones = process_text_capture(m)

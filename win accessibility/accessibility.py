@@ -145,9 +145,11 @@ def get_every_child(el: ax.Element,
         if not stopper.over():
             yield el
             stopper.increment(0)
-            for child in el.children:
-                if not stopper.over():
-                    yield from get_every_child(child,cur_level + 1,max_level,max_n,max_sec,stopper)
+            children = el.children
+            if children:
+                for child in children:
+                    if not stopper.over():
+                        yield from get_every_child(child,cur_level + 1,max_level,max_n,max_sec,stopper)
         
 mod.list("dynamic_element", desc="List of children of the active window")
 
