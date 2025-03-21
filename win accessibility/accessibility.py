@@ -131,35 +131,23 @@ def match(el: ax.Element,
 
 def get_every_child(el: ax.Element, 
         cur_level: int = 0, 
-        max_level: int = 11, 
+        max_level: int = 15, 
         max_n: int = 500, 
-        max_sec: float = 3,
-        reset = True):
+        max_sec: float = 2,
+        stopper = None):
     # possibly keeping elements in memory is very expensive,
     # might be better to find some way to do what you want with element properties
-    global n
-    global start_time
-    if n == 0:
-        start_time = time.time()
+    if not stopper:
+        stopper = actions.user.stopper(max_sec,[max_n])
     if cur_level > max_level:
         print(f"Windows accessibility element traversal reached max level {max_level}")
     else:
-        if n > max_n:
-            print(f"Windows accessibility element traversal reached max count {max_n}")
-        else:
-            cur_time = time.time()
-            elapsed = cur_time - start_time
-            if elapsed > max_sec:
-                print(f"Windows accessibility element traversal reached max seconds {max_sec}")
-                print(f'cur_time: {cur_time}')
-                print(f'start_time: {start_time}')
-            else:
-                if reset:
-                    n = 0
-                n += 1
-                yield el
-                for child in el.children:
-                    yield from get_every_child(child,cur_level + 1,max_level,max_n,reset = False)
+        if not stopper.over():
+            yield el
+            stopper.increment(0)
+            for child in el.children:
+                if not stopper.over():
+                    yield from get_every_child(child,cur_level + 1,max_level,max_n,max_sec,stopper)
         
 mod.list("dynamic_element", desc="List of children of the active window")
 
@@ -182,13 +170,13 @@ def dynamic_element(_) -> dict[str,str]:
             alias = str(el.help_text)
         if alias != "":
             # add full name to dictionary
-            out[str(el.name)] = str(el.name)
+            out[str(alias)] = str(alias)
             # add single word command to dictionary
-            singles = re.split('[^a-zA-Z]',str(el.name))
-            out[singles[0]] = str(el.name)
+            singles = re.split('[^a-zA-Z]',str(alias))
+            out[singles[0]] = str(alias)
             # add double word command to dictionary
             if len(singles) > 1:
-                out[" ".join(singles[:2])] = str(el.name)
+                out[" ".join(singles[:2])] = str(alias)
     print("FUNCTION dynamic_element")
     print(f'window: {win}')
     print(f"ui window: {ui.active_window()}")
@@ -256,7 +244,7 @@ class Actions:
                 else:
                     return el.clickable_point
             elif prop_name.lower() == "children":
-                children = elements.children
+                children = el.children
                 if children == None:
                     if as_text:
                         return str(None)

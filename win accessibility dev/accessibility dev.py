@@ -53,7 +53,7 @@ class Actions:
         prop_list = ["name","class_name",
                         "help_text","automation_id",
                         "printout",
-                        "children","patterns","access_key",
+                        "patterns","access_key",
                         "is_keyboard_focusable","is_enabled",
                         "rect.height","item_status","flows_to",
                     ]
@@ -62,7 +62,6 @@ class Actions:
                         "rect.x","rect.y",
                         "rect.width",
                     "window_handle","pid","access_key","has_keyboard_focus",
-                    "is_keyboard_focusable","is_enabled",
                     "children","is_control_element","is_content_element",
                     "item_type","item_status","described_by",
                     "provider_description",
