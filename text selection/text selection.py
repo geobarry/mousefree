@@ -60,10 +60,6 @@ def find_target(trg: re.Pattern,
         Will handle straight versus curly single quotes and homophones.
         Returns a ax.TextRange object or None"""
     # Handle case of no TextRange input
-    print("FUNCTION: fine_target")
-    print(f'trg: {trg}')
-    print(f'search_dir: {search_dir}')
-    print(f'ordinal: {ordinal}')
     if text_range is None:
         el = winui.focused_element()
         if "Text" not in el.patterns:
@@ -97,10 +93,7 @@ def get_scope(scope_dir: str = "DOWN",
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
         return 
-    print(f"FUNCTION: get_scope")
     el = winui.focused_element()
-
-    print(f'get_scope el: {el}')
     if "Text" not in el.patterns:
         print("Error in function get_scope: focused element does not have text pattern")
         return 
@@ -127,12 +120,12 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if "Text" in el.patterns:
         init_range = el.text_pattern.selection[0]
     # find target
-    actions.user.select_text(trg,scope_dir,ordinal)
+    t = actions.user.select_text(trg,scope_dir,ordinal)
     # perform processing function
-    processing_function()
+    processing_function(t.text)
     # return to original selection
     if init_range != None:
-        actions.sleep(0.2)
+        actions.sleep(0.1)
         init_range.select()
 def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
@@ -286,13 +279,14 @@ class Actions:
                 if r != None:
                     r.select()
                     scroll_to_selection(r)
+                    return r
             except:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
     def replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
-        def replace_process():
+        def replace_process(orig_text):
             with clip.revert():
                 clip.set_text(new_text)
                 actions.sleep(0.2)
@@ -301,9 +295,8 @@ class Actions:
         process_selection(replace_process,trg,scope_dir,ordinal)
     def format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Applies formatter to targeted text"""
-        def format_process():
-            t = actions.edit.selected_text()
-            t = actions.user.formatted_text(t,fmt)
+        def format_process(orig_text: str):
+            t = actions.user.formatted_text(orig_text,fmt)
             with clip.revert():
                 clip.set_text(t)
                 actions.sleep(0.15)
@@ -312,19 +305,15 @@ class Actions:
         process_selection(format_process,trg,scope_dir,ordinal)
     def phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
-        print("FUNCTION: phones_text")
-        print(f'trg: {trg}')
-        def phones_process():
+        def phones_process(orig_text):
             # perform homophones operation
             w = actions.edit.selected_text()
+            w = orig_text
             options = actions.user.homophones_get(w)
             lower_options = [x.lower() for x in options]
-            print(f'options: {options}')
             i = lower_options.index(w.lower())
             i = (i + 1) % len(options)
             x = options[i]
-            print(f'i: {i}')
-            print(f'x: {x}')
             # would be nice to match case with the original selected text here
             with clip.revert():
                 clip.set_text(x)

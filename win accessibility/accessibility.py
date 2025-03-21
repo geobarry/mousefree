@@ -154,7 +154,8 @@ def get_every_child(el: ax.Element,
 mod.list("dynamic_element", desc="List of children of the active window")
 
 @ctx.dynamic_list("user.dynamic_element")
-def dynamic_element(_) -> dict[str,str]:
+def dynamic_element(spoken_form) -> dict[str,str]:
+    print(f'FUNCTION dynamic_element: spoken_form = {spoken_form}')
     win = winui.active_window()
     if win == None:
         print("no active window...")
