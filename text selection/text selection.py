@@ -7,7 +7,7 @@ ax_units = ["Character","Format","Word","Line","Paragraph","Page","Document"]
 
 mod = Module()
 
-mod.setting("win_selection_distance",type = int,default = 50,
+mod.setting("win_selection_distance",type = int,default = 25,
             desc = "Number of lines to search forward or backwards")
 
 mod.list("text_search_direction","directions from cursor in which text can be searched")
