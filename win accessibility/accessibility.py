@@ -15,9 +15,6 @@ from typing import Callable
 n = 0
 start_time = None
 
-# list for tracking a set of clickable points
-marked_elements = []
-
 mod = Module()
 
 mod.list("nav_key","keys commonly used to navigate UI elements")
@@ -165,6 +162,7 @@ def dynamic_element(spoken_form) -> dict[str,str]:
         print("active window has no element...")
         return {}
     elements = list(get_every_child(root))
+    print(f"{len(elements)} elements found...")
     out = {}
     for el in elements:
         # print(f'el: {el.name}')
@@ -656,30 +654,7 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
-    def mark_focused_element():
-        """records the clickable point of the currently focused item"""
-        global marked_elements
-        el = winui.focused_element()
-        marked_elements.append(el)
-    def select_marked():
-        """selects marked elements and then empties list"""
-        global marked_elements
-        # clear any selection
-        el = winui.focused_element()
-        try:
-            pattern = el.selectionitem_pattern
-            pattern.remove_from_selection()
-        except Exception as error:
-            print(f"Error removing from selection in accessibility.py function select_marked: {error}")        
-        # select all marked elements
-        for el in marked_elements:
-            try:
-                pattern = el.selectionitem_pattern
-                pattern.add_to_selection()
-            except Exception as error:
-                print(f"Error adding to selection in accessibility.py function select_marked: {error}")        
-        # reset list of marked elements
-        marked_elements = []
+
     def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
         """Searches for first element with given property value and invokes it."""
         prop_list = [prop,val]

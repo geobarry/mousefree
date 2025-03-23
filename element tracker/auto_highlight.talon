@@ -8,3 +8,5 @@ clear (highlights|labels): user.clear_highlights()
 # commands to manually highlight or label focused element or mouse element 
 # are located in accessibility.talon
 # (basically just "(highlight|label) (focused|mouse) [element]"
+mark focused element: user.mark_focused_element()
+clear marks: user.clear_marked()

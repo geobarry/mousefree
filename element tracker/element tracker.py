@@ -9,6 +9,9 @@ mod = Module()
 
 mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
 
+# list for tracking a set of clickable points
+marked_elements = []
+
 class element_tracker:
     def __init__(self):        
         self.canvas = canvas.Canvas.from_screen(winui.main_screen())
@@ -126,8 +129,8 @@ class element_tracker:
             self.traversal_function()
         # handle auto highlight
         self.update_highlight()
-
 el_track = element_tracker()
+
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
@@ -219,3 +222,38 @@ class Actions:
         if traversal_termination_function:
             traversal_termination_function()
             traversal_termination_function = None
+    def mark_focused_element():
+        """records the clickable point of the currently focused item"""
+        global marked_elements
+        marked_elements = []
+        el = winui.focused_element()
+        marked_elements.append(el)
+    def mouse_to_marked_element_handle(hnd_pos: str, ordinal: int = 0,ms: int = 350):
+        """moves the mouse to the marked element"""
+        if ordinal < len(marked_elements):
+            rect = actions.user.el_prop_val(marked_elements[ordinal],"rect")
+            if rect:
+                actions.user.mouse_to_obj_handle(rect,hnd_pos,ms = ms)
+    def select_marked():
+        """selects marked elements and then empties list"""
+        global marked_elements
+        # clear any selection
+        el = winui.focused_element()
+        try:
+            pattern = el.selectionitem_pattern
+            pattern.remove_from_selection()
+        except Exception as error:
+            print(f"Error removing from selection in accessibility.py function select_marked: {error}")        
+        # select all marked elements
+        for el in marked_elements:
+            try:
+                pattern = el.selectionitem_pattern
+                pattern.add_to_selection()
+            except Exception as error:
+                print(f"Error adding to selection in accessibility.py function select_marked: {error}")        
+        # reset list of marked elements
+        marked_elements = []
+    def clear_marked():
+        """clears the list of marked elements"""
+        global marked_elements
+        marked_elements = []
