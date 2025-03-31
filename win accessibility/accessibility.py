@@ -618,7 +618,8 @@ class Actions:
                 el = actions.user.focused_element()
                 if el:
                     if verbose:
-                        print(f"ELEMENT: {mod_func("name",el.name)} prop_list: {prop_list}")      
+                        if mod_func:
+                            print(f"ELEMENT: {mod_func("name",el.name)} prop_list: {prop_list}")      
                     if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
                         matches += 1
                     if (escape_key != None) and (last_el == el):
