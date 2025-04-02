@@ -21,7 +21,6 @@ mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
 
-ctx = Context()
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
@@ -149,6 +148,8 @@ def get_every_child(el: ax.Element,
                         yield from get_every_child(child,cur_level + 1,max_level,max_n,max_sec,stopper)
         
 mod.list("dynamic_element", desc="List of children of the active window")
+
+ctx = Context()
 
 @ctx.dynamic_list("user.dynamic_element")
 def dynamic_element(spoken_form) -> dict[str,str]:
@@ -619,7 +620,7 @@ class Actions:
                 if el:
                     if verbose:
                         if mod_func:
-                            print(f"ELEMENT: {mod_func("name",el.name)} prop_list: {prop_list}")      
+                            print(f"ELEMENT: {mod_func('name',el.name)} prop_list: {prop_list}")      
                     if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
                         matches += 1
                     if (escape_key != None) and (last_el == el):
@@ -663,3 +664,4 @@ class Actions:
         actions.user.act_on_element(el,"invoke")
 
     
+
