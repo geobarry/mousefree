@@ -224,8 +224,8 @@ def process_text_capture(m) -> (str,bool):
         t = m.function
     if hasattr(m,"keyword"):
         t = m.keyword
-    if hasattr(m,"app_list"):
-        t = m.app_list
+    if hasattr(m,"app"):
+        t = m.app
     if hasattr(m,"font"):
         t = m.font
     if hasattr(m,"prose_formatter"):
@@ -241,7 +241,7 @@ def process_text_capture(m) -> (str,bool):
 # spoken form consistency; the only difference
 # is that this should return text to paste into a document, 
 # rather than text to search for. So no Regular Expressions.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
 def constructed_text(m) -> str:
     """Output of spoken text construction for windows text selection"""
     t, include_homophones = process_text_capture(m)
@@ -251,7 +251,7 @@ def constructed_text(m) -> str:
 # Note: the windows dynamic navigation target will take precedence
 # over the following capture, according to observed behavior 
 # (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app_list} | font [name] {user.font}")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     t, include_homophones = process_text_capture(m)

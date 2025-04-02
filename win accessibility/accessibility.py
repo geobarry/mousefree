@@ -467,12 +467,16 @@ class Actions:
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
+                el_list = []
                 break        
             else:
                 el_list = valid_matches
         if verbose:
             print(f"found {len(el_list)} matches")
-        return el_list[0]
+        if len(el_list) > 0:
+            return el_list[0]
+        else:
+            return None
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         action = action.lower()
