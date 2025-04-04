@@ -156,7 +156,6 @@ def win_dynamic_nav_target(_) -> str:
     el = winui.focused_element()
     if el:
         if "Text" in el.patterns:
-            print("FUNCTION: win_dynamic_nav_target")
             cur_range = get_scope("both","Line",15)
             return f"""
             {cur_range.text}
