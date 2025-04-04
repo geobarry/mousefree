@@ -1,0 +1,32 @@
+windows accessibility text selection
+loosely modeled after navigation commands found in talon community
+requires that software has correctly implemented windows Ui automation
+tested and works well in Microsoft word, power point and outlook, with some caveats
+most notably, it seems to sometimes be messed up by bullets 
+
+We will go through patterns using keywords select, extend, replace and go
+these patterns can be used on either dynamic or static targets
+We will also see how we can apply formatting or switch between homophones
+A final function will look at will be selecting and extending by paragraph
+Lastly, will look at one quirk in the current implementation in which partial words are sometimes selected accidentally
+
+basic pattern: select next/previous target
+
+select the next limit de vertices
+select previous floating point precision errors
+
+static versus dynamic navigation targets
+
+go after next word efficiency
+go after next number fifty
+go before next brief United States geological survey
+go after next comma
+
+select
+select previous metrics of distance
+extend after next character period
+select from previous metrics to period
+format upper previous distance
+
+
+select paragraph

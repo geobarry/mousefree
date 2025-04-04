@@ -379,6 +379,14 @@ class Actions:
             if actions.user.element_match(child,prop_list):
                 n += 1
         return n
+    def matching_children(el: ax.Element, prop_list: list):
+        """Returns a list of children of the input element that matches the property list"""
+        r = []
+        if el:
+            for child in el.children:
+                if actions.user.element_match(child,prop_list):
+                    r.append(child)
+        return r
     def matching_child(el: ax.Element,prop_list: list):
         """Returns the child of the input element that matches the property list"""
         for child in el.children:
