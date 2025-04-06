@@ -24,7 +24,9 @@ mod.list("ui_action","actions that can be performed on accessibility elements")
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
-    """A target string to navigate to. Returns a regular expression as a string."""
+    """A target string to navigate to. Returns a regular expression as a string.
+       Perhaps this should be merged with win_navigation_target in text selection"""
+    
     if hasattr(m, "any_alphanumeric_key"):
         return m.any_alphanumeric_key
     t = m.text
@@ -389,9 +391,10 @@ class Actions:
         return r
     def matching_child(el: ax.Element,prop_list: list):
         """Returns the child of the input element that matches the property list"""
-        for child in el.children:
-            if actions.user.element_match(child,prop_list):
-                return child
+        if el:
+            for child in el.children:
+                if actions.user.element_match(child,prop_list):
+                    return child
         return None
     def element_descendants(el: ax.Element, max_gen: int = -1):
         """obtain a list of all descendants of current element"""
@@ -412,18 +415,17 @@ class Actions:
             if cur_level <= generation + extra_gen:
                 el_id += 1
                 try:
-                    for child in el.children:
-                        if verbose:
-                            print("|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list]))
-                            print(f'cur_level: {cur_level} generation: {generation}')
-                        Q.append((cur_level+1,el_id,child))        
-                        if cur_level+1 >= generation:
+                    if el:
+                        for child in el.children:
                             if verbose:
-                                print("level is okay...")
-                            if actions.user.element_match(child,prop_list,verbose = verbose):
-                                if verbose:
-                                    print("element matches...")
-                                r.append(child)
+                                msg = "|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list])
+                                print(f'cur_level: {cur_level} generation: {generation} {msg}')
+                            Q.append((cur_level+1,el_id,child))        
+                            if cur_level+1 >= generation:
+                                if actions.user.element_match(child,prop_list,verbose = False):
+                                    if verbose:
+                                        print("element matches...")
+                                    r.append(child)
                 except Exception as error:
                     print(f'error: {error}')
         return r
@@ -471,7 +473,7 @@ class Actions:
             valid_matches = perform_search(el_list,extra_levels)
             while len(valid_matches) == 0 and extra_levels < extra_search_levels:
                 extra_levels += 1
-                valid_matches = perform_search(el_list,extra_levels)
+                valid_matches = perform_search(el_list,extra_levels,False)
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
@@ -479,6 +481,7 @@ class Actions:
                 break        
             else:
                 el_list = valid_matches
+                print(f"found {prop_list}")
         if verbose:
             print(f"found {len(el_list)} matches")
         if len(el_list) > 0:
