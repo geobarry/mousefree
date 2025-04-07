@@ -490,56 +490,57 @@ class Actions:
             return None
     def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
         """Perform action on element. Get actions from {user.ui_action}"""
-        action = action.lower()
-        if action == "click" or action == "right-click":
-            loc = actions.user.element_location(el)
-            if loc != None:            
-                if delay_after_ms > 0:
-                    actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                    actions.sleep(f"{delay_after_ms + 75}ms")
+        if el:
+            action = action.lower()
+            if action == "click" or action == "right-click":
+                loc = actions.user.element_location(el)
+                if loc != None:            
+                    if delay_after_ms > 0:
+                        actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
+                        actions.sleep(f"{delay_after_ms + 75}ms")
+                    else:
+                        ctrl.mouse_move(loc.x,loc.y)
+                    if action == "click":
+                        ctrl.mouse_click()
+                    elif action == "right-click":
+                        ctrl.mouse_click(1)
                 else:
-                    ctrl.mouse_move(loc.x,loc.y)
-                if action == "click":
-                    ctrl.mouse_click()
-                elif action == "right-click":
-                    ctrl.mouse_click(1)
-            else:
-                print(f"Error in accessibility.py function act_on_element: Element has no location.")
-                return 
-        elif action == "hover":
-            loc = actions.user.element_location(el)
-            if loc != None:    
-                actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-            else:
-                print(f"Error in accessibility.py function act_on_element: Element has no location.")
-        elif action == "highlight":
-            actions.user.highlight_element(el)
-        elif action == "label":
-            actions.user.highlight_element(el,el.name)
-        elif action == "select":
-            if "SelectionItem" in el.patterns:
-                el.selectionitem_pattern.select()
-            elif "LegacyIAccessible" in el.patterns:
-                el.legacyiaccessible_pattern.select(1)
-            else:
-                print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
-        elif action == "invoke":
-            if "Invoke" in el.patterns:
-                el.invoke_pattern.invoke()
-            else:
-                print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
-        elif action == "toggle":
-            if "Toggle" in el.patterns:
-                el.toggle_pattern.toggle()
-        elif action == "expand":
-            if "ExpandCollapse" in el.patterns:
-                el.expandcollapse_pattern.expand()
-        elif action == "collapse":
-            if "ExpandCollapse" in el.patterns:
-                el.expandcollapse_pattern.collapse()
-        elif action == "scroll_into_view":
-            if "ScrollItem" in el.patterns:
-                el.scrollitem_pattern.scroll_into_view()
+                    print(f"Error in accessibility.py function act_on_element: Element has no location.")
+                    return 
+            elif action == "hover":
+                loc = actions.user.element_location(el)
+                if loc != None:    
+                    actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
+                else:
+                    print(f"Error in accessibility.py function act_on_element: Element has no location.")
+            elif action == "highlight":
+                actions.user.highlight_element(el)
+            elif action == "label":
+                actions.user.highlight_element(el,el.name)
+            elif action == "select":
+                if "SelectionItem" in el.patterns:
+                    el.selectionitem_pattern.select()
+                elif "LegacyIAccessible" in el.patterns:
+                    el.legacyiaccessible_pattern.select(1)
+                else:
+                    print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
+            elif action == "invoke":
+                if "Invoke" in el.patterns:
+                    el.invoke_pattern.invoke()
+                else:
+                    print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
+            elif action == "toggle":
+                if "Toggle" in el.patterns:
+                    el.toggle_pattern.toggle()
+            elif action == "expand":
+                if "ExpandCollapse" in el.patterns:
+                    el.expandcollapse_pattern.expand()
+            elif action == "collapse":
+                if "ExpandCollapse" in el.patterns:
+                    el.expandcollapse_pattern.collapse()
+            elif action == "scroll_into_view":
+                if "ScrollItem" in el.patterns:
+                    el.scrollitem_pattern.scroll_into_view()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
