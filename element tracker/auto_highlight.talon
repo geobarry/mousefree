@@ -1,4 +1,6 @@
 os: windows
+mode: command
+mode: user.zen
 -
 auto highlight [on]: user.auto_highlight(true)
 auto highlight off: user.auto_highlight(false)

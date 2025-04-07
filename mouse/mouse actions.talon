@@ -1,6 +1,7 @@
 os: windows
 mode: command
 or mode: user.compass
+or mode: user.zen
 -
 mouse to screen [{user.handle_position}]:
 	user.mouse_to_screen_handle(handle_position or "center")

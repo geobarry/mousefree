@@ -97,23 +97,24 @@ class element_tracker:
             el = self.focused_element
             if el == None:
                 self.check_focused_element()
-                el = self.focused_element()
+                el = self.focused_element
             if el:
                 try:
                     rect = actions.user.el_prop_val(el,"rect")
-                    if rect:
-                        rectangle_found = True
-                        if el.rect != self.focused_rect:
-                            self.focused_rect = el.rect
-                            if self.auto_label:
-                                self.focused_label = el.name
-                            self.canvas.freeze() # this forces canvas redraw
-                        if not self.auto_label:
-                            if self.focused_label != "":
-                                self.focused_label = ""
-                                self.canvas.freeze() # this forces canvas redraw
                 except Exception as error:
-                    pass
+                    print(f'FUNCTION update_highlight - error: {error}')
+                    return 
+                if rect:
+                    rectangle_found = True
+                    if rect != self.focused_rect:
+                        self.focused_rect = rect
+                        if self.auto_label:
+                            self.focused_label = el.name
+                        self.canvas.freeze() # this forces canvas redraw
+                    if not self.auto_label:
+                        if self.focused_label != "":
+                            self.focused_label = ""
+                            self.canvas.freeze() # this forces canvas redraw
             else:
                 pass
         if not rectangle_found:
@@ -132,6 +133,7 @@ class element_tracker:
 el_track = element_tracker()
 
 def handle_focus_change(el):
+    print("FUNCTION: handle_focus_change")
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 

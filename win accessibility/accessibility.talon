@@ -8,7 +8,14 @@ and mode: user.zen
 # SEARCH FOR UI ELEMENT DYNAMICALLY
 # Searches for a UI element with a name beginning with the spoken form
 
-^{user.ui_action} {user.dynamic_element}$: user.act_on_named_element(dynamic_element,ui_action)
+^dynamic {user.ui_action} {user.dynamic_element}$: user.act_on_named_element(dynamic_element,ui_action)
+
+# CURRENT ELEMENTS
+
+^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 
+^{user.ui_action} mouse [element]$: user.act_on_mouse_element(ui_action) 
+
+
 
 # NAVIGATE TO A TARGET USING KEYS
 # Presses the designated navigation key until an element beginning with the target name is reached.
@@ -31,9 +38,4 @@ and mode: user.zen
 stop [(it|repeating)]:
 	user.stop_repeating()
 	user.terminate_traversal()
-
-# CURRENT ELEMENTS
-
-^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 
-^{user.ui_action} mouse [element]$: user.act_on_mouse_element(ui_action) 
 

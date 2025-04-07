@@ -537,6 +537,9 @@ class Actions:
         elif action == "collapse":
             if "ExpandCollapse" in el.patterns:
                 el.expandcollapse_pattern.collapse()
+        elif action == "scroll_into_view":
+            if "ScrollItem" in el.patterns:
+                el.scrollitem_pattern.scroll_into_view()
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
