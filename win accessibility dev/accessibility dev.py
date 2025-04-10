@@ -331,7 +331,7 @@ class Actions:
         axroot = ax.get_root_element()
         print(f'app: {app}')
         print(f'w: {w}')
-        print(f'root: {root}')
+        print(f'w.element: {root}')
         print(f'axroot: {axroot}')
 
         

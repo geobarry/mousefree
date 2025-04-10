@@ -1,4 +1,4 @@
-from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings
+from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui
 from talon.windows import ax as ax, ui as winui
 from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
@@ -99,11 +99,17 @@ class element_tracker:
                 self.check_focused_element()
                 el = self.focused_element
             if el:
+                rect = None
                 try:
-                    rect = actions.user.el_prop_val(el,"rect")
+                    if not actions.user.el_prop_val(el,"is_offscreen"):
+                        rect = actions.user.el_prop_val(el,"rect")
                 except Exception as error:
-#                    print(f'FUNCTION update_highlight - error: {error}')
-                    return 
+                    print(f'FUNCTION update_highlight - error: {error}')
+                    print(f'el: {el}')
+                    prop_list = ["clickable","item_status"]
+                    msg = " | ".join([f"{prop}: {actions.user.el_prop_val(el,prop)}" for prop in prop_list])
+                    print(f'msg: {msg}')
+                    self.check_focused_element()
                 if rect:
                     rectangle_found = True
                     if rect != self.focused_rect:
@@ -121,7 +127,6 @@ class element_tracker:
             self.focused_rect = None
             self.focused_label = ""
         self.canvas.freeze()
-
     def handle_focus_change(self,el):
         if el:
             self.focused_element = el
@@ -133,9 +138,11 @@ class element_tracker:
 el_track = element_tracker()
 
 def handle_focus_change(el):
-    print("FUNCTION: handle_focus_change")
+    print(f"FUNCTION: handle_focus_change          el: {str(el)[:75]}")
+    actions.user.debug_app_window("focus_change environment")
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
+
 
 traversal_termination_function = None
 
