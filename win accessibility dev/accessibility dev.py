@@ -190,8 +190,8 @@ class Actions:
                 val = actions.user.el_prop_val(el,prop,as_text = True)
                 prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
-        r = "[\n\t\t" + ",\n\t\t".join(prop_seq[2:]) + "\n\t]"
-        r = f"\troot = winui.active_window().element\nprop_seq = {r}\nel = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
+        r = f"        root = winui.active_window().element\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         clip.set_text(r)
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""
@@ -322,6 +322,18 @@ class Actions:
         """copy text version of property tests of focused element descendants to clipboard"""
         el = winui.focused_element()
         actions.user.copy_descendant_sequences(el,props,stop_patterns,require_name)
+    def debug_app_window(hdr: str):
+        """prints out various information about the active window, app, etc."""
+        print(f'hdr: {hdr}')
+        app = winui.active_app()
+        w = winui.active_window()
+        root = w.element
+        axroot = ax.get_root_element()
+        print(f'app: {app}')
+        print(f'w: {w}')
+        print(f'root: {root}')
+        print(f'axroot: {axroot}')
+
         
 def clean(t):
     t = t.lower()

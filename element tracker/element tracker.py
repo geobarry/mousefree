@@ -28,7 +28,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("100ms", self.update_highlight)
+        self.job = cron.interval("500ms", self.update_highlight)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -102,7 +102,7 @@ class element_tracker:
                 try:
                     rect = actions.user.el_prop_val(el,"rect")
                 except Exception as error:
-                    print(f'FUNCTION update_highlight - error: {error}')
+#                    print(f'FUNCTION update_highlight - error: {error}')
                     return 
                 if rect:
                     rectangle_found = True
@@ -149,6 +149,9 @@ class Actions:
         """automatically highlight and label focused element"""
         el_track.auto_label = on
         el_track.update_highlight()
+    def currently_highlighting():
+        """Returns boolean representing current highlighting state"""
+        return el_track.auto_highlight
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
         rect = el.rect

@@ -69,7 +69,7 @@ def match(el: ax.Element,
 #            if type(trg_val) == str:
 #               FOLLOWING MUST BE DONE BY CALLING FUNCTION
 #                trg_val = str(trg_val).replace("(","\\(").replace(")","\\)")
-                trg_val = re.compile(trg_val,re.IGNORECASE)
+                trg_val = re.compile(f"^{trg_val}$",re.IGNORECASE)
             if verbose:
                 print(f'trg_val: {trg_val}')
                 print(f'type(trg_val): {type(trg_val)}')
@@ -332,6 +332,8 @@ class Actions:
         for prop in props:
             if prop != '':
                 val = prop.split("=")            
+                if len(val) == 1:
+                    val = ["n",val[0]]
                 r.append((prop_name[val[0].strip()],val[1].strip()))
         return r
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
