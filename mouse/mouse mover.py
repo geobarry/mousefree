@@ -99,21 +99,17 @@ class Actions:
     def mouse_to_focused_element_handle(hnd_pos: str,ms: int = 350, x_offset: int = 0, y_offset: int = 0):
         """Moves mouse to one of eight positions on edge of element"""
         obj = winui.focused_element().rect
-        print(f'obj: {obj}')
         actions.user.mouse_to_obj_handle(obj,hnd_pos,ms,x_offset,y_offset)
     def mouse_to_active_window_handle(hnd_pos: str,ms: int = 350, x_offset: int = 0, y_offset: int = 0):
         """Moves the mouse to one of eight positions on window"""
         obj = winui.active_window().rect
-        print(f'obj: {obj}')
         actions.user.mouse_to_obj_handle(obj,hnd_pos,ms,x_offset,y_offset)
     def slow_mouse(x: int, y: int, ms: int = None, callback: any = None):
         """moves the mouse slowly towards the target"""
         loc = Point2d(x,y)
-        print(f"FUNCTION slow_mouse: moving to {x},{y} ({ms}ms)")
         mouse_obj = mouse_mover(loc, ms = ms,callback = callback)
     def slow_mouse_relative(dx: int, dy: int, ms: int = 300, callback: any = None):
         """Slowly moves the mouse in the given relative direction"""
-        print("FUNCTION: slow_mouse_relative")
         pos = ctrl.mouse_pos()
         x = pos[0]
         y = pos[1]
@@ -121,15 +117,17 @@ class Actions:
     def drag_window_center (bearing: float, d: float):
         """Drags the given bearing and distance in pixels is on the center of the active window"""
         w = winui.active_window()
-        rect = w.rect
-        print(f'rect: {rect}')
-        x = rect.x + rect.width/2
-        y = rect.y + rect.height / 2
-        dx = math.sin(math.radians(bearing))
-        dy = math.cos(math.radians(bearing))
-        actions.user.slow_mouse(x + dx * d / 2,y - dy * d / 2,100)
-        actions.sleep(0.2)
-        actions.user.mouse_drag(0)
-        actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,500)
-        actions.sleep(0.6)
-        actions.user.mouse_drag_end()
+        if w:
+            rect = w.rect
+            if rect:
+                print(f'rect: {rect}')
+                x = rect.x + rect.width/2
+                y = rect.y + rect.height / 2
+                dx = math.sin(math.radians(bearing))
+                dy = math.cos(math.radians(bearing))
+                actions.user.slow_mouse(x + dx * d / 2,y - dy * d / 2,100)
+                actions.sleep(0.2)
+                actions.user.mouse_drag(0)
+                actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,500)
+                actions.sleep(0.6)
+                actions.user.mouse_drag_end()

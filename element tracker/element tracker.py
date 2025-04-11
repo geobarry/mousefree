@@ -28,7 +28,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("500ms", self.update_highlight)
+        self.job = cron.interval("5000ms", self.update_highlight)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -91,7 +91,10 @@ class element_tracker:
             self.retrieving = True
             self.focused_element = winui.focused_element()
             self.retrieving = False
+        else:
+            print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
     def update_highlight(self):
+#        print("FUNCTION: update_highlight")
         rectangle_found = False
         if self.auto_highlight or self.auto_label:
             el = self.focused_element
@@ -105,10 +108,6 @@ class element_tracker:
                         rect = actions.user.el_prop_val(el,"rect")
                 except Exception as error:
                     print(f'FUNCTION update_highlight - error: {error}')
-                    print(f'el: {el}')
-                    prop_list = ["clickable","item_status"]
-                    msg = " | ".join([f"{prop}: {actions.user.el_prop_val(el,prop)}" for prop in prop_list])
-                    print(f'msg: {msg}')
                     self.check_focused_element()
                 if rect:
                     rectangle_found = True
@@ -138,8 +137,8 @@ class element_tracker:
 el_track = element_tracker()
 
 def handle_focus_change(el):
-    print(f"FUNCTION: handle_focus_change          el: {str(el)[:75]}")
-    actions.user.debug_app_window("focus_change environment")
+#    print(f"FUNCTION: handle_focus_change          el: {str(el)[:75]}")
+#    actions.user.debug_app_window("focus_change environment")
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
