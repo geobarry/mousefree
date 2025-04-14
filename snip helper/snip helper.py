@@ -13,9 +13,10 @@ mod = Module()
 class Actions:
     def snip_rect(rect: Rect):
         """performs a screen capture of given rectangle and copies to clipboard"""
+        actions.sleep(2.5)
         ctrl.mouse_move(rect.x,rect.y)
         actions.key("super-shift-s")
-        actions.sleep(1.0)
+        actions.sleep(2.0)
         actions.user.mouse_drag(0)
         actions.user.slow_mouse(rect.x + rect.width-1,rect.y + rect.height-1, ms=300, callback = lambda: actions.mouse_release(0))
     def snip_screen():
@@ -24,6 +25,9 @@ class Actions:
     def snip_window():
         """copies current window capture to clipboard"""
         actions.user.snip_rect(winui.active_window().rect)
+    def snip_element():
+        """copies the currently focused element capture to clipboard"""
+        actions.user.snip_rect(ax.get_focused_element().rect)
     def save_rect(pt1: tuple = None, pt2: tuple = None, pos: int = -1):
         """records a rectangle for snipping"""
         # get first point

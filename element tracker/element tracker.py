@@ -88,8 +88,9 @@ class element_tracker:
     def check_focused_element(self):
         """retrieves new focused element unless already processing"""
         if not self.retrieving:
+            print("FUNCTION: check_focused_element")
             self.retrieving = True
-            self.focused_element = winui.focused_element()
+            self.focused_element = ax.get_focused_element()
             self.retrieving = False
         else:
             print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
@@ -102,6 +103,10 @@ class element_tracker:
                 self.check_focused_element()
                 el = self.focused_element
             if el:
+                if False:
+                    print(f"winui focused el: {str(self.focused_element)[:75]}")
+                    el = ax.get_focused_element()
+                    print(f'   ax focused el: {str(el)[:75]}')
                 rect = None
                 try:
                     if not actions.user.el_prop_val(el,"is_offscreen"):
