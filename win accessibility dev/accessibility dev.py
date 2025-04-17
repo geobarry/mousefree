@@ -89,11 +89,14 @@ class Actions:
         while True:
             print(f"*******\nELEMENT NUMBER: {i}\n*******")
             messages.append(msg)
-            actions.sleep(delay)
             actions.key(key)
+            actions.sleep(delay)
             el = winui.focused_element()
             msg = actions.user.element_information(el, verbose = verbose)    
             if i > limit or el.__eq__(orig_el):
+                print("pausing due to limit or reaching first element")
+                print(f'el: {el}')
+                print(f'orig_el: {orig_el}')
                 break
             i += 1
         clip.set_text("\n".join(messages))
