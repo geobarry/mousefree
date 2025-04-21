@@ -8,7 +8,8 @@ mod.list("handle_position","position for grabbing ui elements")
 mod.list("move_coordinates","x & y differentials for moving mouse")    
 
 ctx = Context()
-
+interval = 15
+time_mult = 1
 class mouse_mover:
     """Moves mouse using cron intervals until destination is reached"""
     def __init__(self, dest: Point2d, ms = None, callback = None):        
@@ -23,15 +24,16 @@ class mouse_mover:
             totT = ms
         else:
             totT = self.get_move_time(totD)
-        self.num_intervals = max(1,math.ceil(totT / 30))
+        self.num_intervals = max(1,math.ceil(totT / interval))
         self.interval_x = dx / self.num_intervals
         self.interval_y = dy / self.num_intervals
-        self.job = cron.interval('30ms', self.move_next)
+        self.job = cron.interval(f'{interval}ms', self.move_next)
         self.completed = 0
     def get_move_time(self,d):
         """Calculates the total time to move the mouse based on distance in pixels"""
         # Keys: move distance (pixels)
         # Values: move time (ms)
+        print("FUNCTION: get_move_time")
         move_times = {
             -1:50,
             100:200,
@@ -48,7 +50,9 @@ class mouse_mover:
         while dkeys[id] < d:
             id += 1
         lowD,highD = dkeys[id-1],dkeys[id]
-        lowT,highT = move_times[lowD],move_times[highD]
+        lowT,highT = time_mult * move_times[lowD],time_mult * move_times[highD]
+        print(f'lowT: {lowT}')
+        print(f'highT: {highT}')
         return int(lowT + (highT - lowT) * (d - lowD) / (highD - lowD))
     def move_next(self):
         """Moves mouse by one interval until destination reached"""
@@ -127,7 +131,10 @@ class Actions:
                 dy = math.cos(math.radians(bearing))
                 actions.user.slow_mouse(x + dx * d / 2,y - dy * d / 2,100)
                 actions.sleep(0.2)
-                actions.user.mouse_drag(0)
-                actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,500)
-                actions.sleep(0.6)
+                actions.mouse_drag(1)
+                # actions.user.compass_jiggle()
+                # actions.user.mouse_drag(0)
+                actions.sleep(0.5)
+                actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,1000)
+                actions.sleep(1.1)
                 actions.user.mouse_drag_end()
