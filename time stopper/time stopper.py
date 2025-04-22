@@ -7,7 +7,7 @@ class time_stopper:
         self.start_time = time.perf_counter()
         self.count_limit = counter_limits
         self.n = [0]*len(self.count_limit)
-    def increment(self,counter_number):
+    def increment(self,counter_number = 0):
         self.n[counter_number]+=1
     def over(self):
         for i in range(len(self.count_limit)):

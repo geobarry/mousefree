@@ -47,16 +47,17 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
             
 @mod.action_class
 class Actions:
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, verbose: str = False):
+    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, verbose: str = False):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
-        prop_list = ["name","class_name",
-                        "help_text","automation_id",
-                        "printout",
-                        "patterns","access_key",
-                        "is_keyboard_focusable","is_enabled",
-                        "rect.height","item_status","flows_to",
-                    ]
+        if not prop_list:
+            prop_list = ["name","class_name",
+                            "help_text","automation_id",
+                            "printout",
+                            "patterns","access_key",
+                            "is_keyboard_focusable","is_enabled",
+                            "rect.height","item_status","flows_to",
+                        ]
         other_prop = [
                         "clickable_point",
                         "rect.x","rect.y",
