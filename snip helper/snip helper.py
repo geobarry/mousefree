@@ -9,6 +9,8 @@ last_mouse = None
 
 mod = Module()
 
+snip_delay = 3
+
 @mod.action_class
 class Actions:
     def snip_rect(rect: Rect):
@@ -16,7 +18,7 @@ class Actions:
         actions.sleep(2.5)
         ctrl.mouse_move(rect.x,rect.y)
         actions.key("super-shift-s")
-        actions.sleep(2.0)
+        actions.sleep(snip_delay)
         actions.user.mouse_drag(0)
         actions.user.slow_mouse(rect.x + rect.width-1,rect.y + rect.height-1, ms=300, callback = lambda: actions.mouse_release(0))
     def snip_screen():
