@@ -109,8 +109,8 @@ class element_tracker:
                     print(f'   ax focused el: {str(el)[:75]}')
                 rect = None
                 try:
-                    if not actions.user.el_prop_val(el,"is_offscreen"):
-                        rect = actions.user.el_prop_val(el,"rect")
+#                    if not actions.user.el_prop_val(el,"is_offscreen"):
+                    rect = actions.user.el_prop_val(el,"rect")
                 except Exception as error:
                     print(f'FUNCTION update_highlight - error: {error}')
                     self.check_focused_element()

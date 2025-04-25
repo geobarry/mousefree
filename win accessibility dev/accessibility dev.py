@@ -56,7 +56,7 @@ class Actions:
                             "printout",
                             "patterns","access_key",
                             "is_keyboard_focusable","is_enabled",
-                            "rect.height","item_status","flows_to",
+                            "rect.height","legacy.name","legacy.description"
                         ]
         other_prop = [
                         "clickable_point",

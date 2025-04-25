@@ -268,26 +268,47 @@ class Actions:
                 return el.flows_to
             elif prop_name.lower() == "provider_description":
                 return el.provider_description
-            elif prop_name.lower() == "children":
-                return el.children
             elif prop_name.lower() == "rect":
                 return el.rect
             elif prop_name.lower() == "rect.x":
-                return el.rect.x
+                rect = el.rect
+                if rect:
+                    return el.rect.x
             elif prop_name.lower() == "rect.y":
-                return el.rect.y
+                rect = el.rect
+                if rect:
+                    return el.rect.y
             elif prop_name.lower() == "rect.width":
-                return el.rect.width
+                rect = el.rect
+                if rect:
+                    return el.rect.width
             elif prop_name.lower() == "rect.height":
-                return el.rect.height
+                rect = el.rect
+                if rect:
+                    return el.rect.height
             elif prop_name.lower() == "value":
-                return el.value_pattern.value
+                if "Value" in el.patterns:
+                    return el.value_pattern.value
             elif prop_name.lower() == "value.is_read_only":
-                return el.value_pattern.is_read_only
+                if "Value" in el.patterns:
+                    return el.value_pattern.is_read_only
             elif prop_name.lower() == "legacy.value":
-                return el.legacyiaccessible_pattern.value
+                if "LegacyIAccessible" in el.patterns:
+                    return el.legacyiaccessible_pattern.value
+            elif prop_name.lower() == "legacy.state":
+                if "LegacyIAccessible" in el.patterns:
+                    return el.legacyiaccessible_pattern.state
+
+
             elif prop_name.lower() == "legacy.selection":
-                return el.legacyiaccessible_pattern.selection
+                if "LegacyIAccessible" in el.patterns:
+                    return el.legacyiaccessible_pattern.selection
+            elif prop_name.lower() == "legacy.name":
+                if "LegacyIAccessible" in el.patterns:
+                    return el.legacyiaccessible_pattern.name
+            elif prop_name.lower() == "legacy.description":
+                if "LegacyIAccessible" in el.patterns:
+                    return el.legacyiaccessible_pattern.description
             elif prop_name.lower() == "text":
                 if "Text" in el.patterns:
                     text_range = el.text_pattern.selection[0]
