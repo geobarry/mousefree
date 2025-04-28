@@ -334,7 +334,7 @@ class Actions:
         root = w.element
         axroot = ax.get_root_element()
         print(f'app: {app}')
-        print(f'w: {w}')
+        print(f'active window: title {w.title}')
         print(f'w.element: {root}')
         print(f'axroot: {axroot}')
 
