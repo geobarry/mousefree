@@ -54,9 +54,7 @@ def number_to_words(number_str):
         result += convert_three_digits(thousands) + " thousand "
     if hundreds > 0:
         result += convert_three_digits(hundreds)
-    print("FUNCTION number_to_words")
-    print(f'number_str: {number_str}')
-    print(f'result: {result}')
+
     return result.strip()
 
 def number_variations(n_str: str):
@@ -88,7 +86,7 @@ def variations(words_and_numbers: list):
             word_list = words_and_numbers[:idx] + number_words + words_and_numbers[idx+1:]
             spoken_form_list = variations(word_list)
             r += spoken_form_list
-        print(f'FUNCTION variations... r: {r}')
+
         return r
 
 
