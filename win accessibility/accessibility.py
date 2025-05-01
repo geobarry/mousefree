@@ -504,7 +504,8 @@ class Actions:
                 break        
             else:
                 el_list = valid_matches
-                print(f"found {prop_list}")
+                if verbose:
+                    print(f"found {prop_list}")
         if verbose:
             print(f"found {len(el_list)} matches")
         if len(el_list) > 0:

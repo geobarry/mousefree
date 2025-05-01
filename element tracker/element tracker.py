@@ -147,7 +147,6 @@ def handle_focus_change(el):
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
-
 traversal_termination_function = None
 
 @mod.action_class
@@ -227,7 +226,6 @@ class Actions:
         actions.mode.disable("command")
         el_track.traversal_function = lambda: do_traversal(stopper)
         el_track.traversal_function()
-        #
     def terminate_traversal():
         """terminate the continued traversal using a key"""
         el_track.traversal_count = 0
@@ -240,8 +238,8 @@ class Actions:
             traversal_termination_function = None
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
+        print("FUNCTION: mark_focused_element")
         global marked_elements
-        marked_elements = []
         el = winui.focused_element()
         marked_elements.append(el)
     def mouse_to_marked_element_handle(hnd_pos: str, ordinal: int = 0,ms: int = 350):
