@@ -429,3 +429,8 @@ class Actions:
             elif unit == "Paragraph":
                 actions.edit.extend_paragraph_start()
                 actions.edit.extend_paragraph_end()
+
+    def set_selection_distance(d: int):
+        """Allows user to change selection distance with a command"""
+        if d > 0:
+            ctx.settings["user.win_selection_distance"] = d
