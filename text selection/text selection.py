@@ -100,7 +100,7 @@ def get_scope(scope_dir: str = "DOWN",
         return 
     # Get scope as a text range
     cur_range = el.text_pattern.selection[0]
-    
+    print(f"selection_distance: {settings.get("user.win_selection_distance")}")
     # avoid selecting anything in current selection#
     if scope_dir.upper() == "UP":
         cur_range.move_endpoint_by_range("End","Start",target = cur_range)
@@ -154,7 +154,7 @@ ctx = Context()
 
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("both","Line",15)
@@ -164,7 +164,7 @@ def win_dynamic_nav_target(_) -> str:
 
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("DOWN","Line")
@@ -177,7 +177,7 @@ def win_fwd_dyn_nav_trg(_) -> str:
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: backwards dynamic navigation target")
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("UP","Line")
@@ -433,3 +433,8 @@ class Actions:
             elif unit == "Paragraph":
                 actions.edit.extend_paragraph_start()
                 actions.edit.extend_paragraph_end()
+
+    def set_selection_distance(d: int):
+        """Allows user to change selection distance with a command"""
+        if d > 0:
+            ctx.settings["user.win_selection_distance"] = d
