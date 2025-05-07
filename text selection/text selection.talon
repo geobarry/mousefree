@@ -5,6 +5,9 @@ and mode: user.zen
 # NOTE: In old Microsoft Word .doc documents, text is garbled when there are bullets present
 # Please update to .docx; there is no way to fix this from our end
 
+# SETTINGS
+selection distance <number>: user.set_selection_distance(number)
+
 # ABOUT NAVIGATION TARGETS
 # "Dynamic" navigation targets (win_fwd_dyn_nav_trg, win_bkwd_dyn_nav_trg) 
 #	are determined on the fly from text before or after cursor. 

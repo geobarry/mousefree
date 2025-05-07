@@ -89,6 +89,7 @@ def find_target(trg: re.Pattern,
 def get_scope(scope_dir: str = "DOWN",
                 scope_unit: str = "Line"):
     """Returns a text range corresponding to the search scope"""
+    print(f"get_scope - win_selection_distance: {settings.get('user.win_selection_distance')}")
     # Error Checking
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
@@ -268,6 +269,9 @@ def win_nav_target(m) -> str:
 
 @mod.action_class
 class Actions:
+    def set_selection_distance(d: int):
+        """Sets the windows selection distance used in text selection, usually measured in number of lines"""
+        ctx.settings["user.win_selection_distance"] = d
     def select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
