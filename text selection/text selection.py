@@ -153,7 +153,7 @@ ctx = Context()
 
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("both","Line",15)
@@ -163,7 +163,7 @@ def win_dynamic_nav_target(_) -> str:
 
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("DOWN","Line")
@@ -176,7 +176,7 @@ def win_fwd_dyn_nav_trg(_) -> str:
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: backwards dynamic navigation target")
-    el = winui.focused_element()
+    el = actions.user.focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("UP","Line")
