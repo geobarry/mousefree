@@ -96,41 +96,46 @@ class element_tracker:
             print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
     def update_highlight(self):
 #        print("FUNCTION: update_highlight")
-        rectangle_found = False
-        if self.auto_highlight or self.auto_label:
-            el = self.focused_element
-            if el == None:
-                self.check_focused_element()
+        if not self.retrieving:
+            self.retrieving = True
+            rectangle_found = False
+            if self.auto_highlight or self.auto_label:
                 el = self.focused_element
-            if el:
-                if False:
-                    print(f"winui focused el: {str(self.focused_element)[:75]}")
-                    el = ax.get_focused_element()
-                    print(f'   ax focused el: {str(el)[:75]}')
-                rect = None
-                try:
-#                    if not actions.user.el_prop_val(el,"is_offscreen"):
-                    rect = actions.user.el_prop_val(el,"rect")
-                except Exception as error:
-                    print(f'FUNCTION update_highlight - error: {error}')
+                if el == None:
                     self.check_focused_element()
-                if rect:
-                    rectangle_found = True
-                    if rect != self.focused_rect:
-                        self.focused_rect = rect
-                        if self.auto_label:
-                            self.focused_label = el.name
-                        self.canvas.freeze() # this forces canvas redraw
-                    if not self.auto_label:
-                        if self.focused_label != "":
-                            self.focused_label = ""
+                    el = self.focused_element
+                if el:
+                    if False:
+                        print(f"winui focused el: {str(self.focused_element)[:75]}")
+                        el = ax.get_focused_element()
+                        print(f'   ax focused el: {str(el)[:75]}')
+                    rect = None
+                    try:
+    #                    if not actions.user.el_prop_val(el,"is_offscreen"):
+                        rect = actions.user.el_prop_val(el,"rect")
+                    except Exception as error:
+                        print(f'FUNCTION update_highlight - error: {error}')
+                        self.check_focused_element()
+                    if rect:
+                        rectangle_found = True
+                        if rect != self.focused_rect:
+                            self.focused_rect = rect
+                            if self.auto_label:
+                                self.focused_label = el.name
                             self.canvas.freeze() # this forces canvas redraw
-            else:
-                pass
-        if not rectangle_found:
-            self.focused_rect = None
-            self.focused_label = ""
-        self.canvas.freeze()
+                        if not self.auto_label:
+                            if self.focused_label != "":
+                                self.focused_label = ""
+                                self.canvas.freeze() # this forces canvas redraw
+                else:
+                    pass
+            if not rectangle_found:
+                self.focused_rect = None
+                self.focused_label = ""
+            self.canvas.freeze()
+            self.retrieving = False
+        else:
+            print("FUNCTION: update_highlight - in the middle of retrieving another element...")
     def handle_focus_change(self,el):
         if el:
             self.focused_element = el
