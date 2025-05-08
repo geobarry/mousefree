@@ -20,9 +20,6 @@ selection distance <number>: user.set_selection_distance(number)
 #	Static targets also include alphanumeric characters, optionally prefixed with
 #	"letter" or "character"
 
-# SETTINGS
-selection distance <number>: user.set_selection_distance(number)
-	
 # NAVIGATION COMMANDS
 	# example spoken forms:
 	#   go before next hippopotamus
