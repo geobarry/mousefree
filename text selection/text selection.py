@@ -269,10 +269,7 @@ def win_nav_target(m) -> str:
 
 @mod.action_class
 class Actions:
-    def set_selection_distance(d: int):
-        """Sets the windows selection distance used in text selection, usually measured in number of lines"""
-        ctx.settings["user.win_selection_distance"] = d
-    def select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         el = winui.focused_element()
@@ -287,7 +284,7 @@ class Actions:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
         else:
             actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
-    def replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
             with clip.revert():
@@ -296,7 +293,7 @@ class Actions:
                 actions.edit.paste()
                 actions.sleep(0.15)
         process_selection(replace_process,trg,scope_dir,ordinal)
-    def format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Applies formatter to targeted text"""
         def format_process(orig_text: str):
             t = actions.user.formatted_text(orig_text,fmt)
@@ -306,7 +303,7 @@ class Actions:
                 actions.edit.paste()
                 actions.sleep(0.15)
         process_selection(format_process,trg,scope_dir,ordinal)
-    def phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
         def phones_process(orig_text):
             # perform homophones operation
@@ -324,7 +321,7 @@ class Actions:
                 actions.edit.paste()
                 actions.sleep(0.15)
         process_selection(phones_process,trg,scope_dir,ordinal)
-    def go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
+    def winax_go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = winui.focused_element()
@@ -350,7 +347,7 @@ class Actions:
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-    def extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
+    def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = winui.focused_element()
@@ -367,7 +364,7 @@ class Actions:
                 actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
         else:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-    def move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
+    def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = winui.focused_element()
         if "Text" in el.patterns:
@@ -380,7 +377,7 @@ class Actions:
             cur_range.move(unit,ordinal)
             cur_range.select()
             cur_range.scroll_into_view(True)
-    def extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
+    def winax_extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
         el = winui.focused_element()
         if "Text" in el.patterns:
@@ -397,7 +394,7 @@ class Actions:
             cur_range.move_endpoint_by_range(pos,pos,target = ext_range)
             cur_range.select()            
             cur_range.scroll_into_view(True)
-    def expand_selection(left: bool = True, right: bool = True, 
+    def winax_expand_selection(left: bool = True, right: bool = True, 
             unit: str = "Character", ordinal: int = 1):
         """Expands selection in the specified direction(s)"""
         el = winui.focused_element()
@@ -412,7 +409,7 @@ class Actions:
             cur_range.move_endpoint_by_unit("End",unit,ordinal)
         cur_range.select()            
         cur_range.scroll_into_view(True)
-    def select_unit(unit: str):
+    def winax_select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = winui.focused_element() 
         if "Text" in el.patterns:
@@ -433,8 +430,7 @@ class Actions:
             elif unit == "Paragraph":
                 actions.edit.extend_paragraph_start()
                 actions.edit.extend_paragraph_end()
-
-    def set_selection_distance(d: int):
+    def winax_set_selection_distance(d: int):
         """Allows user to change selection distance with a command"""
         if d > 0:
             ctx.settings["user.win_selection_distance"] = d

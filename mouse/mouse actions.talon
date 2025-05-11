@@ -19,3 +19,6 @@ mouse to window [{user.handle_position}]:
 	print("{bearing}")
 	user.drag_window_center(bearing,number or 500)
 (mouse|compass) jiggle: user.compass_jiggle()
+
+# EXPERIMENTAL
+get screen bounds: user.get_screen_bounds()

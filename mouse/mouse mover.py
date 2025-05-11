@@ -1,4 +1,4 @@
-from talon import Module, ui, Context, ctrl, cron, actions
+from talon import Module, ui, Context, ctrl, cron, actions, screen
 from talon.types import Point2d as Point2d, Rect
 from talon.windows import ax as ax, ui as winui
 import math
@@ -14,21 +14,26 @@ class mouse_mover:
     """Moves mouse using cron intervals until destination is reached"""
     def __init__(self, dest: Point2d, ms = None, callback = None):        
         self.callback = callback
-        self.dest = dest
-        self.orig = ctrl.mouse_pos()
-        self.cur = self.orig
-        dx = self.dest.x - self.orig[0]
-        dy = self.dest.y - self.orig[1]
-        totD = ((dx ** 2) + (dy ** 2)) ** 0.5
-        if ms != None:
-            totT = ms
-        else:
-            totT = self.get_move_time(totD)
-        self.num_intervals = max(1,math.ceil(totT / interval))
-        self.interval_x = dx / self.num_intervals
-        self.interval_y = dy / self.num_intervals
-        self.job = cron.interval(f'{interval}ms', self.move_next)
-        self.completed = 0
+        # need to validate destination, can get error: Python int too large to convert to C long
+        print("CLASS mouse_mover __init__")
+        valid = actions.user.coords_in_bounds(dest)
+        print(f'valid: {valid}')
+        if valid:
+            self.dest = dest
+            self.orig = ctrl.mouse_pos()
+            self.cur = self.orig
+            dx = self.dest.x - self.orig[0]
+            dy = self.dest.y - self.orig[1]
+            totD = ((dx ** 2) + (dy ** 2)) ** 0.5
+            if ms != None:
+                totT = ms
+            else:
+                totT = self.get_move_time(totD)
+            self.num_intervals = max(1,math.ceil(totT / interval))
+            self.interval_x = dx / self.num_intervals
+            self.interval_y = dy / self.num_intervals
+            self.job = cron.interval(f'{interval}ms', self.move_next)
+            self.completed = 0
     def get_move_time(self,d):
         """Calculates the total time to move the mouse based on distance in pixels"""
         # Keys: move distance (pixels)
@@ -94,8 +99,6 @@ class Actions:
         x = pos[hnd_pos][0] + x_offset
         y = pos[hnd_pos][1] + y_offset
         actions.user.slow_mouse(x,y,ms = ms)
-
-
     def mouse_to_screen_handle(hnd_pos: str, ms: int = 350, x_offset: int = 0, y_offset: int = 0):
         """moves mouse to one of eight positions on edge of the main screen"""
         obj = ui.main_screen()
@@ -138,3 +141,16 @@ class Actions:
                 actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,1000)
                 actions.sleep(1.1)
                 actions.user.mouse_drag_end()
+    def get_screen_bounds():
+        """Experimental function to get bounds of out screens"""
+        for x in screen.screens():
+            print(f'x: {x}')
+    def coords_in_bounds(coords: Point2d):
+        """Returns boolean describing if in per coordinates are in any screen"""
+        for s in screen.screens():
+            if coords.x >= s.x:
+                if coords.x < s.x + s.width:
+                    if coords.y >= s.y:
+                        if coords.y < s.y + s.height:
+                            return True
+        return False

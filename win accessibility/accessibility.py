@@ -690,7 +690,7 @@ class Actions:
                 return el
             else:
                 print(f"Element doesn't match property list... :(")
-                print(f"element properties: {user.element_information(el,prop_list = prop_list)}")
+                print(f"element properties: {actions.user.element_information(el,prop_list = prop_list)}")
                 return None
     def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
