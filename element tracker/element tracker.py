@@ -156,6 +156,10 @@ traversal_termination_function = None
 
 @mod.action_class
 class Actions:
+    def reset_tracker():
+        """Resets the element tracker used for automatic highlighting and labeling"""
+        el_track = element_tracker()
+        el_track.retrieving = False
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
         el_track.auto_highlight = on

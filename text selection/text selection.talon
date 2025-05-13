@@ -60,10 +60,10 @@ select {user.text_search_unit}$: user.winax_select_unit(text_search_unit)
 	# example spoken forms:
 	#	phones previous ceiling
 	#	phones third next word there
-phones [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.user.winax_phones_text(win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
-phones [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.user.winax_phones_text(win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
-phones [<user.ordinals>] next <user.win_nav_target>$: user.user.winax_phones_text(win_nav_target,"DOWN",ordinals or 1)
-phones [<user.ordinals>] previous <user.win_nav_target>$: user.user.winax_phones_text(win_nav_target,"UP",ordinals or 1)
+phones [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.winax_phones_text(win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+phones [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$: user.winax_phones_text(win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+phones [<user.ordinals>] next <user.win_nav_target>$: user.winax_phones_text(win_nav_target,"DOWN",ordinals or 1)
+phones [<user.ordinals>] previous <user.win_nav_target>$: user.winax_phones_text(win_nav_target,"UP",ordinals or 1)
 
 # FORMATTING CORRECTION
 format <user.formatters> [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
@@ -109,7 +109,7 @@ extend {user.before_or_after} [<user.ordinals>] previous {user.win_bkwd_dyn_nav_
 extend {user.before_or_after} [<user.ordinals>] {user.text_search_direction} <user.win_nav_target>$:
 	user.winax_extend_selection(win_nav_target,text_search_direction,before_or_after,ordinals or 1)
 extend {user.text_search_direction} [<number_small>] {user.text_search_unit}$:
-	user.extend_by_unit(text_search_unit,text_search_direction,number_small or 1)
+	user.winax_extend_by_unit(text_search_unit,text_search_direction,number_small or 1)
 extend right$: user.winax_expand_selection(false,true)
 extend left$: user.winax_expand_selection(true,false)
 expand [<number_small>] {user.text_search_unit}$: user.winax_expand_selection(true,true,text_search_unit or "character",number_small or 1)

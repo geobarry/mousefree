@@ -94,7 +94,6 @@ def variations(words_and_numbers: list):
 class Actions:
     def text_to_spoken_forms(text_list: list, max_words: int = 5):
         """returns a dictionary of spoken_form: id"""
-        print(f"FUNCTION: text_to_spoken_forms")
         r = {}
         for i in range(len(text_list)):
             # Create spoken forms of first word or first and second word

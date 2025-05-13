@@ -121,7 +121,7 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if "Text" in el.patterns:
         init_range = el.text_pattern.selection[0]
     # find target
-    t = actions.user.select_text(trg,scope_dir,ordinal)
+    t = actions.user.winax_select_text(trg,scope_dir,ordinal)
     # perform processing function
     processing_function(t.text)
     # return to original selection

@@ -488,12 +488,15 @@ class Actions:
         el_list = [root]
         def perform_search(el_list,level,verbose = False):
             valid_matches = []        
+            # print(f'el_list: {el_list}')
+            # print(f'prop_list: {prop_list}')
             for el in el_list:
                 valid_matches += actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
             return valid_matches
         for prop_list in prop_seq:
             extra_levels = 0
             valid_matches = perform_search(el_list,extra_levels)
+            # print(f'len(valid_matches): {len(valid_matches)}')
             while len(valid_matches) == 0 and extra_levels < extra_search_levels:
                 extra_levels += 1
                 valid_matches = perform_search(el_list,extra_levels,False)
