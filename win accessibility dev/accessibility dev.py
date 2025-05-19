@@ -192,7 +192,8 @@ class Actions:
             prop_list = []
             for prop in props:
                 val = actions.user.el_prop_val(el,prop,as_text = True)
-                prop_list.append(f'("{prop}","{val}")')
+                if val != '':
+                    prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
         r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
         r = f"        root = winui.active_window().element\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
