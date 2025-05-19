@@ -54,6 +54,7 @@ class compass:
     def pot_of_gold(self,x,y,distance,bearing):
         # calculate next position
         theta = math.radians(bearing)
+        tan_theta = math.tan(theta)
         x2,y2 = x + distance * math.sin(theta), y - distance * math.cos(theta)
         # make sure it is not off the screen
         # note that the most important equation is :
@@ -63,13 +64,15 @@ class compass:
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
-                y2 = y - (x2 - x) / math.tan(theta)
+                if tan_theta > 0:
+                    y2 = y - (x2 - x) / tan_theta
         if x2 > compass_object.width - 1:
             x2 = compass_object.width - 1
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
-                y2 = y - (x2 - x) / math.tan(theta)
+                if tan_theta > 0:
+                    y2 = y - (x2 - x) / tan_theta
         if y2 < 0:
             y2 = 0
             x2 = x - (y2 - y) * math.tan(theta)

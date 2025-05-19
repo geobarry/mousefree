@@ -110,6 +110,7 @@ def get_scope(scope_dir: str = "DOWN",
         cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
     if scope_dir.upper() != "DOWN":
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*settings.get("user.win_selection_distance"))
+    print(f'FUNCTION et_scope return range text: {cur_range.text}')
     return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""

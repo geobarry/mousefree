@@ -1,6 +1,6 @@
 from talon import Context,Module,actions,clip,ui
 from talon.windows import ax as ax, ui as winui
-import subprocess
+from typing import Callable
 import re
 import os
 mod = Module()
@@ -92,15 +92,20 @@ def variations(words_and_numbers: list):
 
 @mod.action_class
 class Actions:
-    def text_to_spoken_forms(text_list: list, max_words: int = 5):
-        """returns a dictionary of spoken_form: id"""
+    def text_to_spoken_forms(item_list: list, text_func: Callable = None, max_words: int = 5):
+        """returns a dictionary of spoken_form: item_id"""
+        # The pattern here will be to locally save a dict of e.g. {str:ax.Element},
+        # then create another dictionary for the dynamic list based on the output of this function,
+        # and finally use the dynamic list capture to retrieve the intended element from the first dictionary
+        if not text_func:
+            text_func = lambda x: x
         r = {}
-        for i in range(len(text_list)):
+        for i in range(len(item_list)):
             # Create spoken forms of first word or first and second word
             # (maybe this can be changed to accept any number of words)
             # (maybe also could be improved to accept numbers)
             # add full t to dictionary
-            t = text_list[i]
+            t = text_func(item_list[i])
             t = re.sub(r"[^a-zA-Z0-9]+"," ",t)
             # split into single words or numbers
             singles = re.findall(r"\d+|\w+",t)
@@ -111,5 +116,5 @@ class Actions:
                 for j in range(max(max_words,len(variation))):
                     x = " ".join(variation[:j+1])
                     if not x in r:
-                        r[x] = i  
+                        r[x] = item_list[i]
         return r

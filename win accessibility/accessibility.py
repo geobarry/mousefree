@@ -597,17 +597,30 @@ class Actions:
                         final_func: Callable = None,
                         verbose: bool = False):
         """press give him key until matching element is reached"""
-        def key_continue(prop_list,first_el):
-            el = winui.focused_element()
-            if el:
-                if el.__eq__(first_el):
-                    actions.user.terminate_traversal()
-                elif actions.user.element_match(el,prop_list):
-                    actions.user.terminate_traversal()
+        def key_continue(prop_list,first_el, try_number = 0):
+            if actions.user.winax_retrieving():
+                try_number += 1
+                if try_number < 5:
+                    actions.sleep(0.5)
+                    key_continue(prop_list,first_el,try_number)
                 else:
-                    actions.key(key)
+                    actions.user.terminate_traversal()
             else:
-                actions.user.terminate_traversal()
+                actions.user.set_winax_retrieving(True)
+                el = winui.focused_element()
+                if el:
+                    if el.__eq__(first_el):
+                        actions.user.set_winax_retrieving(False)
+                        actions.user.terminate_traversal()
+                    elif actions.user.element_match(el,prop_list):
+                        actions.user.set_winax_retrieving(False)
+                        actions.user.terminate_traversal()
+                    else:
+                        actions.user.set_winax_retrieving(False)
+                        actions.key(key)
+                else:
+                    actions.user.set_winax_retrieving(False)
+                    actions.user.terminate_traversal()
         first_el = winui.focused_element() if avoid_cycles else None
         actions.key(key)
         actions.user.initialize_traversal(
