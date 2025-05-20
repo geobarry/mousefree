@@ -87,13 +87,13 @@ format <user.formatters> <user.formatters> [<user.ordinals>] previous <user.win_
 
 # TEXT REPLACEMENT
 replace [<user.ordinals>] next {user.win_fwd_dyn_nav_trg} with <user.constructed_text>$:
-	user.replace_text(constructed_text, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+	user.winax_replace_text(constructed_text, win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
 replace [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg} with <user.constructed_text>$:
-	user.replace_text(constructed_text, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+	user.winax_replace_text(constructed_text, win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
 replace [<user.ordinals>] next <user.win_nav_target> with <user.constructed_text>$:
-	user.replace_text(constructed_text, win_nav_target,"DOWN",ordinals or 1)
+	user.winax_replace_text(constructed_text, win_nav_target,"DOWN",ordinals or 1)
 replace [<user.ordinals>] previous <user.win_nav_target> with <user.constructed_text>$:
-	user.replace_text(constructed_text, win_nav_target,"UP",ordinals or 1)
+	user.winax_replace_text(constructed_text, win_nav_target,"UP",ordinals or 1)
 
 
 # EXTEND CURRENT SELECTION

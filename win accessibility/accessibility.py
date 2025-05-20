@@ -82,7 +82,10 @@ def match(el: ax.Element,
                     print(f'trg_val: {trg_val}')
                     print(f'prop_val: {prop_val}')
                     print(f"regex match: {re.match(trg_val,prop_val)}")
-                return re.match(trg_val,prop_val) != None
+                if prop_val != None:
+                    return re.match(trg_val,prop_val) != None
+                else:
+                    return None
         if prop in ["AND","OR"]:
             return match(el,trg_val,prop)
         elif prop == "clickable":
@@ -190,9 +193,36 @@ def dynamic_element(spoken_form) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
+    def set_el_prop_val(el: ax.Element, prop_name: str, val: str):
+        """Attempts to set the given property value of the given element"""
+        if not el:
+            return 
+        if actions.user.winax_retrieving():
+            return 
+        actions.user.set_winax_retrieving(True)
+        try:
+            if "VirtualizedItem" in el.patterns:
+                el.virtualizeditem_pattern.realize()
+            if prop_name == "value":
+                if "Value" in el.patterns:
+                    pattern = el.value_pattern
+                    pattern.value = val
+            if prop_name == "text":
+                if "Text" in el.patterns:
+                    pattern = el.text_pattern
+                    pattern.text = val
+        except:
+            return 
+        finally:
+            actions.user.set_winax_retrieving(False)
+            return True
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
-        
+        if not el:
+            return 
+        if actions.user.winax_retrieving():
+            return 
+        actions.user.set_winax_retrieving(True)
         try:
             # handle virtualized elements
             if "VirtualizedItem" in el.patterns:
@@ -324,6 +354,8 @@ class Actions:
                 return ''
             else:
                 return  None
+        finally:
+            actions.user.set_winax_retrieving(False)            
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
         try: # try clickable point property
