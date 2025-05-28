@@ -220,8 +220,6 @@ class Actions:
         """Returns the property value or None if the property value cannot be retrieved"""
         if not el:
             return 
-        if actions.user.winax_retrieving():
-            return 
         actions.user.set_winax_retrieving(True)
         try:
             # handle virtualized elements
@@ -627,36 +625,45 @@ class Actions:
                         iter_limit: int = -1,
                         avoid_cycles: bool = True,
                         final_func: Callable = None,
+                        use_registered_element: bool = False,
                         verbose: bool = False):
         """press give him key until matching element is reached"""
-        def key_continue(prop_list,first_el, try_number = 0):
+        def key_continue(prop_list,use_registered_element,first_el, try_number = 0):
             if actions.user.winax_retrieving():
                 try_number += 1
                 if try_number < 5:
                     actions.sleep(0.5)
-                    key_continue(prop_list,first_el,try_number)
+                    key_continue(prop_list,use_registered_element,first_el,try_number)
                 else:
+                    print(f"FUNCTION key_to_element_by_prop_list - stopping because of retrieval conflict")
                     actions.user.terminate_traversal()
             else:
                 actions.user.set_winax_retrieving(True)
-                el = winui.focused_element()
-                if el:
-                    if el.__eq__(first_el):
-                        actions.user.set_winax_retrieving(False)
-                        actions.user.terminate_traversal()
-                    elif actions.user.element_match(el,prop_list):
-                        actions.user.set_winax_retrieving(False)
-                        actions.user.terminate_traversal()
+                try:
+                    if use_registered_element:
+                        el = actions.user.focused_element()
                     else:
-                        actions.user.set_winax_retrieving(False)
-                        actions.key(key)
-                else:
+                        el = winui.focused_element()
+                    print("FUNCTION key_to_element_by_prop_list")                    
+                    print(f'user_focus: {el} name: {el.name}')
+                    if el:
+                        if el.__eq__(first_el):
+                            print(f"FUNCTION key_to_element_by_prop_list - stopping because equal to first element")
+                            actions.user.terminate_traversal()
+                        elif actions.user.element_match(el,prop_list):
+                            print("found what we are looking for - terminating traversal")
+                            actions.user.terminate_traversal()
+                        else:
+                            actions.key(key)
+                    else:
+                        print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
+                        actions.user.terminate_traversal()
+                finally:
                     actions.user.set_winax_retrieving(False)
-                    actions.user.terminate_traversal()
         first_el = winui.focused_element() if avoid_cycles else None
         actions.key(key)
         actions.user.initialize_traversal(
-                    lambda: key_continue(prop_list,first_el),
+                    lambda: key_continue(prop_list,use_registered_element,first_el),
                     sec_lim, iter_limit,final_func)
     def key_to_element(key: str, 
                         prop_str: str, 
@@ -680,14 +687,16 @@ class Actions:
     def key_to_matching_element(key: str, 
                                 prop_list: list, 
                                 ordinal: int=1, 
-                                limit: int=200, 
+                                limit: int=10, 
                                 escape_key: str=None, 
                                 delay: float = 0.03, 
                                 sec_lim: float = 5,
                                 avoid_cycles: bool = False,
                                 mod_func: Callable = None,
+                                el_func: Callable = winui.focused_element,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
+        print("FUNCTION key_to_matching_element")
         if verbose:
             print(f"FUNCTION: key_to_matching_element limit: {limit} delay: {delay} avoids_cycles: {avoid_cycles}")
         el = actions.user.focused_element()
@@ -698,16 +707,19 @@ class Actions:
         i = 1
         matches = 0
         if el:
-            stopper = actions.user.stopper(sec_lim)
+            print(f'limit: {limit}')
+            stopper = actions.user.stopper(sec_lim,[limit])
             while True:
                # if elapsed_sec > max_sec:
                 if stopper.over():
                     print("break due to time overage")
                     break
                 actions.key(key)
+                
                 if delay > 0:
                     actions.sleep(delay)
                 el = actions.user.focused_element()
+                print(f'el: {el}')
                 if el:
                     if verbose:
                         if mod_func:
@@ -719,7 +731,8 @@ class Actions:
                     last_el = el
                     i += 1
                     if matches == ordinal:
-                        # print(f"Found #{ordinal} matching element!")
+                        print(f"Found #{ordinal} matching element!")
+                        print(f'el: {el} prop_list: {prop_list}')
                         break
                     if i == limit:
                         print(f"Reached limit... (i={i}) :(")
@@ -740,7 +753,7 @@ class Actions:
                 print(f"Element doesn't match property list... :(")
                 print(f"element properties: {actions.user.element_information(el,prop_list = prop_list)}")
                 return None
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.03):
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=10, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
         actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)

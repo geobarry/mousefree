@@ -5,6 +5,7 @@ report mouse location: user.report_mouse_location()
 
 # RESULTS ARE COPIED TO CLIPBOARD FOR PASTING INTO SPREADSHEET
 ^copy focused element information$: user.copy_focused_element_to_clipboard()
+^copy registered element information$: user.copy_registered_element_to_clipboard()
 ^copy focused element descendants$: user.copy_focused_element_descendants()
 ^copy focused element ancestors$: user.copy_focused_element_ancestors()
 ^copy focused element {user.element_property} sequence$: user.copy_focused_element_sequence(element_property)

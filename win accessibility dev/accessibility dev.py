@@ -115,6 +115,12 @@ class Actions:
         msg = actions.user.element_information(el, headers = True, verbose = False)
         msg += "\n" + actions.user.element_information(el, verbose = False)
         clip.set_text(msg)
+    def copy_registered_element_to_clipboard():
+        """Copies information about last registered element to the clipboard"""
+        el = actions.user.focused_element()
+        msg = actions.user.element_information(el, headers = True, verbose = False)
+        msg += "\n" + actions.user.element_information(el, verbose = False)
+        clip.set_text(msg)
     def element_descendant_tree(el: ax.Element, max_level: int = 7):
         """Returns a list of [level,cur_id,parent_id,el]"""
         el_info = breadth_first_tree(el,max_level = max_level)
@@ -296,37 +302,53 @@ class Actions:
         clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
     def copy_descendant_sequences(root: ax.Element, 
                                 props: list = ["name","class_name"],
-                                stop_patterns: list = ["Invoke","ExpandCollapse"],
-                                require_name: bool = True):
+                                include_patterns: list = ["Invoke"]):
         """Returns a list of property strings to get from the root to each 
             element with a matching stop pattern"""
+        print("FUNCTION copy_descendant_sequences")
         def walk_children(el, prop_str_list):
-            prop_str_list.append(actions.user.get_property_string(el))
-            stop = False
-            for pattern in stop_patterns:
-                if pattern in el.patterns:
-                    stop = True
-            if require_name:
-                if el.name == '':
-                    stop = False
-            if stop:
-                return [f"{el.name}: " + ";".join(prop_str_list)]
+            if el:
+                print(f'el: {el}')
+                try:
+                    r = []
+                    # expand element if needed
+                    if "ExpandCollapse" in el.patterns:
+                        actions.user.act_on_element(el,"expand")
+                    new_prop_str_list = prop_str_list + [actions.user.get_property_string(el)]
+                    include = False
+                    pattern_list = el.patterns
+                    for pattern in include_patterns:
+                        if pattern in pattern_list:
+                            include = True
+                    if include:
+                        r += [f"{el.name}: " + ";".join(new_prop_str_list)]
+                    else:
+                        print("walking children...")
+                        children = el.children
+                        if children:
+                            for child in children:
+                                r += walk_children(child,new_prop_str_list)
+                    return r
+                except Exception as error:
+                    print(f'error: {error}')
+                    print(f'el: {el}')
+                    return []
             else:
-                print("walking children...")
-                r = []
-                for child in el.children:
-                    r += walk_children(child,prop_str_list)
-            return r
+                return []
         r = []
+        children = root.children
+        print(f'len(children): {len(children)}')
         for child in root.children:
             r += walk_children(child,[])
         clip.set_text("\n".join(r))
     def copy_focused_element_descendant_sequences(props: list = ["name","class_name"],
-                                stop_patterns: list = ["Invoke","ExpandCollapse"],
-                                require_name: bool = True):
+                                include_patterns: list = ["Invoke"]):
         """copy text version of property tests of focused element descendants to clipboard"""
+        print("FUNCTION copy_focused_element_descendent_sequences")
         el = winui.focused_element()
-        actions.user.copy_descendant_sequences(el,props,stop_patterns,require_name)
+        print(f'el: {el}')
+        if el:
+            actions.user.copy_descendant_sequences(el,props,include_patterns)
     def debug_app_window(hdr: str):
         """prints out various information about the active window, app, etc."""
         print(f'hdr: {hdr}')

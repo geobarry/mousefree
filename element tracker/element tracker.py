@@ -14,9 +14,9 @@ marked_elements = []
 
 class element_tracker:
     def __init__(self):        
-        self.canvas = canvas.Canvas.from_screen(winui.main_screen())
-        self.canvas.register('draw', self.draw_canvas) 
-        self.canvas.freeze() # uncomment this line for debugging
+        self.screen = winui.main_screen()
+        self.canvas = None
+        self.update_screen(self.screen)
         self.rectangles = []
         self.labels = []
         self.auto_highlight = False
@@ -24,11 +24,22 @@ class element_tracker:
         self.active_tags = set()
         self.traversal_function = None
         self.retrieving = False
+        print("initializing element tracker...")
         self.focused_element = None
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("5000ms", self.update_highlight)
+#        self.job = cron.interval("5000ms", self.update_highlight)
+    def update_screen(self, s):
+        # updates canvas to input screen 
+        if s:
+            self.screen = s
+            if self.canvas:
+                self.canvas.close()
+            self.canvas = canvas.Canvas.from_screen(s)
+            self.canvas.register('draw', self.draw_canvas) 
+            self.canvas.freeze() # uncomment this line for debugging
+            
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -90,21 +101,21 @@ class element_tracker:
         if not self.retrieving:
             print("FUNCTION: check_focused_element")
             self.retrieving = True
-            self.focused_element = ax.get_focused_element()
-            self.retrieving = False
+            try:
+                self.focused_element = ax.get_focused_element()
+            finally:
+                self.retrieving = False
         else:
-            print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
+            pass
+            # print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
     def update_highlight(self):
-#        print("FUNCTION: update_highlight")
+        # print("FUNCTION: update_highlight")
         if not self.retrieving:
             self.retrieving = True
             try:
                 rectangle_found = False
                 if self.auto_highlight or self.auto_label:
                     el = self.focused_element
-                    if el == None:
-                        self.check_focused_element()
-                        el = self.focused_element
                     if el:
                         rect = None
                         rect = actions.user.el_prop_val(el,"rect")
@@ -112,8 +123,13 @@ class element_tracker:
                             rectangle_found = True
                             if rect != self.focused_rect:
                                 self.focused_rect = rect
+                                s = screen.containing(rect.x,rect.y)
+                                if not s == self.screen:
+                                    self.update_screen(s)
                                 if self.auto_label:
+                                    print("FUNCTION update_highlight")
                                     self.focused_label = el.name
+                                    print(f"focused_label: self.focused_label")
                                 self.canvas.freeze() # this forces canvas redraw
                             if not self.auto_label:
                                 if self.focused_label != "":
@@ -128,25 +144,34 @@ class element_tracker:
             except Exception as error:
                 print(f'FUNCTION update_highlight - error: {error}')
                 self.check_focused_element()            
-            self.retrieving = False
+            finally:
+                self.retrieving = False
         else:
-            print("FUNCTION: update_highlight - in the middle of retrieving another element...")
+            # print("FUNCTION: update_highlight - in the middle of retrieving another element...")
+            pass
     def handle_focus_change(self,el):
-        if el:
+        # print("FUNCTION handle_focus_change")
+        if el:           
             self.focused_element = el
         # handle automatic element traversal
         if self.traversal_function != None:
+            print("Running traversal function...")
             self.traversal_function()
         # handle auto highlight
         self.update_highlight()
 el_track = element_tracker()
 
 def handle_focus_change(el):
-#    print(f"FUNCTION: handle_focus_change          el: {str(el)[:75]}")
-#    actions.user.debug_app_window("focus_change environment")
+    # print("FUNCTION handle_focus_change")
+    # print(f'windows.ui.register"element_focus" input: {el}')
+    # print(f'windows.ui.focused_element: {winui.focused_element()}')
+    # print(f"ax.focused_element: {ax.get_focused_element()}")
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
+    
+        
+    
 traversal_termination_function = None
 
 @mod.action_class
@@ -197,7 +222,7 @@ class Actions:
         """manages windows focused element retrieval;
            places request only if there is no other request in process;
            returns currently focused element"""
-        el_track.check_focused_element()
+#        el_track.check_focused_element()
         return el_track.focused_element
     def set_winax_retrieving(state: bool = True):
         """Used this to prevent windows accessibility freezes"""
@@ -216,6 +241,7 @@ class Actions:
         global traversal_termination_function
         traversal_termination_function = finish_function
         def do_traversal(stopper):
+            print("FUNCTION do_traversal")
             if stopper.over():
                 del stopper
                 actions.user.terminate_traversal()
@@ -226,6 +252,7 @@ class Actions:
                 print("traversal stopped due to over count")
             else:
                 el_track.traversal_count += 1
+                print("...continuing traversal...")
                 traversal_function()
 
         el_track.traversal_count = 0
@@ -235,14 +262,23 @@ class Actions:
         el_track.traversal_function()
     def terminate_traversal():
         """terminate the continued traversal using a key"""
-        el_track.traversal_count = 0
-        el_track.traversal_function = None
         actions.mode.enable("command")
         actions.mode.disable("user.slow_repeating")
+            # return
+        el_track.traversal_count = 0
+        el_track.traversal_function = None
+        
+
         global traversal_termination_function
         if traversal_termination_function:
             traversal_termination_function()
             traversal_termination_function = None
+        # debugging
+        win_focus = winui.focused_element()
+        user_focus = actions.user.focused_element()
+        print("FUNCTION terminate_traversal")
+        print(f'win_focus: {win_focus}')
+        print(f'user_focus: {user_focus}')
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
         print("FUNCTION: mark_focused_element")
