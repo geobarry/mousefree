@@ -233,6 +233,7 @@ class Actions:
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,
         max_iter: int = 500, 
+        delay: float = 0.015,
         finish_function: Callable = None):
         """initialize a traversal of windows accessibility elements; 
         traversal_function should guarantee that actions.user.terminate_traversal 
@@ -242,6 +243,7 @@ class Actions:
         traversal_termination_function = finish_function
         def do_traversal(stopper):
             print("FUNCTION do_traversal")
+            actions.sleep(delay)
             if stopper.over():
                 del stopper
                 actions.user.terminate_traversal()

@@ -169,6 +169,12 @@ class Actions:
         """Copies information about currently focused element and children to the clipboard"""
         el = winui.focused_element()
         actions.user.copy_elements_to_clipboard(levels,root = el)
+    def copy_mouse_element_descendants(levels: int = 12):
+        """Copies information about current mouse element and children to the clipboard"""
+        pos = ctrl.mouse_pos()
+        # get element designated by windows accessibility
+        el = ui.element_at(pos[0],pos[1])
+        actions.user.copy_elements_to_clipboard(levels,root = el)
     def element_ancestors(el: ax.Element, max_gen: int = -1):
         """Returns a list of element ancestors including current element"""
         if max_gen == -1:

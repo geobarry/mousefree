@@ -134,7 +134,7 @@ class Actions:
                 dy = math.cos(math.radians(bearing))
                 actions.user.slow_mouse(x + dx * d / 2,y - dy * d / 2,100)
                 actions.sleep(0.2)
-                actions.mouse_drag(1)
+                actions.user.mouse_drag(0)
                 # actions.user.compass_jiggle()
                 # actions.user.mouse_drag(0)
                 actions.sleep(0.5)

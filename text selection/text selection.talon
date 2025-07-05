@@ -102,6 +102,7 @@ replace [<user.ordinals>] previous <user.win_nav_target> with <user.constructed_
 	#	extend after next period
 	#   extend before third to previous brief exponent
 	#	extend next three lines
+	#	expand one character
 extend {user.before_or_after} [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$:
 	user.winax_extend_selection(win_fwd_dyn_nav_trg,"DOWN",before_or_after,ordinals or 1)
 extend {user.before_or_after} [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$:

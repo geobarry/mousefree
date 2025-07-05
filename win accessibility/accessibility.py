@@ -504,7 +504,7 @@ class Actions:
                 if actions.user.element_match(el,prop_list):
                     return el
             except Exception as error:
-                print(f'error: {error}')
+                print("FUNCTION matching_ancestor: ancestor not found :(")
                 return None
     def find_el_by_prop_seq(prop_seq: list, 
             root: ax.Element = None, 
@@ -549,7 +549,7 @@ class Actions:
         """Perform action on element. Get actions from {user.ui_action}"""
         if el:
             action = action.lower()
-            if action == "click" or action == "right-click":
+            if action in ["click","right-click","double-click"]:
                 loc = actions.user.element_location(el)
                 if loc != None:            
                     if delay_after_ms > 0:
@@ -561,6 +561,8 @@ class Actions:
                         ctrl.mouse_click()
                     elif action == "right-click":
                         ctrl.mouse_click(1)
+                    elif action == "double-click":
+                        ctrl.mouse_click(times = 2)
                 else:
                     print(f"Error in accessibility.py function act_on_element: Element has no location.")
                     return 
@@ -629,6 +631,7 @@ class Actions:
                         verbose: bool = False):
         """press give him key until matching element is reached"""
         def key_continue(prop_list,use_registered_element,first_el, try_number = 0):
+            print("FUNCTION key_continue")
             if actions.user.winax_retrieving():
                 try_number += 1
                 if try_number < 5:
@@ -664,7 +667,7 @@ class Actions:
         actions.key(key)
         actions.user.initialize_traversal(
                     lambda: key_continue(prop_list,use_registered_element,first_el),
-                    sec_lim, iter_limit,final_func)
+                    sec_lim, iter_limit,finish_function = final_func)
     def key_to_element(key: str, 
                         prop_str: str, 
                         escape_key: str=None, 
@@ -677,7 +680,7 @@ class Actions:
         """press given key until the first matching element is reached"""
         prop_list = actions.user.get_property_list(prop_str)
         actions.user.key_to_element_by_prop_list(
-            key,prop_list,key,sec_lim,iter_limit,avoid_cycles,final_func,verbose)
+            key,prop_list,key,sec_lim,iter_limit,avoid_cycles,final_func = final_func,verbose = verbose)
         
     def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
         """press key until element with exact value for one property is reached"""
@@ -687,7 +690,7 @@ class Actions:
     def key_to_matching_element(key: str, 
                                 prop_list: list, 
                                 ordinal: int=1, 
-                                limit: int=10, 
+                                limit: int=30, 
                                 escape_key: str=None, 
                                 delay: float = 0.03, 
                                 sec_lim: float = 5,
