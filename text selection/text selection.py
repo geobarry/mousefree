@@ -110,7 +110,7 @@ def get_scope(scope_dir: str = "DOWN",
         cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
     if scope_dir.upper() != "DOWN":
         cur_range.move_endpoint_by_unit("Start",scope_unit,-1*settings.get("user.win_selection_distance"))
-    print(f'FUNCTION et_scope return range text: {cur_range.text}')
+    print(f'FUNCTION get_scope return range text: {cur_range.text}')
     return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
@@ -196,41 +196,41 @@ def process_text_capture(m) -> (str,bool):
     include_homophones = False
     if hasattr(m,"any_alphanumeric_key"):
         t = re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
-    if hasattr(m,"delimiter_pair"):
+    elif hasattr(m,"delimiter_pair"):
         t = "\\" + m.delimiter_pair.replace(" ",".*?\\")
-    if hasattr(m,"navigation_target_name"):
+    elif hasattr(m,"navigation_target_name"):
         t = re.compile(m.navigation_target_name)
-    if hasattr(m,"abbreviation"):
+    elif hasattr(m,"abbreviation"):
         t = m.abbreviation
-    if hasattr(m,"real_number"):
+    elif hasattr(m,"real_number"):
         x = int(m.real_number)
         y = float(m.real_number)
         t = str(x) if x == y else str(y)
-    if hasattr(m,"word"):
+    elif hasattr(m,"word"):
         t = m.word
         include_homophones = True
-    if hasattr(m,"text"):
+    elif hasattr(m,"text"):
         t = m.text
         include_homophones = True
-    if hasattr(m,"variable"):
-        t = m.variable
-    if hasattr(m,"person"):
+    elif hasattr(m,"extended_variable"):
+        t = m.extended_variable
+    elif hasattr(m,"person"):
         t = m.person
-    if hasattr(m,"student"):
+    elif hasattr(m,"student"):
         t = m.student
-    if hasattr(m,"place"):
+    elif hasattr(m,"place"):
         t = m.place
-    if hasattr(m,"module"):
+    elif hasattr(m,"module"):
         t = m.module
-    if hasattr(m,"function"):
+    elif hasattr(m,"function"):
         t = m.function
-    if hasattr(m,"keyword"):
+    elif hasattr(m,"keyword"):
         t = m.keyword
-    if hasattr(m,"app"):
+    elif hasattr(m,"app"):
         t = m.app
-    if hasattr(m,"font"):
+    elif hasattr(m,"font"):
         t = m.font
-    if hasattr(m,"prose_formatter"):
+    elif hasattr(m,"prose_formatter"):
         t = actions.user.formatted_text(m.prose,m.prose_formatter)
         # later should change this to True to allow for searching by
         # formatter, but that will probably entail returning the formatter
@@ -243,7 +243,7 @@ def process_text_capture(m) -> (str,bool):
 # spoken form consistency; the only difference
 # is that this should return text to paste into a document, 
 # rather than text to search for. So no Regular Expressions.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
 def constructed_text(m) -> str:
     """Output of spoken text construction for windows text selection"""
     t, include_homophones = process_text_capture(m)
@@ -253,7 +253,7 @@ def constructed_text(m) -> str:
 # Note: the windows dynamic navigation target will take precedence
 # over the following capture, according to observed behavior 
 # (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable {user.variable} | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
 def win_nav_target(m) -> str:
     """A target to navigate to. Returns a regular expression."""
     t, include_homophones = process_text_capture(m)
