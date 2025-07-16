@@ -16,9 +16,8 @@ class mouse_mover:
         self.callback = callback
         # need to validate destination, can get error: Python int too large to convert to C long
         print("CLASS mouse_mover __init__")
-        valid = actions.user.coords_in_bounds(dest)
-        print(f'valid: {valid}')
-        if valid:
+        s = actions.user.containing_screen(dest.x,dest.y)
+        if s:
             self.dest = dest
             self.orig = ctrl.mouse_pos()
             self.cur = self.orig
@@ -145,12 +144,12 @@ class Actions:
         """Experimental function to get bounds of out screens"""
         for x in screen.screens():
             print(f'x: {x}')
-    def coords_in_bounds(coords: Point2d):
+    def containing_screen(x: int, y: int):
         """Returns boolean describing if in per coordinates are in any screen"""
         for s in screen.screens():
-            if coords.x >= s.x:
-                if coords.x < s.x + s.width:
-                    if coords.y >= s.y:
-                        if coords.y < s.y + s.height:
-                            return True
-        return False
+            if x >= s.x:
+                if x < s.x + s.width:
+                    if y >= s.y:
+                        if y < s.y + s.height:
+                            return s
+        return None

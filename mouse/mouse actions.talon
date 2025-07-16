@@ -20,5 +20,12 @@ mouse to window [{user.handle_position}]:
 	user.drag_window_center(bearing,number or 500)
 (mouse|compass) jiggle: user.compass_jiggle()
 
+# ADDITIONAL WHEEL MOVEMENT
+wheel up element:
+	user.mouse_to_focused_element_handle(handle_position or "center")
+	user.mouse_scroll_up()
+wheel down element:
+	user.mouse_to_focused_element_handle(handle_position or "center")
+	user.mouse_scroll_down()
 # EXPERIMENTAL
 get screen bounds: user.get_screen_bounds()

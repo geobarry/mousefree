@@ -34,13 +34,18 @@ class compass:
         self.bearing = bearing
         if self.enabled:
             return
-        self.enabled = True
-        screen = ui.main_screen()
-        self.width, self.height = screen.width, screen.height
-        self.canvas = canvas.Canvas.from_screen(screen)#  canvas.Canvas(0, 0, self.width, self.height)
-        self.canvas.register('draw', self.draw_canvas) 
-        self.canvas.freeze() # uncomment this line for debugging
-        self.job = cron.interval('{}ms'.format(update_interval), self.check_for_updates)
+        pos = ctrl.mouse_pos()
+        screen = actions.user.containing_screen(pos[0],pos[1]) # ui.main_screen()
+        if screen:
+            self.enabled = True
+            self.screen = screen
+            self.width, self.height = screen.width, screen.height
+            self.canvas = canvas.Canvas.from_screen(screen)#  canvas.Canvas(0, 0, self.width, self.height)
+            self.canvas.register('draw', self.draw_canvas) 
+            self.canvas.freeze() # uncomment this line for debugging
+            self.job = cron.interval('{}ms'.format(update_interval), self.check_for_updates)
+            rect = self.canvas.rect
+            print(f'rect: {rect}')
     def disable(self):
         if not self.enabled:
             return
@@ -59,37 +64,39 @@ class compass:
         # make sure it is not off the screen
         # note that the most important equation is :
         # tan(theta) = -dx/dy
-        if x2 < 0:
-            x2 = 0
+        if x2 < self.screen.x:
+            x2 = self.screen.x
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
                 if tan_theta > 0:
                     y2 = y - (x2 - x) / tan_theta
-        if x2 > compass_object.width - 1:
-            x2 = compass_object.width - 1
+        if x2 > self.screen.x + compass_object.width - 1:
+            x2 = self.screen.x + compass_object.width - 1
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
                 if tan_theta > 0:
                     y2 = y - (x2 - x) / tan_theta
-        if y2 < 0:
-            y2 = 0
+        if y2 < self.screen.y:
+            y2 = self.screen.y
             x2 = x - (y2 - y) * math.tan(theta)
-        if y2 > compass_object.height - 1:
-            y2 = compass_object.height - 1
+        if y2 > self.screen.y + compass_object.height - 1:
+            y2 = self.screen.y + compass_object.height - 1
             x2 = x - (y2 - y) * math.tan(theta)            
         return x2,y2
     def distance_to_edge(self,x,y,bearing):
-        # calculate distance to edge in pixels
+        # calculate distance to screen edge along bearing in pixels
         theta = math.radians(bearing)
         cos_theta = math.cos(theta)
         sin_theta = math.sin(theta)
         h = compass_object.height
         w = compass_object.width
+        s_x = self.screen.x
+        s_y = self.screen.y
         # get distances in vertical and horizontal directions
-        vrt_dist = y/cos_theta if cos_theta>0 else (y-h)/cos_theta if cos_theta<0 else 9999999
-        hz_dist = -x/sin_theta if sin_theta<0 else (w-x)/sin_theta if sin_theta>0 else 9999999
+        vrt_dist = (y-s_y)/cos_theta if cos_theta>0 else (y-(s_y + h))/cos_theta if cos_theta<0 else 9999999
+        hz_dist = -1*(x-s_x)/sin_theta if sin_theta<0 else ((s_x + w)-x)/sin_theta if sin_theta>0 else 9999999
         # distance is minimum of vertical and horizontal distances
         return min(vrt_dist,hz_dist)
     def draw_canvas(self, canvas):
