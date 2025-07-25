@@ -115,20 +115,24 @@ def get_scope(scope_dir: str = "DOWN",
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
     # get textRange so we can return cursor to original position
-    el = winui.focused_element()
-    init_range = None
-    if "Text2" in el.patterns:
-        init_range = el.text_pattern2.selection[0]
-    if "Text" in el.patterns:
-        init_range = el.text_pattern.selection[0]
-    # find target
-    t = actions.user.winax_select_text(trg,scope_dir,ordinal)
-    # perform processing function
-    processing_function(t.text)
-    # return to original selection
-    if init_range != None:
-        actions.sleep(0.1)
-        init_range.select()
+    el = actions.user.safe_focused_element()
+    if el:
+        init_range = None
+        if "Text2" in el.patterns:
+            selection = el.text_pattern2.selection
+        if "Text" in el.patterns:
+            selection = el.text_pattern.selection
+        if selection:
+            if len(selection) > 0:
+                init_range = selection[0]
+                # find target
+                t = actions.user.winax_select_text(trg,scope_dir,ordinal)
+                # perform processing function
+                processing_function(t.text)
+                # return to original selection
+                if init_range != None:
+                    actions.sleep(0.1)
+                    init_range.select()
 def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
     # Attempt to scroll into view
@@ -274,18 +278,19 @@ class Actions:
     def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
         trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
-        el = winui.focused_element()
-        if "Text" in el.patterns:
-            try:
-                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-                if r != None:
-                    r.select()
-                    scroll_to_selection(r)
-                    return r
-            except:
+        el = actions.user.safe_focused_element()
+        if el:
+            if "Text" in el.patterns:
+                try:
+                    r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                    if r != None:
+                        r.select()
+                        scroll_to_selection(r)
+                        return r
+                except:
+                    actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
+            else:
                 actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
-        else:
-            actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
     def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
@@ -424,38 +429,43 @@ class Actions:
             unit: str = "Character", ordinal: int = 1):
         """Expands selection in the specified direction(s)"""
         print(f"FUNCTION winax_expand_selection: left: {left} | right: {right} | units: {unit} | ordinal: {ordinal}")
-
-        el = winui.focused_element()
-        if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0]
-            print(f"selected text: {cur_range.text}")
-            if left:
-                cur_range.move_endpoint_by_unit("Start",unit,-1*ordinal)
-            if right:
-                cur_range.move_endpoint_by_unit("End",unit,ordinal)
-            cur_range.select()            
-            cur_range.scroll_into_view(True)
+        el = actions.user.safe_focused_element()
+        if el:
+            if "Text" in el.patterns:
+                selection = el.text_pattern.selection
+                if len(selection) > 0:
+                    cur_range = selection[0]
+                    print(f"selected text: {cur_range.text}")
+                    if left:
+                        cur_range.move_endpoint_by_unit("Start",unit,-1*ordinal)
+                    if right:
+                        cur_range.move_endpoint_by_unit("End",unit,ordinal)
+                    cur_range.select()            
+                    cur_range.scroll_into_view(True)
     def winax_select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
-        el = winui.focused_element() 
-        if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0]
-            cur_range.expand_to_enclosing_unit(unit)
-            cur_range.select()
-        else:
-            # need to handle these individually because community edit commands
-            # use classes that I don't know how to access
-            if unit == "Line":
-                # 
-                actions.edit.line_start()
-                actions.edit.extend_line_end()
-            elif unit == "Word":
-                print("selecting word...")
-                actions.edit.word_left()
-                actions.edit.extend_word_right()
-            elif unit == "Paragraph":
-                actions.edit.extend_paragraph_start()
-                actions.edit.extend_paragraph_end()
+        el = actions.user.safe_focused_element()
+        if el:
+            if "Text" in el.patterns:
+                selection = el.text_pattern.selection
+                if len(selection) > 0:
+                    cur_range = selection[0]
+                    cur_range.expand_to_enclosing_unit(unit)
+                    cur_range.select()
+            else:
+                # need to handle these individually because community edit commands
+                # use classes that I don't know how to access
+                if unit == "Line":
+                    # 
+                    actions.edit.line_start()
+                    actions.edit.extend_line_end()
+                elif unit == "Word":
+                    print("selecting word...")
+                    actions.edit.word_left()
+                    actions.edit.extend_word_right()
+                elif unit == "Paragraph":
+                    actions.edit.extend_paragraph_start()
+                    actions.edit.extend_paragraph_end()
     def winax_set_selection_distance(d: int):
         """Allows user to change selection distance with a command"""
         if d > 0:
