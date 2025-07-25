@@ -1,0 +1,11 @@
+list: user.element_property
+-
+name
+class: class_name
+automation: automation_id
+printout
+help text: help_text
+help: help_text
+patterns
+enabled: is_enabled
+keyboard focusable:is_keyboard_focusable

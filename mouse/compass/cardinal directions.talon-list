@@ -1,0 +1,22 @@
+list: user.cardinal_direction
+-
+north: 0
+east: 90
+south: 180
+west: 270
+northeast: 45
+southeast: 135
+southwest: 225
+northwest: 315
+north northeast: 22.5
+east northeast: 67.5
+east southeast: 112.5
+south southeast: 157.5
+south southwest: 202.5
+west southwest: 247.5
+west northwest: 292.5
+north northwest: 337.5
+up: 0
+right: 90
+down: 180
+left: 270

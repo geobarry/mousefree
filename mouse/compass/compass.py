@@ -1,0 +1,421 @@
+# module to control mouse using directions and distances
+
+from typing import Tuple
+from talon import Context, Module, canvas, cron, ctrl, cron, screen, ui, actions
+import math, time, random
+mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
+compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
+resting_display_mode = 0
+update_interval = 30
+fade_time = 5000 # five seconds
+
+def f_distance(from_pos,to_pos):
+    return (((to_pos[0]-from_pos[0]) ** 2) + ((to_pos[1] - from_pos[1]) ** 2))**0.5
+
+class compass:
+    def __init__(self, width: float, height: float):
+        self.enabled = False
+        self.canvas = None
+        self.job = None
+        self.width = width
+        self.height = height
+        self.bearing = 0
+        self.distance = 0
+        self.max_dist = (self.width ** 2 + self.height ** 2) ** 0.5
+        self.active_display_mode = 3
+        self.display_mode = self.active_display_mode
+        self.elapsed_ms = 0
+        self.target_ms = 1500
+        self.max_ms = 1500
+        self.min_ms = 100
+        
+        
+    def enable(self, bearing = 0):
+        self.bearing = bearing
+        if self.enabled:
+            return
+        pos = ctrl.mouse_pos()
+        screen = actions.user.containing_screen(pos[0],pos[1]) # ui.main_screen()
+        if screen:
+            self.enabled = True
+            self.screen = screen
+            self.width, self.height = screen.width, screen.height
+            self.canvas = canvas.Canvas.from_screen(screen)#  canvas.Canvas(0, 0, self.width, self.height)
+            self.canvas.register('draw', self.draw_canvas) 
+            self.canvas.freeze() # uncomment this line for debugging
+            self.job = cron.interval('{}ms'.format(update_interval), self.check_for_updates)
+            rect = self.canvas.rect
+            print(f'rect: {rect}')
+    def disable(self):
+        if not self.enabled:
+            return
+        cron.cancel(self.job)
+        self.canvas.close()
+        self.canvas = None
+        actions.user.grid_close()
+        actions.mode.enable("command")
+        actions.mode.disable("user.compass")
+        self.enabled = False
+    def pot_of_gold(self,x,y,distance,bearing):
+        # calculate next position
+        theta = math.radians(bearing)
+        tan_theta = math.tan(theta)
+        x2,y2 = x + distance * math.sin(theta), y - distance * math.cos(theta)
+        # make sure it is not off the screen
+        # note that the most important equation is :
+        # tan(theta) = -dx/dy
+        if x2 < self.screen.x:
+            x2 = self.screen.x
+            if bearing == 90 or bearing == 270:
+                y2 = y
+            else:
+                if tan_theta > 0:
+                    y2 = y - (x2 - x) / tan_theta
+        if x2 > self.screen.x + compass_object.width - 1:
+            x2 = self.screen.x + compass_object.width - 1
+            if bearing == 90 or bearing == 270:
+                y2 = y
+            else:
+                if tan_theta > 0:
+                    y2 = y - (x2 - x) / tan_theta
+        if y2 < self.screen.y:
+            y2 = self.screen.y
+            x2 = x - (y2 - y) * math.tan(theta)
+        if y2 > self.screen.y + compass_object.height - 1:
+            y2 = self.screen.y + compass_object.height - 1
+            x2 = x - (y2 - y) * math.tan(theta)            
+        return x2,y2
+    def distance_to_edge(self,x,y,bearing):
+        # calculate distance to screen edge along bearing in pixels
+        theta = math.radians(bearing)
+        cos_theta = math.cos(theta)
+        sin_theta = math.sin(theta)
+        h = compass_object.height
+        w = compass_object.width
+        s_x = self.screen.x
+        s_y = self.screen.y
+        # get distances in vertical and horizontal directions
+        vrt_dist = (y-s_y)/cos_theta if cos_theta>0 else (y-(s_y + h))/cos_theta if cos_theta<0 else 9999999
+        hz_dist = -1*(x-s_x)/sin_theta if sin_theta<0 else ((s_x + w)-x)/sin_theta if sin_theta>0 else 9999999
+        # distance is minimum of vertical and horizontal distances
+        return min(vrt_dist,hz_dist)
+    def draw_canvas(self, canvas):
+
+        paint = canvas.paint
+#        paint.antialias = True
+        paint.color = 'fff'
+        paint.font.size = 36
+        rect = canvas.rect
+        def line_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
+            for off, color,width in ((0, color_alias,3),(0, color_main,2)):
+                paint.color = color
+                paint.stroke_width = width
+                start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
+                finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
+                canvas.draw_line(start_x, start_y, finish_x, finish_y)
+        def line_thick_aliased(x,y,distance,bearing, color_main = 'ffffff99', color_alias = '00000099'):
+            for off, color,width in ((0, color_alias,5),(0, color_main,3)):
+                paint.color = color
+                paint.stroke_width = width
+                start_x,start_y = self.pot_of_gold(x,y,off,bearing + 90)
+                finish_x,finish_y = self.pot_of_gold(start_x,start_y,distance,bearing)
+                canvas.draw_line(start_x, start_y, finish_x, finish_y)
+        def text_aliased(label,x,y,font_size):
+                paint.font.size = font_size
+                limit = 2
+                for dx in range(-limit,limit+1):
+                    for dy in range(-limit,limit+1):
+                        # spine-black and more transparent towards edges
+                        dist = ((dx ** 2) + (dy ** 2)) ** 0.5
+                        paint.color = f'000000'
+                        canvas.draw_text(label,x + dx,y + dy)
+                # outline-white and less transparent
+                paint.color = 'ffffffee'
+                canvas.draw_text(label,x,y)
+                canvas.draw_text(label,x+1,y-1)
+        def left_cardinal(b):
+            b = b % 360
+            r = 'W' if b<45 else 'N' if b<135 else 'E' if b<225 else 'S' if b<315 else 'W'
+            return r
+        def right_cardinal(b):
+            b = b % 360
+            r = 'E' if b<45 else 'S' if b<135 else 'W' if b<225 else 'N' if b<315 else 'E'
+            return r
+
+        # get spoke parameters
+        distance = 5000
+        crosshair_radius = 30
+        
+        long_crosshair_length = 12
+        short_crosshair_length = 5
+
+        inner_compass_radius = 250
+        outer_compass_radius = 200
+        short_compass_mark_length = 50
+        long_compass_mark_length = 100
+        label_offset = 25
+        pos = ctrl.mouse_pos()
+        cx = pos[0]
+        cy = pos[1]
+        max_dist = self.distance_to_edge(cx,cy,self.bearing)
+
+        # DRAW GRID
+        startBearing = max(0,self.bearing)
+        if mode_label[self.display_mode] in ['heavy','medium','light','tiny']:
+            # draw circular crosshairs around current mouse position
+            for brg_adj in [0,90,180,270]:
+                start_x,start_y = self.pot_of_gold(cx,cy,crosshair_radius-long_crosshair_length,startBearing + brg_adj)
+                line_aliased(start_x, start_y, long_crosshair_length, startBearing + brg_adj, color_main = 'ff9999ff', color_alias = 'ffffff99')
+            for brg_adj in range(0,360,10):
+                if not brg_adj % 90 == 0:
+                    start_x,start_y = self.pot_of_gold(cx,cy,crosshair_radius - short_crosshair_length,startBearing + brg_adj)
+                    line_aliased(start_x, start_y, short_crosshair_length, startBearing + brg_adj, color_main = 'ff9999ff', color_alias = 'ffffff99')
+
+        if mode_label[self.display_mode] in ['heavy','medium','light','tiny']: 
+            # draw an extra little arrow for tiny display
+            start_x,start_y = self.pot_of_gold(cx,cy,crosshair_radius,startBearing)
+            line_aliased(start_x, start_y, crosshair_radius * 0.5, startBearing, color_main = 'ff9999ff', color_alias = 'ffffff99')
+            start_x,start_y = self.pot_of_gold(cx,cy,crosshair_radius * 1.5, startBearing)
+            line_aliased(start_x, start_y, crosshair_radius * 0.25, startBearing + 135, color_main = 'ff9999ff', color_alias = 'ffffff99')
+            line_aliased(start_x, start_y, crosshair_radius * 0.25, startBearing - 135, color_main = 'ff9999ff', color_alias = 'ffffff99')
+            
+        
+        # bearing not selected
+        if self.bearing  == -1:
+            if mode_label[self.display_mode] in ['heavy','medium','light']:
+                # draw cardinal directions and diagonals
+                for bearing in range(45,359,90):
+                    start_x,start_y = self.pot_of_gold(cx,cy,crosshair_radius,bearing)
+                    line_aliased(start_x, start_y, distance, bearing)
+                for bearing in range(0,359,45):
+                    if bearing % 90 == 0:
+                        start_x,start_y = self.pot_of_gold(cx, cy, inner_compass_radius - long_compass_mark_length, bearing)
+                        line_aliased(start_x, start_y, long_compass_mark_length, bearing)
+            if mode_label[self.display_mode] in ['heavy','medium']:
+                # draw minor spokes
+                for bearing_x10 in range(0,3590,225):
+                    bearing = bearing_x10/10
+                    if bearing % 45 != 0:
+                        start_x,start_y = self.pot_of_gold(cx, cy, inner_compass_radius - short_compass_mark_length, bearing)
+                        line_aliased(start_x, start_y, short_compass_mark_length, bearing)
+            if mode_label[self.display_mode] in ['heavy','medium','light']:
+                # draw labels for cardinal directions
+                paint.color = 'ffffffff'
+                for bearing,label in zip([0,90,180,270],['North','East','South','West']):
+                    start_x,start_y = self.pot_of_gold(cx,cy,inner_compass_radius + label_offset,bearing)
+                    text_aliased(label,start_x,start_y,45)
+            if mode_label[self.display_mode] in ['heavy','medium']:
+                paint.color = 'DDDDDDDD'
+                for bearing,label in zip([45,135,225,315],['NE', 'SE','SW','NW']):
+                    start_x,start_y = self.pot_of_gold(cx,cy,inner_compass_radius + label_offset,bearing)
+                    text_aliased(label,start_x,start_y,30)
+            if mode_label[self.display_mode] in 'heavy':
+                paint.color = 'BBBBBB99'
+                for bearing,label in zip([22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5],['NNE', 'ENE','ESE','SSE','SSW','WSW','WNW','NNW']):
+                    start_x,start_y = self.pot_of_gold(cx,cy,inner_compass_radius + label_offset,bearing)
+                    text_aliased(label,start_x,start_y,18)
+                    
+        # bearing selected
+        if self.bearing  != -1:            
+            # draw distance hash lines
+            spacings = []
+            label_spacings = []
+            if mode_label[self.display_mode] in ['heavy','medium','light']:
+                spacings += [500,100]
+                label_spacings += [500]
+                if mode_label[self.display_mode] in ['heavy','medium']:
+                    spacings += [50,10]
+                    label_spacings += [100]
+            
+            spacing_sizes = {500:60,100:39,50:21,10:12}
+            if mode_label[self.display_mode] == 'medium':
+                spacing_sizes = {500:60,100:25,50:11,10:3}    
+            if mode_label[self.display_mode] == 'light':
+                spacing_sizes = {500:60,100:5,50:3,10:2}    
+            for j in range(len(spacings)):
+                spacing = spacings[j]
+                size = spacing_sizes[spacing]
+                for i in range(int(self.max_dist/spacing) + 1):
+                    # make sure that we are not hitting a larger spacing
+                    if (j == 0) or (((spacing * i) % spacings[j-1]) != 0):
+                        for inout in [-1,1]:
+                            d = self.distance + spacing * i * inout
+                            if d > 0 and d < max_dist:
+                                x,y = self.pot_of_gold(cx,cy,d,self.bearing)
+                                sx,sy = self.pot_of_gold(x,y,size/2,self.bearing - 90)
+                                if spacing == 10:
+                                    line_aliased(sx,sy,size,self.bearing + 90)
+                                elif spacing == 500:
+                                    line_thick_aliased(sx,sy,size,self.bearing + 90,color_main = "ff999999")
+                                else:
+                                    line_thick_aliased(sx,sy,size,self.bearing + 90)
+                                # draw crosshairs for display light mode
+                                if mode_label[self.display_mode] == 'light':
+                                    sx,sy = self.pot_of_gold(x,y,size/2,self.bearing - 180)
+                                    if spacing == 500:
+                                        line_aliased(sx,sy,size,self.bearing)
+                                # draw labels for big lines
+                                if spacing in label_spacings:
+                                    s = 5 if 0 < self.bearing < 180 else size + 5
+                                    sx,sy = self.pot_of_gold(sx,sy,s,self.bearing - 90)
+                                    fs = 27 if spacing == 500 else 18
+                                    text_aliased(str(spacing * i),sx,sy,fs)
+            if mode_label[self.display_mode] in ['heavy']:
+                # draw selected bearing line            
+                start_x,start_y = self.pot_of_gold(cx,cy,10,self.bearing)
+                line_thick_aliased(start_x, start_y, distance, self.bearing, color_main = 'ff9999ff', color_alias = 'ffffff99')
+            
+            # draw adjacent bearings thirty degrees on either side
+            for left_right in [-1,1]:
+                cardinal = left_cardinal(self.bearing) if left_right == -1 else right_cardinal(self.bearing)
+                if mode_label[self.display_mode] in ['heavy','medium']:
+                    # draw full spoke every ten degrees
+                    for brg_adj in [10,20,30]:
+                        b = self.bearing + brg_adj * left_right
+                        start_distance = min(100,max_dist * 0.5)
+                        start_x,start_y = self.pot_of_gold(cx,cy,start_distance,b)
+                        if mode_label[self.display_mode] in ['heavy']:
+                            line_aliased(start_x,start_y,distance,b)
+                    # determine radii
+                    hash_len = spacing_sizes[500]
+                    radii = []
+                    min_int_ratio = 10 # minimum interval ratio
+                    if max_dist > min_int_ratio * hash_len:
+                        radii = [0.6]
+                    if mode_label[self.display_mode] == 'heavy':
+                        if max_dist > 3 * min_int_ratio * hash_len:
+                            radii = [0.2,0.5,0.8]
+                        elif max_dist > 2 * min_int_ratio * hash_len:
+                            radii = [0.35,0.75]
+                    # draw dial marks at radii
+                    for brg_adj in range(31):
+                        spacing_size_id = 500 if brg_adj%10==0 else 100 if brg_adj%5==0 else 50
+                        hash_len = spacing_sizes[spacing_size_id]/2
+                        b = self.bearing + brg_adj * left_right
+                        dial_radius = [int(max_dist * x) for x in radii]
+                        for out_dist in dial_radius:
+                            start_x,start_y = self.pot_of_gold(cx,cy,out_dist - hash_len/2,b)
+                            line_aliased(start_x,start_y, hash_len,b)
+                            # label spokes every ten degrees
+                            if brg_adj % 10 == 0:
+                                buffer = 10
+                                text_x,text_y = self.pot_of_gold(start_x,start_y,buffer+hash_len,b)
+                                label = "{}{}".format(str(abs(brg_adj)), cardinal)
+                                text_aliased(label,text_x,text_y,18)
+    def check_for_updates(self):
+        if self.enabled:
+            if self.display_mode == resting_display_mode:
+                print("back to resting display mode")
+                actions.user.compass_disable()
+                return 
+            do_redraw = True           
+            compass_object.canvas.freeze()
+            # increment time since last action
+            self.elapsed_ms += update_interval
+            # fade radial grid
+            if self.elapsed_ms > fade_time:
+                if self.display_mode > resting_display_mode:
+                    self.display_mode = self.display_mode - 1
+                    self.elapsed_ms = 0
+               
+
+compass_object = compass(5000, 5000)
+# compass_object.enable()
+
+mod = Module()
+mod.list('compass_display_mode', desc = 'amount of information displayed in compass grid')
+mod.list("cardinal_direction",desc = "spoken forms for compass cardinal directions")
+mod.mode("compass",desc = "Compass commands only")
+
+@mod.capture(rule="{user.cardinal_direction} [<user.real_number> [degrees] {user.cardinal_direction}]")
+def bearing(m) -> float:
+    """determines bearing from spoken compass direction"""
+    if len(m) == 1:
+        return float(m[0])
+    else:
+        b1 = float(m[0])
+        if len(m) == 3:
+            b2 = float(m[2])
+        else:
+            b2 = float(m[3])
+        if b2 - b1 > 180:
+            return b1 - float(m[1])
+        elif b2 - b1 > 0:
+            return b1 + float(m[1])
+        elif b2 - b1 > -180:
+            return b1 - float(m[1])
+        else:
+            return b1 + float(m[1])
+
+@mod.action_class
+class Actions:
+    def compass_enable(bearing: float = -999,display_mode: int = -1):
+        """Enable relative mouse guide"""
+        print("FUNCTION: compass_enable")
+        if display_mode == -1:
+            display_mode = compass_object.active_display_mode
+        if bearing == -999:
+            bearing = compass_object.bearing
+            print(f'bearing: {bearing}')
+            if not bearing:
+                bearing = 0
+        compass_object.enable(bearing)
+        compass_object.elapsed_ms = 0
+        compass_object.display_mode = display_mode
+        actions.mode.enable("user.compass")
+        if display_mode > 1:
+            actions.mode.disable("command")
+        else:
+            actions.mode.enable("command")
+    def compass_disable():
+        """Disable relative mouse guide"""
+        compass_object.disable()
+    def move_cardinal(move_degrees: float, target: float):
+        """move the bearing direction a certain number of degrees towards a cardinal direction"""
+        # determine difference between current bearing and target bearing
+        delta = (((target - compass_object.bearing) + 180) % 360) - 180       
+        # limit movement to ensure we don't go past the target direction
+        if move_degrees > abs(delta):
+            move_degrees = abs(delta)
+        # adjust sign of movement if necessary
+        if delta < 0:
+            move_degrees = -move_degrees            
+        # initialize compass compass
+        actions.user.compass_enable((compass_object.bearing + move_degrees) % 360)
+    def fly_out(distance: int, max_ms: int = -1):
+        """move out the specified number of pixels"""
+        pos = ctrl.mouse_pos()
+        cx,cy = pos[0],pos[1]
+        trg = compass_object.pot_of_gold(cx, cy, distance, compass_object.bearing)
+        actions.user.slow_mouse(round(trg[0]),round(trg[1]),max_ms)
+        if max_ms > 0:
+            compass_object.max_ms = max_ms
+        actions.user.compass_enable()
+    def reverse():
+        """reverse direction"""
+        actions.user.compass_enable((compass_object.bearing + 180) % 360)
+    def fly_back(distance: int):
+        """turn around and move back the specified number of pixels"""
+        compass_object.bearing = (compass_object.bearing + 180) % 360
+        actions.user.fly_out(distance)
+        compass_object.bearing = (compass_object.bearing + 180) % 360
+        actions.user.compass_enable()
+    def compass_jiggle(max_dist: int = 15):
+        """move the mouse around a little"""
+        actions.user.compass_enable(-999,1)
+        pos = ctrl.mouse_pos()
+        init_x,init_y = pos[0],pos[1]
+        for n in range(10):
+            d = max_dist*random.random()
+            b = 360*random.random()
+            trg = compass_object.pot_of_gold(init_x,init_y,d,b)
+            actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
+            print(f'trg: {trg}')
+            actions.sleep("50ms")
+        actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
+    def compass_set_default_display_mode(mode: str):
+        """change how much information is displayed in the compass grid"""
+        compass_object.active_display_mode = mode
+        compass_object.display_mode = mode
+    
+ctx = Context()

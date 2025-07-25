@@ -1,0 +1,6 @@
+list: user.move_direction
+-
+up
+down
+left
+right

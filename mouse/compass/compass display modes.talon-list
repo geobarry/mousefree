@@ -1,0 +1,7 @@
+list: user.compass_display_mode
+-
+heavy:4
+medium:3
+regular:3
+light:2
+tiny:1

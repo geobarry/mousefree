@@ -1,0 +1,10 @@
+list: user.file_ext
+# these also need to be entered into the dictionary in explorer.py
+-
+project: aprx
+document: docx
+spreadsheet: xlsx
+excel: xlsx
+power: pptx
+powerpoint: pptx
+pdf

@@ -289,7 +289,10 @@ class Actions:
             elif prop_name.lower() == "item_status":
                 return el.item_status
             elif prop_name.lower() == "patterns":
-                return el.patterns
+                r = el.patterns
+                if as_text:
+                    r = str(r).replace("[","").replace("]","")
+                return r
             elif prop_name.lower() == "described_by":
                 return el.is_described_by
             elif prop_name.lower() == "flows_to":
@@ -326,8 +329,6 @@ class Actions:
             elif prop_name.lower() == "legacy.state":
                 if "LegacyIAccessible" in el.patterns:
                     return el.legacyiaccessible_pattern.state
-
-
             elif prop_name.lower() == "legacy.selection":
                 if "LegacyIAccessible" in el.patterns:
                     return el.legacyiaccessible_pattern.selection
@@ -346,8 +347,10 @@ class Actions:
                         return ''
                     else:
                         return None
-                    
-        except:
+            elif prop_name.lower() == "parent":
+                return el.parent.name if as_text else el.parent
+        except Exception as error:
+            print(f'error: {error}')
             if as_text:
                 return ''
             else:
@@ -489,7 +492,7 @@ class Actions:
             if len(el_list) > 0:
                 return el_list[0]
         return None
-    def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25):
+    def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, verbose: bool = False):
         """Returns the first ancestor that meets prop_list conditions, or None if none is found"""
         if max_gen == -1:
             max_gen == 25
@@ -500,11 +503,16 @@ class Actions:
             if i > max_gen:
                 return None
             try:
-                el = el.parent
-                if actions.user.element_match(el,prop_list):
-                    return el
+                el = actions.user.el_prop_val(el,"parent")
+                if el:
+                    if verbose:
+                        msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
+                        print(f'msg: {msg}')
+                    if actions.user.element_match(el,prop_list):
+                        return el
             except Exception as error:
                 print("FUNCTION matching_ancestor: ancestor not found :(")
+                print(f'error: {error}')
                 return None
     def find_el_by_prop_seq(prop_seq: list, 
             root: ax.Element = None, 
@@ -773,3 +781,38 @@ class Actions:
 
     
 
+    def scroll_el_to_top(el: ax.Element = None, increment: float = 2, delay: float = 0.00):
+        """Scrolls container to bring input element to the top"""
+        # for now we are going to assume element is vertically not horizontally scrollable
+        # NOTES ON SCROLL PATTERN:
+        # - pattern.scroll takes keywords not floats as input: NoAmount, SmallIncrement, LargeDecrement
+        # - if horizontal scrolling is not allowed, pattern.set_scroll_percent horizontal argument must be set to -1
+        if not el:
+            el = winui.focused_element()
+        if el:
+            # find container
+            prop_list = [("patterns",".*'Scroll'.*")]
+            container = actions.user.matching_ancestor(el,prop_list,verbose = False)
+            if container:
+                # from here need to scroll down as needed until element y == container yield
+                pattern = container.scroll_pattern
+                if pattern:
+                    # first scroll to bottom
+                    vrt = pattern.vertical_percent
+                    container_rect = actions.user.el_prop_val(container,"rect")
+                    el_rect = actions.user.el_prop_val(el,"rect")
+                    el_ht = el_rect.height
+                    dy = el_rect.y - container_rect.y
+                    i = 0
+                    while dy > el_ht and vrt < 100 and i < 100:
+                        actions.sleep(delay)
+                        pattern.set_scroll_percent(-1,min(vrt + increment,100))
+                        vrt = pattern.vertical_percent
+                        container_rect = actions.user.el_prop_val(container,"rect")
+                        el_rect = actions.user.el_prop_val(el,"rect")
+                        container_ht = pattern.vertical_size
+                        dy = el_rect.y - container_rect.y
+
+
+                    
+                

@@ -6,6 +6,7 @@ import math
 mod = Module()
 mod.list("handle_position","position for grabbing ui elements")    
 mod.list("move_coordinates","x & y differentials for moving mouse")    
+mod.list("move_direction","simple words for mouse movement directions")
 
 ctx = Context()
 interval = 15
