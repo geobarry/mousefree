@@ -340,7 +340,7 @@ class Actions:
                     return el.legacyiaccessible_pattern.description
             elif prop_name.lower() == "text":
                 if "Text" in el.patterns:
-                    text_range = el.text_pattern.selection[0]
+                    text_range = el.text_pattern.document_range
                     return text_range.text
                 else:
                     if as_text:
@@ -392,7 +392,10 @@ class Actions:
         return r
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
-        return match(el,prop_list,conjunction,mod_func,verbose)
+        if el:
+            return match(el,prop_list,conjunction,mod_func,verbose)
+        else:
+            return False
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
         root = winui.active_window().element
@@ -779,6 +782,7 @@ class Actions:
         el = actions.user.matching_element(prop_list,max_level = max_level)
         actions.user.act_on_element(el,"invoke")
 
+    
     
 
     def scroll_el_to_top(el: ax.Element = None, increment: float = 2, delay: float = 0.00):

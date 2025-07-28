@@ -22,3 +22,6 @@ refresh highlight:
 mark focused element: user.mark_focused_element()
 clear marks: user.clear_marked()
 
+# ACCESSIBILITY MANAGEMENT: USE WITH CAUTION
+# MouseFree utilizes a system to prevent accessibility stalls that prevents attempted retrieval of accessibility elements when another retrieval is believed to be in process. This system is fragile and can sometimes got stuck in a situation where it cannot perform any actions because a retrieval was never completed. The following command resets the retrieval monitor. Be aware that attempting a retrieval when another retrieval is in process is a common cause of the entire system stalling, sometimes requiring a reboot of windows.
+reset retrieval: user.set_winax_retrieving(false)

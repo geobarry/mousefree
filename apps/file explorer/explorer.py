@@ -67,7 +67,7 @@ def retrieve_item(name: str, item_type: str = "file"):
                     print(f'el name: {actions.user.el_prop_val(el,"name")}')
                     actions.key("up")
                     actions.sleep(0.5)
-                    actions.user.key_to_matching_element("down",prop_list,delay = 0.02,avoid_cycles = True,limit = 50,sec_lim = 1)
+                    actions.user.key_to_matching_element("down",prop_list,delay = 0.02,avoid_cycles = True,limit = 75,sec_lim = 3)
                 
             el = winui.focused_element()
             if actions.user.element_match(winui.focused_element(),prop_list):

@@ -127,6 +127,7 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
                 init_range = selection[0]
                 # find target
                 t = actions.user.winax_select_text(trg,scope_dir,ordinal)
+                print(f'trg: {trg} -- t: {t.text}')
                 # perform processing function
                 processing_function(t.text)
                 # return to original selection
@@ -159,7 +160,7 @@ ctx = Context()
 
 @ctx.dynamic_list("user.win_dynamic_nav_target")
 def win_dynamic_nav_target(_) -> str:
-    el = actions.user.focused_element()
+    el = actions.user.safe_focused_element()
     if el:
         if "Text" in el.patterns:
             cur_range = get_scope("both","Line",15)
@@ -169,7 +170,7 @@ def win_dynamic_nav_target(_) -> str:
 
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
-    el = actions.user.focused_element()
+    el = actions.user.safe_focused_element()
     if el:
         print(f'el: {el}')
         if "Text" in el.patterns:
@@ -183,12 +184,16 @@ def win_fwd_dyn_nav_trg(_) -> str:
 @ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: backwards dynamic navigation target")
-    el = winui.focused_element()
+    el = actions.user.safe_focused_element()
+    print(f'el: {el}')
     if el:
-        if "Text" in el.patterns:
+        pattern_list = el.patterns
+        print(f'pattern_list: {pattern_list}')
+        if "Text" in pattern_list:
             cur_range = get_scope("UP","Line")
             t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
             t = re.sub(r"’","'",t)
+            print(f't: {t}')
             return f"""
             {t}
             """
@@ -357,33 +362,44 @@ class Actions:
     def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        el = winui.focused_element()
-        if "Text" in el.patterns:
-            try:
-                cur_range = el.text_pattern.selection[0]
-                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-                if r != None:
-                    src_pos = "Start" if scope_dir.upper() == "UP" else "End"
-                    trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                    cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r)
-                    cur_range.select()
-            except:
+        el = actions.user.safe_focused_element()
+        if el:
+            if "Text" in el.patterns:
+                try:
+                    cur_range = el.text_pattern.selection[0]
+                    r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                    if r != None:
+                        src_pos = "Start" if scope_dir.upper() == "UP" else "End"
+                        trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
+                        cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r)
+                        cur_range.select()
+                except:
+                    actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+            else:
                 actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-        else:
-            actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
-        el = winui.focused_element()
-        if "Text" in el.patterns:
-            cur_range = el.text_pattern.selection[0]
-            if scope_dir.upper() == "UP":
-                ordinal = -ordinal
-                cur_range.move_endpoint_by_range("End","Start",target = cur_range)
-            else:
-                cur_range.move_endpoint_by_range("Start","End",target = cur_range)
-            cur_range.move(unit,ordinal)
-            cur_range.select()
-            cur_range.scroll_into_view(True)
+        el = actions.user.safe_focused_element()
+        print(f'el: {el}')
+        if el:
+            pattern_list = actions.user.el_prop_val(el,"patterns")
+            if pattern_list:
+                if "Text" in pattern_list:
+                    pattern = el.text_pattern
+                    if pattern:
+                        selection_list = pattern.selection
+                        if selection_list:
+                            if len(selection_list) > 0:
+                                cur_range = selection_list[0]
+                                if cur_range:
+                                    if scope_dir.upper() == "UP":
+                                        ordinal = -ordinal
+                                        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
+                                    else:
+                                        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
+                                    cur_range.move(unit,ordinal)
+                                    cur_range.select()
+                                    cur_range.scroll_into_view(True)
     def winax_extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
         el = actions.user.safe_focused_element()

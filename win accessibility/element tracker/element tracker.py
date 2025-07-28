@@ -115,7 +115,7 @@ class element_tracker:
             try:
                 rectangle_found = False
                 if self.auto_highlight or self.auto_label:
-                    el = self.focused_element
+                    el = winui.focused_element()
                     if el:
                         rect = None
                         rect = actions.user.el_prop_val(el,"rect")
@@ -162,10 +162,6 @@ class element_tracker:
 el_track = element_tracker()
 
 def handle_focus_change(el):
-    # print("FUNCTION handle_focus_change")
-    # print(f'windows.ui.register"element_focus" input: {el}')
-    # print(f'windows.ui.focused_element: {winui.focused_element()}')
-    # print(f"ax.focused_element: {ax.get_focused_element()}")
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
@@ -175,6 +171,7 @@ winui.register("element_focus",handle_focus_change)
 traversal_termination_function = None
 
 @mod.action_class
+
 class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
@@ -294,12 +291,6 @@ class Actions:
         if traversal_termination_function:
             traversal_termination_function()
             traversal_termination_function = None
-        # debugging
-        win_focus = winui.focused_element()
-        user_focus = actions.user.focused_element()
-        print("FUNCTION terminate_traversal")
-        print(f'win_focus: {win_focus}')
-        print(f'user_focus: {user_focus}')
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
         print("FUNCTION: mark_focused_element")

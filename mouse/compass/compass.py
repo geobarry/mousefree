@@ -351,7 +351,8 @@ def bearing(m) -> float:
 class Actions:
     def compass_enable(bearing: float = -999,display_mode: int = -1):
         """Enable relative mouse guide"""
-        print("FUNCTION: compass_enable")
+        print(f"FUNCTION: compass_enable | bearing: {bearing} display_mode: {display_mode}")
+        print(f"compass bearing: {compass_object.bearing} | compass display mode: {compass_object.display_mode}")
         if display_mode == -1:
             display_mode = compass_object.active_display_mode
         if bearing == -999:
@@ -359,9 +360,10 @@ class Actions:
             print(f'bearing: {bearing}')
             if not bearing:
                 bearing = 0
+        compass_object.display_mode = display_mode
         compass_object.enable(bearing)
         compass_object.elapsed_ms = 0
-        compass_object.display_mode = display_mode
+
         actions.mode.enable("user.compass")
         if display_mode > 1:
             actions.mode.disable("command")
