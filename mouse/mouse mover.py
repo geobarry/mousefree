@@ -141,16 +141,3 @@ class Actions:
                 actions.user.slow_mouse(x - dx * d / 2,y + dy * d / 2,1000)
                 actions.sleep(1.1)
                 actions.user.mouse_drag_end()
-    def get_screen_bounds():
-        """Experimental function to get bounds of out screens"""
-        for x in screen.screens():
-            print(f'x: {x}')
-    def containing_screen(x: int, y: int):
-        """Returns boolean describing if in per coordinates are in any screen"""
-        for s in screen.screens():
-            if x >= s.x:
-                if x < s.x + s.width:
-                    if y >= s.y:
-                        if y < s.y + s.height:
-                            return s
-        return None

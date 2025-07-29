@@ -1,7 +1,7 @@
 mode: user.compass
 -
 # TURN OFF COMPASS; WILL ALSO TURN OFF AUTOMATICALLY WITH MOST MOUSE COMMANDS, AFTER DELAY
-(exit compass|stop it): user.compass_disable()
+(exit compass| escape): user.compass_disable()
 
 # SET DIRECTION
 # set the compasss direction, e.g. "north"

@@ -30,7 +30,6 @@ def explorer_window():
         prop_list = [("class_name","ShellTabWindowClass")]
         root = actions.user.matching_child(root,prop_list)
     return root
-
 def retrieve_item(name: str, item_type: str = "file"):
     """Returns the file or folder ax.Element from the items view"""
     print(f"FUNCTION: retrieve_item {item_type} (name: {name})")
@@ -74,7 +73,6 @@ def retrieve_item(name: str, item_type: str = "file"):
                 return el
             else:
                 return None
-
 def current_folder():
     root = winui.active_window().element
     # Okay here's the situation:
@@ -112,8 +110,6 @@ def current_folder():
             actions.key("esc")
             actions.user.explorer_select_items_panel()
             return val
-
-
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
@@ -199,8 +195,9 @@ class Actions:
     def explorer_select_navigation_panel():
         """Uses windows accessibility to select navigation panel"""
         root = winui.active_window().element
+        print(f'root: {root} root.name: {root.name}')
         prop_seq = [
-        	[("name","file explorer"),("class_name","ShellTabWindowClass")],
+        	[("class_name","ShellTabWindowClass")],
         	[("class_name","DUIViewWndClassName")],
         	[("name","Navigation Pane"),("class_name","SysTreeView32")],
         ]
@@ -365,7 +362,17 @@ class Actions:
             if "ExpandCollapse" in el.patterns:
                 print("expanding...")
                 actions.user.act_on_element(el,"expand")
-
+    def explorer_filter():
+        """Opens the filter by button"""
+        root = winui.active_window().element
+        prop_seq = [
+        	[("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+        	[("class_name","ApplicationBar")],
+        	[("class_name","AppBarButton"),("name","Filter")]
+        ]
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        if el:
+            actions.user.act_on_element(el,"expand")
     def explorer_open_path_in_terminal():
         """Open path in terminal"""
         actions.user.file_explorer_copy_folder()

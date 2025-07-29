@@ -2,6 +2,7 @@
 
 from typing import Tuple
 from talon import Context, Module, canvas, cron, ctrl, cron, screen, ui, actions
+from talon.types import Point2d as Point2d, Rect as Rect
 import math, time, random
 mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
@@ -17,11 +18,10 @@ class compass:
         self.enabled = False
         self.canvas = None
         self.job = None
-        self.width = width
-        self.height = height
+        self.rect = None
         self.bearing = 0
         self.distance = 0
-        self.max_dist = (self.width ** 2 + self.height ** 2) ** 0.5
+        self.max_dist = 0
         self.active_display_mode = 3
         self.display_mode = self.active_display_mode
         self.elapsed_ms = 0
@@ -35,17 +35,15 @@ class compass:
         if self.enabled:
             return
         pos = ctrl.mouse_pos()
-        screen = actions.user.containing_screen(pos[0],pos[1]) # ui.main_screen()
-        if screen:
+        rect = actions.user.get_screen_bounds()
+        if rect:
             self.enabled = True
-            self.screen = screen
-            self.width, self.height = screen.width, screen.height
-            self.canvas = canvas.Canvas.from_screen(screen)#  canvas.Canvas(0, 0, self.width, self.height)
+            self.canvas = canvas.Canvas.from_rect(rect)
             self.canvas.register('draw', self.draw_canvas) 
             self.canvas.freeze() # uncomment this line for debugging
             self.job = cron.interval('{}ms'.format(update_interval), self.check_for_updates)
-            rect = self.canvas.rect
-            print(f'rect: {rect}')
+            self.rect = self.canvas.rect
+            self.max_dist = (self.rect.width ** 2 + self.rect.height ** 2) ** 0.5
     def disable(self):
         if not self.enabled:
             return
@@ -64,36 +62,38 @@ class compass:
         # make sure it is not off the screen
         # note that the most important equation is :
         # tan(theta) = -dx/dy
-        if x2 < self.screen.x:
-            x2 = self.screen.x
+        if x2 < self.rect.x:
+            x2 = self.rect.x
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
                 if tan_theta > 0:
                     y2 = y - (x2 - x) / tan_theta
-        if x2 > self.screen.x + compass_object.width - 1:
-            x2 = self.screen.x + compass_object.width - 1
+        if x2 > self.rect.x + self.rect.width - 1:
+            x2 = self.rect.x + self.rect.width - 1
             if bearing == 90 or bearing == 270:
                 y2 = y
             else:
                 if tan_theta > 0:
                     y2 = y - (x2 - x) / tan_theta
-        if y2 < self.screen.y:
-            y2 = self.screen.y
+        if y2 < self.rect.y:
+            y2 = self.rect.y
             x2 = x - (y2 - y) * math.tan(theta)
-        if y2 > self.screen.y + compass_object.height - 1:
-            y2 = self.screen.y + compass_object.height - 1
+        if y2 > self.rect.y + self.rect.height - 1:
+            y2 = self.rect.y + self.rect.height - 1
             x2 = x - (y2 - y) * math.tan(theta)            
         return x2,y2
     def distance_to_edge(self,x,y,bearing):
-        # calculate distance to screen edge along bearing in pixels
+        # calculate distance to canvas edge along bearing in pixels
         theta = math.radians(bearing)
         cos_theta = math.cos(theta)
         sin_theta = math.sin(theta)
-        h = compass_object.height
-        w = compass_object.width
-        s_x = self.screen.x
-        s_y = self.screen.y
+        h = self.rect.height
+        w = self.rect.width
+        s_x = self.rect.x
+        s_y = self.rect.y
+
+        
         # get distances in vertical and horizontal directions
         vrt_dist = (y-s_y)/cos_theta if cos_theta>0 else (y-(s_y + h))/cos_theta if cos_theta<0 else 9999999
         hz_dist = -1*(x-s_x)/sin_theta if sin_theta<0 else ((s_x + w)-x)/sin_theta if sin_theta>0 else 9999999

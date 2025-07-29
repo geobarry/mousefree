@@ -49,6 +49,7 @@ view small (icons|thumbnails): key(ctrl-shift-3)
 view list: key(ctrl-shift-4)
 view (detailed|details): key(ctrl-shift-6)
 view distraction free: key(ctrl-shift-5)
+filter: user.explorer_filter()
 
 # COLUMN MANAGEMENT
 sort by {user.explorer_column}: user.explorer_sort_by(explorer_column)
