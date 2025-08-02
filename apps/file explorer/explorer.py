@@ -18,7 +18,7 @@ mod.list("explorer_action",desc = "Actions you can perform on files or folders i
 ctx = Context()
 
 def explorer_window():
-    """Gets route window, whether in main application or dialog"""
+    """Gets root window, whether in main application or dialog"""
     root = winui.active_window().element
     print(f'root: {root}')
     c = actions.user.el_prop_val(root,"class_name")
@@ -39,7 +39,9 @@ def retrieve_item(name: str, item_type: str = "file"):
 #        [("class_name","DUIListView")], # not present in dialogues
         [("class_name","UIItemsView")]
     ]        
+    print(f'root: {root}')
     el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = True)
+    print(f'el: {el}')
     # get first item
     if el:
         for child in el.children:
@@ -75,6 +77,7 @@ def retrieve_item(name: str, item_type: str = "file"):
                 return None
 def current_folder():
     root = winui.active_window().element
+    print(f'FUNCTION current_folder root: {root}')
     # Okay here's the situation:
     # The address bar is not reliable, might leave out the last subfolder or be empty string
     # but the address bar the only place that we can get the letter drive
@@ -202,6 +205,7 @@ class Actions:
         	[("name","Navigation Pane"),("class_name","SysTreeView32")],
         ]
         el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)   
+        print(f'el: {el}')
         if el:
             if "Selection" in el.patterns:
                 pattern = el.selection_pattern
@@ -222,20 +226,6 @@ class Actions:
         filename = actions.edit.selected_text()
         folder = actions.user.file_explorer_copy_folder()
         clip.set_text(f"{folder}\\{filename}")
-    def explorer_sort_by(col_name: str):
-        """sort files and folders by column"""
-        print(col_name)
-        prop_list = [("class_name","UIColumnHeader")]
-        actions.user.key_to_matching_element("tab",prop_list)
-        el = winui.focused_element()
-        if el:
-            if actions.user.element_match(el,prop_list):
-                prop_list = [("name",f"{col_name}.*")]
-                actions.user.key_to_matching_element("right",prop_list,limit = 15)
-                el = winui.focused_element()
-                if el:
-                    if actions.user.element_match(el,prop_list):
-                        actions.user.act_on_element(el,"double-click")
     def explorer_navigate_to_folder(path: str):
         """navigates to given folder in ff explorer like application or dialog"""
         actions.key("alt-d")
@@ -350,6 +340,21 @@ class Actions:
                                 actions.insert(str(x))
                             # Finish up
                             actions.key("enter shift-tab") 
+    def explorer_sort_by(col_name: str):
+        """sort files and folders by column"""
+        print(col_name)
+        prop_list = [("class_name","UIColumnHeader")]
+        actions.user.key_to_matching_element("tab",prop_list)
+        el = winui.focused_element()
+        if el:
+            if actions.user.element_match(el,prop_list):
+                prop_list = [("name",f"{col_name}.*")]
+                actions.user.key_to_matching_element("right",prop_list,limit = 15)
+                el = winui.focused_element()
+                if el:
+                    if actions.user.element_match(el,prop_list):
+                        actions.user.act_on_element(el,"double-click")
+
     def explorer_context_action(action_name: str):
         """Select option in context menu"""
         print(f"FUNCTION: explore_context_action({action_name})")
@@ -362,6 +367,54 @@ class Actions:
             if "ExpandCollapse" in el.patterns:
                 print("expanding...")
                 actions.user.act_on_element(el,"expand")
+    def explorer_special_group(group_name: str):
+        """Attempts to navigate to the recent files section of the files panel"""
+        # First we need to open the HOME item in the navigation panel
+        root = winui.active_window().element
+        print(f'root: {root}')
+        # This is stupid but we're going to select another item first for consistency
+        prop_seq = [
+        	[("class_name","ShellTabWindowClass")],
+        	[("class_name","DUIViewWndClassName")],
+        	[("name","Navigation Pane"),("class_name","SysTreeView32")],
+        	[("name","Desktop")],
+        	[("name","Gallery")]
+        ]
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        if el:
+            # select the desktop item
+            print(f'el: {el}')
+            actions.user.act_on_element(el,"select")
+            # select the home item
+            prop_seq[-1] = [("name","Home")]
+            el = actions.user.find_el_by_prop_seq(prop_seq,root)
+            if el:
+                print(f'el: {el}')
+                actions.user.act_on_element(el,"select")
+                actions.key("enter")
+                # wait for the recommended button to be selected
+                prop_list = [("name","Recommended.*")]
+                el = actions.user.wait_for_element(prop_list,time_limit = 2,verbose = True)
+                if not el:
+                    actions.key("tab")
+                el = actions.user.wait_for_element(prop_list,time_limit = 2,verbose = True)                
+                print(f'el: {el}')
+                if el:
+                    actions.user.act_on_element(el,"collapse")
+                    actions.sleep(0.5)
+                    actions.key("down")
+#                   explorer will revert back to recommended group one time
+                    el = actions.user.wait_for_element(prop_list,time_limit = 2)
+                    if el:
+                        actions.key("down")
+                        el = actions.user.safe_focused_element()
+                        print(f'el: {el}')
+                        prop_list = [("name",group_name)]
+                        if not actions.user.element_match(el,prop_list):
+                            actions.user.key_to_matching_element("right",prop_list,limit = 3,sec_lim = 1.5)
+                        actions.key("enter down")
+
+
     def explorer_filter():
         """Opens the filter by button"""
         root = winui.active_window().element

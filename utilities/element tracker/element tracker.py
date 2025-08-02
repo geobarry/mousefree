@@ -14,7 +14,7 @@ marked_elements = []
 
 class element_tracker:
     def __init__(self):        
-        self.screen = winui.main_screen()
+        self.screen = actions.user.winax_main_screen()
         self.canvas = None
         self.update_screen(self.screen)
         self.rectangles = []
@@ -23,7 +23,6 @@ class element_tracker:
         self.auto_label = False
         self.active_tags = set()
         self.traversal_function = None
-        self.retrieving = False
         print("initializing element tracker...")
         self.focused_element = None
         self.focused_rect = None
@@ -98,57 +97,42 @@ class element_tracker:
         self.canvas = None
     def check_focused_element(self):
         """retrieves new focused element unless already processing"""
-        if not self.retrieving:
-            print("FUNCTION: check_focused_element")
-            self.retrieving = True
-            try:
-                self.focused_element = ax.get_focused_element()
-            finally:
-                self.retrieving = False
-        else:
-            pass
-            # print("FUNCTION: check_focused_element - in the middle of retrieving another element...")
+        self.focused_element = actions.user.safe_focused_element()
     def update_highlight(self):
-        # print("FUNCTION: update_highlight")
-        if not self.retrieving:
-            self.retrieving = True
-            try:
-                rectangle_found = False
-                if self.auto_highlight or self.auto_label:
-                    el = winui.focused_element()
-                    if el:
-                        rect = None
-                        rect = actions.user.el_prop_val(el,"rect")
-                        if rect:
-                            rectangle_found = True
-                            if rect != self.focused_rect:
-                                self.focused_rect = rect
-                                s = screen.containing(rect.x,rect.y)
-                                if not s == self.screen:
-                                    self.update_screen(s)
-                                if self.auto_label:
-                                    print("FUNCTION update_highlight")
-                                    self.focused_label = el.name
-                                    print(f"focused_label: self.focused_label")
+        try:
+            rectangle_found = False
+            if self.auto_highlight or self.auto_label:
+                el = actions.user.safe_focused_element()
+                if el:
+                    rect = None
+                    rect = actions.user.el_prop_val(el,"rect")
+                    if rect:
+                        rectangle_found = True
+                        if rect != self.focused_rect:
+                            self.focused_rect = rect
+                            s = screen.containing(rect.x,rect.y)
+                            if not s == self.screen:
+                                self.update_screen(s)
+                            if self.auto_label:
+                                print("FUNCTION update_highlight")
+                                self.focused_label = el.name
+                                print(f"focused_label: self.focused_label")
+                            self.canvas.freeze() # this forces canvas redraw
+                        if not self.auto_label:
+                            if self.focused_label != "":
+                                self.focused_label = ""
                                 self.canvas.freeze() # this forces canvas redraw
-                            if not self.auto_label:
-                                if self.focused_label != "":
-                                    self.focused_label = ""
-                                    self.canvas.freeze() # this forces canvas redraw
-                    else:
-                        pass
-                if not rectangle_found:
-                    self.focused_rect = None
-                    self.focused_label = ""
-                self.canvas.freeze()
-            except Exception as error:
-                print(f'FUNCTION update_highlight - error: {error}')
-                self.check_focused_element()            
-            finally:
-                self.retrieving = False
-        else:
-            # print("FUNCTION: update_highlight - in the middle of retrieving another element...")
-            pass
+                else:
+                    pass
+            if not rectangle_found:
+                self.focused_rect = None
+                self.focused_label = ""
+            self.canvas.freeze()
+        except Exception as error:
+            print(f'FUNCTION update_highlight - error: {error}')
+#            self.check_focused_element()            
+
+
     def handle_focus_change(self,el):
         # print("FUNCTION handle_focus_change")
         if el:           
@@ -186,66 +170,34 @@ class Actions:
         return el_track.auto_highlight
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
-        rect = el.rect
-        if len(lbl) > 50:
-            lbl = lbl[:50]
-        el_track.add_element(rect,lbl)
+        if el:
+            rect = actions.user.el_prop_val(el,"rect")
+            if rect:
+                if len(lbl) > 50:
+                    lbl = lbl[:50]
+                el_track.add_element(rect,lbl)
     def highlight_rectangle(rect: rect):
         """Highlights input rectangle without associated element"""
         el_track.add_element(rect,"")
     def remove_highlight(el: ax.Element):
         """Remove element from highlights"""
-        try:
-            el_track.remove_element(el.rect)
-        except:
-            print("Unable to remove highlight: Element rectangle does not match any current highlight")
+        if el:
+            rect = actions.user.el_prop_val(el,"rect")
+            if rect:
+                try:
+                    el_track.remove_element(el.rect)
+                except:
+                    print("Unable to remove highlight: Element rectangle does not match any current highlight")
     def clear_highlights():
         """Removes all ui elements from the highlight list"""
         el_track.clear_elements()
-    def key_highlight(keys: str, delay_before_highlight: float = 0.05, delay_after_highlight: float = 0):
-        """Presses a key sequence and then highlights the focused element. If not forced, only highlights if in auto highlight mode."""
-        actions.key(keys)
-        if delay_before_highlight > 0:
-            actions.sleep(delay_before_highlight)
-        actions.user.clear_highlights()
-        actions.user.highlight_element(winui.focused_element())
-        if delay_after_highlight > 0:
-            actions.sleep(delay_after_highlight)
     def focused_element():
         """manages windows focused element retrieval;
            places request only if there is no other request in process;
            returns currently focused element"""
 #        el_track.check_focused_element()
         return el_track.focused_element
-    def set_winax_retrieving(state: bool = True):
-        """Used this to prevent windows accessibility freezes"""
-        el_track.retrieving = state
-    def winax_retrieving():
-        """if true, you should not request a focused element because we are probably waiting for windows to respond to a previous request"""
-        return el_track.retrieving
-    def safe_focused_element():
-        """This is intended to be a safe way to obtain the currently focused element. Will return none if unable to retrieve."""
-        if not actions.user.winax_retrieving():
-            actions.user.set_winax_retrieving(True)
-            try:
-                el = winui.focused_element()
-                return el
-            except Exception as error:
-                print("FUNCTION safe_focused_element could not retrieve element due to error")
-                print(f'error: {error}')
-                print("Attempting to retrieve from generic UI")
-                try:
-                    el = ui.focused_element()
-                    return el
-                except Exception as error:
-                    print("Retrieval from generic UI also raised an error")
-                    print(f'error: {error}')
-                return None
-            finally:
-                actions.user.set_winax_retrieving(False)
-        else:
-            print(f"FUNCTION safe_focused_element could not retrieve element because another retrieval is in process")
-            return None
+
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,
         max_iter: int = 500, 
@@ -295,8 +247,9 @@ class Actions:
         """records the clickable point of the currently focused item"""
         print("FUNCTION: mark_focused_element")
         global marked_elements
-        el = winui.focused_element()
-        marked_elements.append(el)
+        el = actions.user.safe_focused_element()
+        if el:
+            marked_elements.append(el)
     def mouse_to_marked_element_handle(hnd_pos: str, ordinal: int = 0,ms: int = 350):
         """moves the mouse to the marked element"""
         if ordinal < len(marked_elements):
@@ -307,7 +260,7 @@ class Actions:
         """selects marked elements and then empties list"""
         global marked_elements
         # clear any selection
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         try:
             pattern = el.selectionitem_pattern
             pattern.remove_from_selection()

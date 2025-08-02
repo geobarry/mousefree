@@ -447,7 +447,8 @@ class Actions:
         print(f"FUNCTION winax_expand_selection: left: {left} | right: {right} | units: {unit} | ordinal: {ordinal}")
         el = actions.user.safe_focused_element()
         if el:
-            if "Text" in el.patterns:
+            pattern_list = actions.user.el_prop_val(el,"patterns")
+            if "Text" in pattern_list:
                 selection = el.text_pattern.selection
                 if len(selection) > 0:
                     cur_range = selection[0]
@@ -458,6 +459,36 @@ class Actions:
                         cur_range.move_endpoint_by_unit("End",unit,ordinal)
                     cur_range.select()            
                     cur_range.scroll_into_view(True)
+    def winax_peek(scope_dir: str = "DOWN", unit: str = "Character"):
+        """returns the text to the left or right of the current selection"""
+        el = actions.user.safe_focused_element()
+        if el:
+            pattern_list = actions.user.el_prop_val(el,"patterns")
+            if "Text" in pattern_list:
+                selection = el.text_pattern.selection
+                if len(selection) > 0:
+                    cur_range = selection[0]
+                    print(f"selected text: {cur_range.text}")
+                    cur_range = cur_range.clone()
+                    if scope_dir == "DOWN":
+                        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
+                        cur_range.move_endpoint_by_unit("End",unit,1)
+                    else:
+                        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
+                        cur_range.move_endpoint_by_unit("Start",unit,1)
+                    txt = cur_range.text
+                    print(f'txt: {txt}')
+                    return txt
+    def winax_expand_if(trg_val: str, scope_dir: str = "DOWN", unit: str = "Character"):
+        """Expands the current selection if the expansion matches the expression"""
+        expand_txt = actions.user.winax_peek(scope_dir,unit)
+        trg_val = re.compile(f"^{trg_val}$")
+        expand = re.match(trg_val,expand_txt) != None
+        if expand:
+            if scope_dir == "DOWN":
+                actions.user.winax_expand_selection(left = False,right = True,unit = unit)
+            else:
+                actions.user.winax_expand_selection(left = True,right = False,unit = unit)            
     def winax_select_unit(unit: str):
         """Selects the enclosing unit around the current cursor position"""
         el = actions.user.safe_focused_element()

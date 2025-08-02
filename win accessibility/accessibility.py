@@ -5,9 +5,7 @@ from talon.skia import  Paint
 import inspect
 import math
 import re
-from io import StringIO
-from contextlib import redirect_stdout
-import io
+
 from copy import deepcopy
 import time
 from typing import Callable
@@ -193,179 +191,16 @@ def dynamic_element(spoken_form) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
-    def set_el_prop_val(el: ax.Element, prop_name: str, val: str):
-        """Attempts to set the given property value of the given element"""
-        if not el:
-            return 
-        if actions.user.winax_retrieving():
-            return 
-        actions.user.set_winax_retrieving(True)
-        try:
-            if "VirtualizedItem" in el.patterns:
-                el.virtualizeditem_pattern.realize()
-            if prop_name == "value":
-                if "Value" in el.patterns:
-                    pattern = el.value_pattern
-                    pattern.value = val
-            if prop_name == "text":
-                if "Text" in el.patterns:
-                    pattern = el.text_pattern
-                    pattern.text = val
-        except:
-            return 
-        finally:
-            actions.user.set_winax_retrieving(False)
-            return True
-    def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
-        """Returns the property value or None if the property value cannot be retrieved"""
-        if not el:
-            return 
-        actions.user.set_winax_retrieving(True)
-        try:
-            # handle virtualized elements
-            if "VirtualizedItem" in el.patterns:
-                el.virtualizeditem_pattern.realize()
-            if prop_name.lower() == "name":
-                return el.name
-            elif prop_name.lower() == "pid":
-                return el.pid
-            elif prop_name.lower() == "control_type":
-                return el.control_type
-            elif prop_name.lower() == "localized_control_type":
-                return el.localized_control_type
-            elif prop_name.lower() == "accelerator_key":
-                return el.accelerator_key
-            elif prop_name.lower() == "access_key":
-                return el.access_key
-            elif prop_name.lower() == "has_keyboard_focus":
-                return el.has_keyboard_focus
-            elif prop_name.lower() == "is_keyboard_focusable":
-                return el.is_keyboard_focusable
-            elif prop_name == "is_enabled":
-                return el.is_enabled
-            elif prop_name.lower() == "class_name":
-                return el.class_name
-            elif prop_name.lower() == "automation_id":
-                return el.automation_id
-            elif prop_name.lower() == "printout":
-                s = StringIO()               
-                with redirect_stdout(s):
-                    print(el)
-                x = s.getvalue().strip().replace("<","").replace(">","") 
-                return x                
-            elif prop_name.lower() == "help_text":
-                return el.help_text
-            elif prop_name.lower() == "culture":
-                return el.culture
-            elif prop_name.lower() == "is_control_element":
-                return el.is_control_element
-            elif prop_name.lower() == "is_content_element":
-                return el.is_content_element
-            elif prop_name.lower() == "is_password":
-                return el.is_password
-            elif prop_name.lower() == "window_handle":
-                return el.window_handle
-            elif prop_name.lower() == "item_type":
-                return el.item_type
-            elif prop_name.lower() == "is_offscreen":
-                return el.is_offscreen
-            elif prop_name.lower() == "clickable":
-                if as_text:
-                    loc = el.clickable_point
-                    return f"x: {loc.x}   y: {loc.y}"
-                else:
-                    return el.clickable_point
-            elif prop_name.lower() == "children":
-                children = el.children
-                if children == None:
-                    if as_text:
-                        return str(None)
-                    else:
-                        return 0
-                elif as_text:
-                    return str(len(children))
-                else:
-                    return children
-            elif prop_name.lower() == "item_status":
-                return el.item_status
-            elif prop_name.lower() == "patterns":
-                r = el.patterns
-                if as_text:
-                    r = str(r).replace("[","").replace("]","")
-                return r
-            elif prop_name.lower() == "described_by":
-                return el.is_described_by
-            elif prop_name.lower() == "flows_to":
-                return el.flows_to
-            elif prop_name.lower() == "provider_description":
-                return el.provider_description
-            elif prop_name.lower() == "rect":
-                return el.rect
-            elif prop_name.lower() == "rect.x":
-                rect = el.rect
-                if rect:
-                    return el.rect.x
-            elif prop_name.lower() == "rect.y":
-                rect = el.rect
-                if rect:
-                    return el.rect.y
-            elif prop_name.lower() == "rect.width":
-                rect = el.rect
-                if rect:
-                    return el.rect.width
-            elif prop_name.lower() == "rect.height":
-                rect = el.rect
-                if rect:
-                    return el.rect.height
-            elif prop_name.lower() == "value":
-                if "Value" in el.patterns:
-                    return el.value_pattern.value
-            elif prop_name.lower() == "value.is_read_only":
-                if "Value" in el.patterns:
-                    return el.value_pattern.is_read_only
-            elif prop_name.lower() == "legacy.value":
-                if "LegacyIAccessible" in el.patterns:
-                    return el.legacyiaccessible_pattern.value
-            elif prop_name.lower() == "legacy.state":
-                if "LegacyIAccessible" in el.patterns:
-                    return el.legacyiaccessible_pattern.state
-            elif prop_name.lower() == "legacy.selection":
-                if "LegacyIAccessible" in el.patterns:
-                    return el.legacyiaccessible_pattern.selection
-            elif prop_name.lower() == "legacy.name":
-                if "LegacyIAccessible" in el.patterns:
-                    return el.legacyiaccessible_pattern.name
-            elif prop_name.lower() == "legacy.description":
-                if "LegacyIAccessible" in el.patterns:
-                    return el.legacyiaccessible_pattern.description
-            elif prop_name.lower() == "text":
-                if "Text" in el.patterns:
-                    text_range = el.text_pattern.document_range
-                    return text_range.text
-                else:
-                    if as_text:
-                        return ''
-                    else:
-                        return None
-            elif prop_name.lower() == "parent":
-                return el.parent.name if as_text else el.parent
-        except Exception as error:
-            print(f'error: {error}')
-            if as_text:
-                return ''
-            else:
-                return  None
-        finally:
-            actions.user.set_winax_retrieving(False)            
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
-        try: # try clickable point property
+        pt = actions.user.el_prop_val(el,"clickable_point")
+        if pt:
             return el.clickable_point
-        except:
-            try: # try rectangle
-                rect = el.rect
+        else:
+            rect = actions.user.el_prop_val(el,"rect")
+            if rect:
                 return Point2d(rect.x + int(rect.width/2),rect.y + int(rect.height/2))
-            except:
+            else:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
     def get_property_string(el: ax.Element):
@@ -457,7 +292,7 @@ class Actions:
         return None
     def element_descendants(el: ax.Element, max_gen: int = -1):
         """obtain a list of all descendants of current element"""
-    def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, verbose: bool = False):
+    def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, time_limit: float = 5,verbose: bool = False):
         """Returns the matching descendants of the input element at the given generation, 
         or continues the search up to the given number of extra generations"""
         if verbose:
@@ -469,22 +304,30 @@ class Actions:
         r = []
         Q = []
         Q.append((cur_level,parent_id,el))    
+        stopper = actions.user.stopper(time_limit)
         while len(Q) > 0:        
             cur_level,parent_id,el = Q.pop(0)
             if cur_level <= generation + extra_gen:
                 el_id += 1
                 try:
                     if el:
-                        for child in el.children:
-                            if verbose:
-                                msg = "|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list])
-                                print(f'cur_level: {cur_level} generation: {generation} {msg}')
-                            Q.append((cur_level+1,el_id,child))        
-                            if cur_level+1 >= generation:
-                                if actions.user.element_match(child,prop_list,verbose = False):
+                        children = el.children
+                        if children:
+                            for child in children:
+                                if stopper.over():
                                     if verbose:
-                                        print("element matches...")
-                                    r.append(child)
+                                        print(f"FUNCTION: matching_descendants - stopping due to stopper overage")
+                                    return 
+                                stopper.increment()
+                                if verbose:
+                                    msg = "|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list])
+                                    print(f'cur_level: {cur_level} generation: {generation} {msg}')
+                                Q.append((cur_level+1,el_id,child))        
+                                if cur_level+1 >= generation:
+                                    if actions.user.element_match(child,prop_list,verbose = False):
+                                        if verbose:
+                                            print("element matches...")
+                                        r.append(child)
                 except Exception as error:
                     print(f'error: {error}')
         return r
@@ -501,11 +344,12 @@ class Actions:
             max_gen == 25
         el_list = [el]
         i = 0
+        stopper = actions.user.stopper(time_limit)
         while True:
-            i += 1
-            if i > max_gen:
-                return None
             try:
+                if stopper.over():
+                    return 
+                stopper.increment()
                 el = actions.user.el_prop_val(el,"parent")
                 if el:
                     if verbose:
@@ -520,6 +364,7 @@ class Actions:
     def find_el_by_prop_seq(prop_seq: list, 
             root: ax.Element = None, 
             extra_search_levels: int = 2, 
+            time_limit: float = 5,
             verbose: bool = False):
         """Finds element by working down from root"""
         if verbose:
@@ -534,13 +379,24 @@ class Actions:
             for el in el_list:
                 valid_matches += actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
             return valid_matches
+        stopper = actions.user.stopper(time_limit)
+        if verbose:
+            print(f'FUNCTION find_el_by_prop_seq() root: {root}')
         for prop_list in prop_seq:
             extra_levels = 0
             valid_matches = perform_search(el_list,extra_levels)
+            if verbose:
+                print(f'prop_list: {prop_list} valid_matches: {valid_matches}')
+            if stopper.over():
+                if verbose:
+                    print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
+                return 
             # print(f'len(valid_matches): {len(valid_matches)}')
             while len(valid_matches) == 0 and extra_levels < extra_search_levels:
                 extra_levels += 1
                 valid_matches = perform_search(el_list,extra_levels,False)
+                if stopper.over():
+                    return 
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
@@ -556,61 +412,7 @@ class Actions:
             return el_list[0]
         else:
             return None
-    def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
-        """Perform action on element. Get actions from {user.ui_action}"""
-        if el:
-            action = action.lower()
-            if action in ["click","right-click","double-click"]:
-                loc = actions.user.element_location(el)
-                if loc != None:            
-                    if delay_after_ms > 0:
-                        actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                        actions.sleep(f"{delay_after_ms + 75}ms")
-                    else:
-                        ctrl.mouse_move(loc.x,loc.y)
-                    if action == "click":
-                        ctrl.mouse_click()
-                    elif action == "right-click":
-                        ctrl.mouse_click(1)
-                    elif action == "double-click":
-                        ctrl.mouse_click(times = 2)
-                else:
-                    print(f"Error in accessibility.py function act_on_element: Element has no location.")
-                    return 
-            elif action == "hover":
-                loc = actions.user.element_location(el)
-                if loc != None:    
-                    actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                else:
-                    print(f"Error in accessibility.py function act_on_element: Element has no location.")
-            elif action == "highlight":
-                actions.user.highlight_element(el)
-            elif action == "label":
-                actions.user.highlight_element(el,el.name)
-            elif action == "select":
-                if "SelectionItem" in el.patterns:
-                    el.selectionitem_pattern.select()
-                elif "LegacyIAccessible" in el.patterns:
-                    el.legacyiaccessible_pattern.select(1)
-                else:
-                    print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
-            elif action == "invoke":
-                if "Invoke" in el.patterns:
-                    el.invoke_pattern.invoke()
-                else:
-                    print(f"Error in accessibility.py function act_on_element: Element cannot be invoked.")
-            elif action == "toggle":
-                if "Toggle" in el.patterns:
-                    el.toggle_pattern.toggle()
-            elif action == "expand":
-                if "ExpandCollapse" in el.patterns:
-                    el.expandcollapse_pattern.expand()
-            elif action == "collapse":
-                if "ExpandCollapse" in el.patterns:
-                    el.expandcollapse_pattern.collapse()
-            elif action == "scroll_into_view":
-                if "ScrollItem" in el.patterns:
-                    el.scrollitem_pattern.scroll_into_view()
+
     def act_on_focused_element(action: str, delay_after_ms: int = 0):
         """Performs action on currently focused element"""
         el = winui.focused_element()
@@ -643,37 +445,26 @@ class Actions:
         """press give him key until matching element is reached"""
         def key_continue(prop_list,use_registered_element,first_el, try_number = 0):
             print("FUNCTION key_continue")
-            if actions.user.winax_retrieving():
-                try_number += 1
-                if try_number < 5:
-                    actions.sleep(0.5)
-                    key_continue(prop_list,use_registered_element,first_el,try_number)
-                else:
-                    print(f"FUNCTION key_to_element_by_prop_list - stopping because of retrieval conflict")
-                    actions.user.terminate_traversal()
+
+            if use_registered_element:
+                el = actions.user.focused_element()
             else:
-                actions.user.set_winax_retrieving(True)
-                try:
-                    if use_registered_element:
-                        el = actions.user.focused_element()
-                    else:
-                        el = winui.focused_element()
-                    print("FUNCTION key_to_element_by_prop_list")                    
-                    print(f'user_focus: {el} name: {el.name}')
-                    if el:
-                        if el.__eq__(first_el):
-                            print(f"FUNCTION key_to_element_by_prop_list - stopping because equal to first element")
-                            actions.user.terminate_traversal()
-                        elif actions.user.element_match(el,prop_list):
-                            print("found what we are looking for - terminating traversal")
-                            actions.user.terminate_traversal()
-                        else:
-                            actions.key(key)
-                    else:
-                        print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
-                        actions.user.terminate_traversal()
-                finally:
-                    actions.user.set_winax_retrieving(False)
+                el = actions.user.safe_focused_element()
+            print("FUNCTION key_to_element_by_prop_list")                    
+            print(f'user_focus: {el} name: {el.name}')
+            if el:
+                if el.__eq__(first_el):
+                    print(f"FUNCTION key_to_element_by_prop_list - stopping because equal to first element")
+                    actions.user.terminate_traversal()
+                elif actions.user.element_match(el,prop_list):
+                    print("found what we are looking for - terminating traversal")
+                    actions.user.terminate_traversal()
+                else:
+                    actions.key(key)
+            else:
+                print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
+                actions.user.terminate_traversal()
+
         first_el = winui.focused_element() if avoid_cycles else None
         actions.key(key)
         actions.user.initialize_traversal(
@@ -775,6 +566,20 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
+    def wait_for_element(prop_list: list, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
+        """Waits until an element matching the property list becomes focused, and returns that element or None"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            el = actions.user.safe_focused_element()
+            if verbose:
+                print(f'el: {el} name: {el.name} prop_list: {prop_list}')
+            if el:
+                if actions.user.element_match(el,prop_list):
+                    return el
+            if stopper.over():
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)
 
     def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
         """Searches for first element with given property value and invokes it."""

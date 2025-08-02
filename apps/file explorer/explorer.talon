@@ -41,6 +41,9 @@ panel navigation: user.explorer_select_navigation_panel()
 [panel] address bar: key(alt-d)
 copy full path: user.explorer_copy_full_path()
 copy folder: user.explorer_copy_folder()
+go recent: user.explorer_special_group("Recent")
+go favorites: user.explorer_special_group("Favorites")
+go shared: user.explorer_special_group("Shared")
 
 # ALTERNATE VIEWS OF ITEMS PANEL
 view large (icons|thumbnails): key(ctrl-shift-1)
