@@ -6,11 +6,15 @@ class time_stopper:
         self.sec_lim = sec_lim
         self.start_time = time.perf_counter()
         self.count_limit = counter_limits
-        print(f"count limits: {self.count_limit}")
         self.n = [0]*len(self.count_limit)
     def increment(self,counter_number = 0):
         if counter_number < len(self.count_limit):
             self.n[counter_number]+=1
+    def elapsed(self):
+        """Returns number of seconds elapsed since initialization"""
+        cur_time = time.perf_counter()
+        elapsed_sec = cur_time - self.start_time
+        return elapsed_sec
     def over(self):
         for i in range(len(self.count_limit)):
             if self.count_limit[i] > 0:

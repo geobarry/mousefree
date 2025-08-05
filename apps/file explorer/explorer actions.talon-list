@@ -2,4 +2,6 @@ list: user.explorer_action
 -
 open
 select
+add to selection
+remove from selection
 cut

@@ -7,11 +7,22 @@ from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen
 from talon.windows import ax as ax, ui as winui
 from io import StringIO
 from contextlib import redirect_stdout
+from talon.types import Point2d as Point2d
 import io
 
 retrieving = False
 
 mod = Module()
+
+def wait_for_access(time_limit: float = 1):
+    # if currently retrieving, attempt to buy time
+    interval = 0.05
+    stopper = actions.user.stopper(time_limit)
+    while retrieving:
+        # print(f"waiting... {stopper.elapsed()}")
+        if stopper.over():
+            return None
+        actions.sleep(interval)
 
 @mod.action_class
 class Actions:
@@ -26,6 +37,7 @@ class Actions:
     def safe_focused_element():
         """This is intended to be a safe way to obtain the currently focused element. Will return none if unable to retrieve."""
         global retrieving
+        wait_for_access()
         if retrieving:
             print(f"FUNCTION safe_focused_element could not retrieve element because another retrieval is in process")
             return None
@@ -47,9 +59,24 @@ class Actions:
                 return None
             finally:
                 retrieving = False
+    def window_root():
+        """Retrieves the root element of the active window"""
+        global retrieving
+        wait_for_access()
+        if retrieving:
+            print("WINDOW_ROOT: unable to retrieve element because another retrieval is in process")
+        else:
+            retrieving = True
+            try:
+                return winui.active_window().element
+            except Exception as error:
+                print(f"WINDOW_ROOT encountered an error:\n {error}")
+            finally:
+                retrieving = False
     def winax_main_screen():
         """retrieves the main screen from windows UI"""
         global retrieving
+        wait_for_access()
         if retrieving:
             print("FUNCTION winax_main_screen: unable to retrieve element because another retrieval is in process")
         else:
@@ -60,7 +87,19 @@ class Actions:
                 print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
             finally:
                 retrieving = False
-    def act_on_element(el: ax.Element, action: str, delay_after_ms: int=0):
+    def element_location(el: ax.Element):
+        """Returns a point that can be clicked on, or else None"""
+        pt = actions.user.el_prop_val(el,"clickable_point")
+        if pt:
+            return pt
+        else:
+            rect = actions.user.el_prop_val(el,"rect")
+            if rect:
+                return Point2d(rect.x + int(rect.width/2),rect.y + int(rect.height/2))
+            else:
+                print("accessibility: element_location: NO LOCATION FOUND :(")
+                return None
+    def act_on_element(el: ax.Element, action: str, mouse_delay: float=0):
         """Perform action on element. Get actions from {user.ui_action}"""
         if not el:
             return 
@@ -68,32 +107,28 @@ class Actions:
         if retrieving:
             print("FUNCTION el_prop_val: unable to retrieve element because another retrieval is in process")
         else:
-            retrieving = True
+            # first get location if needed for action
+
+            action = action.lower()
+            if action in ["click","right-click","double-click","hover"]:
+                loc = actions.user.element_location(el)
+                if loc != None:            
+                    if mouse_delay > 0:
+                        actions.user.slow_mouse(loc.x,loc.y,mouse_delay*1000)
+                        actions.sleep(mouse_delay + 0.1)
+                    else:
+                       ctrl.mouse_move(loc.x,loc.y)
+                else:
+                    print(f"Error in accessibility.py function act_on_element: Element has no location.")
+                    return 
             try:
-                action = action.lower()
-                if action in ["click","right-click","double-click"]:
-                    loc = actions.user.element_location(el)
-                    if loc != None:            
-                        if delay_after_ms > 0:
-                            actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                            actions.sleep(f"{delay_after_ms + 75}ms")
-                        else:
-                            ctrl.mouse_move(loc.x,loc.y)
-                        if action == "click":
-                            ctrl.mouse_click()
-                        elif action == "right-click":
-                            ctrl.mouse_click(1)
-                        elif action == "double-click":
-                            ctrl.mouse_click(times = 2)
-                    else:
-                        print(f"Error in accessibility.py function act_on_element: Element has no location.")
-                        return 
-                elif action == "hover":
-                    loc = actions.user.element_location(el)
-                    if loc != None:    
-                        actions.user.slow_mouse(loc.x,loc.y,delay_after_ms)
-                    else:
-                        print(f"Error in accessibility.py function act_on_element: Element has no location.")
+                retrieving = True
+                if action == "click":
+                    ctrl.mouse_click()
+                elif action == "right-click":
+                    ctrl.mouse_click(1)
+                elif action == "double-click":
+                    ctrl.mouse_click(times = 2)
                 elif action == "highlight":
                     actions.user.highlight_element(el)
                 elif action == "label":
@@ -105,6 +140,12 @@ class Actions:
                         el.legacyiaccessible_pattern.select(1)
                     else:
                         print(f"Error in accessibility.py function act_on_element: Element cannot be selected.")
+                elif action == "add to selection":
+                    if "SelectionItem" in el.patterns:
+                        el.selectionitem_pattern.add_to_selection()
+                elif action == "remove to selection":
+                    if "SelectionItem" in el.patterns:
+                        el.selectionitem_pattern.remove_from_selection()
                 elif action == "invoke":
                     if "Invoke" in el.patterns:
                         el.invoke_pattern.invoke()
@@ -153,7 +194,9 @@ class Actions:
         """Returns the property value or None if the property value cannot be retrieved"""
         if not el:
             return 
+        wait_for_access()
         global retrieving
+#        print(f"FUNCTION: el_prop_val() - retrieving: {actions.user.winax_retrieving()}")
         if retrieving:
             print("FUNCTION el_prop_val: unable to retrieve element because another retrieval is in process")
         else:
@@ -286,8 +329,15 @@ class Actions:
                             return None
                 elif prop_name.lower() == "parent":
                     return el.parent.name if as_text else el.parent
+                elif prop_name.lower() == "expand_collapse_state":
+                    if "ExpandCollapse" in el.patterns:
+                        return el.expandcollapse_pattern.state
+                elif prop_name.lower() == "selection":
+                    if "Selection" in el.patterns:
+                        print("*****************************")
+                        return el.selection_pattern.selection
             except Exception as error:
-                print(f'error: {error}')
+                print(f'EL_PROP_VAL prop_name: {prop_name} | error: {error}')
                 if as_text:
                     return ''
                 else:

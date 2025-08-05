@@ -5,13 +5,6 @@ right
 left
 up
 down
-shift up: shift-up
-shift down: shifted-down
 tab	
 tabby: tab
-shift tab: shift-tab
-sky tab: shift-tab
-sky tabby: shift-tab
-shifty tabby: shift-tab
 funk six: f6
-sky funk six: shift-f6

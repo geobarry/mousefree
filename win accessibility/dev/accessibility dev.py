@@ -83,7 +83,7 @@ class Actions:
     def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = False):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         orig_el = el
         msg = actions.user.element_information(el, verbose = verbose)
         messages = []
@@ -92,7 +92,7 @@ class Actions:
             messages.append(msg)
             actions.key(key)
             actions.sleep(delay)
-            el = winui.focused_element()
+            el = actions.user.safe_focused_element()
             msg = actions.user.element_information(el, verbose = verbose)    
             if i > limit or el.__eq__(orig_el):
                 print("pausing due to limit or reaching first element")
@@ -111,7 +111,7 @@ class Actions:
         clip.set_text(msg)
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         msg = actions.user.element_information(el, headers = True, verbose = False)
         msg += "\n" + actions.user.element_information(el, verbose = False)
         clip.set_text(msg)
@@ -132,7 +132,7 @@ class Actions:
             root = winui.active_window().element
         # mark elements with special status
         # focused element
-        focused_el = winui.focused_element()
+        focused_el = actions.user.safe_focused_element()
         prop_list = ["name","class_name","automation_id","printout"]
         focus_fingerprint = [actions.user.el_prop_val(focused_el,prop) for prop in prop_list]
         # mouse elements
@@ -167,7 +167,7 @@ class Actions:
         clip.set_text(msg + "\n" + "\n".join(messages))
     def copy_focused_element_descendants(levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         actions.user.copy_elements_to_clipboard(levels,root = el)
     def copy_mouse_element_descendants(levels: int = 12):
         """Copies information about current mouse element and children to the clipboard"""
@@ -209,7 +209,7 @@ class Actions:
                     prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
         r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
-        r = f"        root = winui.active_window().element\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        r = f"        root = action.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         clip.set_text(r)
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""
@@ -246,13 +246,13 @@ class Actions:
         """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
             assumes menu heading is selected with rectangle around it, and ribbon is expanded"""
         i = 1
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         heading_access_key = clean(actions.user.el_prop_val(el,"access_key")) 
         # convention: use menu heading name as prefix for every command
         prefix = el.name
         # press tab to get to the first command; note grayed out commands will not be reached
         actions.key("tab")
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         first_name = f"{prefix} {clean(el.name)}"
         first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
         print(f'first_access_key: {first_access_key}')
@@ -265,7 +265,7 @@ class Actions:
             actions.key("tab")
             actions.sleep(0.05)
             try:
-                el = winui.focused_element()
+                el = actions.user.safe_focused_element()
                 name = f"{prefix} {clean(el.name)}"
                 access_key = clean(actions.user.el_prop_val(el,"access_key"))
                 print(f'{i} access_key: {access_key}')
@@ -292,7 +292,7 @@ class Actions:
         actions.key("esc:5 alt")
         actions.sleep(0.2)
         i = 1
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         first_name = clean(el.name)
         first_access_key = actions.user.el_prop_val(el,"access_key")
         r = {}
@@ -302,7 +302,7 @@ class Actions:
             if i > 100:
                 break
             actions.key("right")
-            el = winui.focused_element()
+            el = actions.user.safe_focused_element()
             name = clean(el.name)
             if name == first_name:
                 break
@@ -355,7 +355,7 @@ class Actions:
                                 include_patterns: list = ["Invoke"]):
         """copy text version of property tests of focused element descendants to clipboard"""
         print("FUNCTION copy_focused_element_descendent_sequences")
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         print(f'el: {el}')
         if el:
             actions.user.copy_descendant_sequences(el,props,include_patterns)

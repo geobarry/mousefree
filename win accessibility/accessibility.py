@@ -19,6 +19,13 @@ mod.list("nav_key","keys commonly used to navigate UI elements")
 mod.list("action_key","keys commonly used to invoke UI elements")
 mod.list("ui_action","actions that can be performed on accessibility elements")
 
+@mod.capture(rule = "[control] [(alt|alternate)] [(shift|sky)] {user.nav_key}")
+def nav_key(m) -> str:
+    """A navigation key preceded or not by standard modifiers"""
+    print(f'm: {m}')
+    r = str(m)
+    r = r.replace("control ","ctrl-").replace("alternate","alt").replace("alt ","alt-").replace("sky","shift").replace("shift ","shift-")
+    return r
 
 @mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
 def ax_target(m) -> str:
@@ -191,18 +198,6 @@ def dynamic_element(spoken_form) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
-    def element_location(el: ax.Element):
-        """Returns a point that can be clicked on, or else None"""
-        pt = actions.user.el_prop_val(el,"clickable_point")
-        if pt:
-            return el.clickable_point
-        else:
-            rect = actions.user.el_prop_val(el,"rect")
-            if rect:
-                return Point2d(rect.x + int(rect.width/2),rect.y + int(rect.height/2))
-            else:
-                print("accessibility: element_location: NO LOCATION FOUND :(")
-                return None
     def get_property_string(el: ax.Element):
         """creates a property string that can be converted into a property list"""
         prop_name = {"n":"name","c":"class_name","a":"automation_id"}
@@ -233,7 +228,7 @@ class Actions:
             return False
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
-        root = winui.active_window().element
+        root = action.user.window_root()
         elements = list(get_every_child(root,max_level = max_level))
         for el in elements:
             if actions.user.element_match(el,prop_list):            
@@ -241,12 +236,12 @@ class Actions:
         return False
     def element_list():
         """returns_a_list_of_all_elements"""
-        root = winui.active_window().element
+        root = action.user.window_root()
         return list(get_every_child(root))
     def matching_element(prop_list: list, item_num: int = 0, max_level: int = 12,root: ax.Element = None):
         """returns the zero based nth item matching the property list, or None"""
         if root == None:
-            root = winui.active_window().element
+            root = action.user.window_root()
         matches = actions.user.matching_elements(prop_list,max_level = max_level,root = root)
         if len(matches) > item_num:
             return matches[item_num]
@@ -257,7 +252,7 @@ class Actions:
         r = []
         # get list of elements
         if root == None:
-            root = winui.active_window().element
+            root = action.user.window_root()
         elements = list(get_every_child(root,max_level = max_level))       
         # search for match
         for el in elements:
@@ -370,7 +365,7 @@ class Actions:
         if verbose:
             print("FUNCTION: actions.user.find_el_by_prop_seq()")
         if root == None:
-            root = winui.active_window().element
+            root = action.user.window_root()
         el_list = [root]
         def perform_search(el_list,level,verbose = False):
             valid_matches = []        
@@ -413,21 +408,21 @@ class Actions:
         else:
             return None
 
-    def act_on_focused_element(action: str, delay_after_ms: int = 0):
+    def act_on_focused_element(action: str, mouse_delay: int = 0):
         """Performs action on currently focused element"""
-        el = winui.focused_element()
-        actions.user.act_on_element(el,action,delay_after_ms)
-    def act_on_mouse_element(action: str, delay_after_ms: int = 0):
+        el = actions.user.safe_focused_element()
+        actions.user.act_on_element(el,action,mouse_delay)
+    def act_on_mouse_element(action: str, mouse_delay: int = 0):
         """Returns the UI element at the current mouse position"""
         pos = ctrl.mouse_pos()
         el = ui.element_at(pos[0],pos[1])
-        actions.user.act_on_element(el,action,delay_after_ms)
-    def act_on_named_element(name: str, action: str, delay_after_ms: int = 0):
+        actions.user.act_on_element(el,action,mouse_delay)
+    def act_on_named_element(name: str, action: str, mouse_delay: int = 0):
         """Performs action on first element beginning with given name"""
         prop_list = [("name",name)]
         elements = actions.user.matching_elements(prop_list)
         if len(elements) > 0:
-            actions.user.act_on_element(elements[0],action,delay_after_ms)
+            actions.user.act_on_element(elements[0],action,mouse_delay)
     def act_on_matching_element(prop_list: list, action: str, item_num: int = 0, max_level: int = 99):
         """Perform action on first UI element that matches the property list"""
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
@@ -465,7 +460,7 @@ class Actions:
                 print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
                 actions.user.terminate_traversal()
 
-        first_el = winui.focused_element() if avoid_cycles else None
+        first_el = actions.user.safe_focused_element() if avoid_cycles else None
         actions.key(key)
         actions.user.initialize_traversal(
                     lambda: key_continue(prop_list,use_registered_element,first_el),
@@ -498,13 +493,12 @@ class Actions:
                                 sec_lim: float = 5,
                                 avoid_cycles: bool = False,
                                 mod_func: Callable = None,
-                                el_func: Callable = winui.focused_element,
+                                el_func: Callable = actions.user.safe_focused_element,
                                 verbose: bool = False):
         """press given key until the first matching element is reached"""
-        print("FUNCTION key_to_matching_element")
         if verbose:
-            print(f"FUNCTION: key_to_matching_element limit: {limit} delay: {delay} avoids_cycles: {avoid_cycles}")
-        el = actions.user.focused_element()
+            print(f"FUNCTION: key_to_matching_element \n  prop_list: {prop_list}  \nlimit: {limit} delay: {delay} avoids_cycles: {avoid_cycles}")
+        el = actions.user.safe_focused_element()
         first_el = el
         if verbose:
             print(f'first_el: {first_el}')
@@ -512,7 +506,6 @@ class Actions:
         i = 1
         matches = 0
         if el:
-            print(f'limit: {limit}')
             stopper = actions.user.stopper(sec_lim,[limit])
             while True:
                # if elapsed_sec > max_sec:
@@ -523,8 +516,11 @@ class Actions:
                 
                 if delay > 0:
                     actions.sleep(delay)
-                el = actions.user.focused_element()
-                print(f'el: {el}')
+                el = actions.user.safe_focused_element()
+                if verbose:
+                    msg = actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])
+                    print(f"element: {msg}")
+
                 if el:
                     if verbose:
                         if mod_func:
@@ -556,7 +552,7 @@ class Actions:
                 return el
             else:
                 print(f"Element doesn't match property list... :(")
-                print(f"element properties: {actions.user.element_information(el,prop_list = prop_list)}")
+                print(f"element properties: {actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])}")
                 return None
     def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=10, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
@@ -597,7 +593,7 @@ class Actions:
         # - pattern.scroll takes keywords not floats as input: NoAmount, SmallIncrement, LargeDecrement
         # - if horizontal scrolling is not allowed, pattern.set_scroll_percent horizontal argument must be set to -1
         if not el:
-            el = winui.focused_element()
+            el = actions.user.safe_focused_element()
         if el:
             # find container
             prop_list = [("patterns",".*'Scroll'.*")]

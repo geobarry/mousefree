@@ -5,6 +5,7 @@ from talon.skia import  Paint
 from typing import Callable
 import time
 
+
 mod = Module()
 
 mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
@@ -28,7 +29,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-#        self.job = cron.interval("5000ms", self.update_highlight)
+        self.job = cron.interval("500ms", self.update_highlight)
     def update_screen(self, s):
         # updates canvas to input screen 
         if s:
@@ -149,7 +150,7 @@ def handle_focus_change(el):
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
-    
+   
         
     
 traversal_termination_function = None
@@ -197,6 +198,7 @@ class Actions:
            returns currently focused element"""
 #        el_track.check_focused_element()
         return el_track.focused_element
+
 
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,

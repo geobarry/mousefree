@@ -1,8 +1,12 @@
-from talon import Context,Module,actions,clip,ui
-from talon.windows import ax as ax, ui as winui
+from talon import Context,Module,actions,clip
+from talon.windows import ax as ax
 import subprocess
 import re
 import os
+from pathlib import Path
+import itertools
+
+
 # from ..utilities.spoken_form_utils import text_to_spoken_forms
 mod = Module()
  
@@ -19,14 +23,10 @@ ctx = Context()
 
 def explorer_window():
     """Gets root window, whether in main application or dialog"""
-    root = winui.active_window().element
-    print(f'root: {root}')
+    root = actions.user.window_root()
     c = actions.user.el_prop_val(root,"class_name")
-    print(f'c: {c}')
     if c == None or not "#" in c:
-        print("We're inside...")
         children = root.children
-        print(f'children: {children}')
         prop_list = [("class_name","ShellTabWindowClass")]
         root = actions.user.matching_child(root,prop_list)
     return root
@@ -39,98 +39,114 @@ def retrieve_item(name: str, item_type: str = "file"):
 #        [("class_name","DUIListView")], # not present in dialogues
         [("class_name","UIItemsView")]
     ]        
-    print(f'root: {root}')
-    el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = True)
-    print(f'el: {el}')
-    # get first item
+    el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
     if el:
-        for child in el.children:
-            if actions.user.element_match(child,[("class_name",("UIItem"))]):
-                el = child
-                break
-        if el:
-            actions.user.act_on_element(el,"select")
-            
-            actions.edit.file_start()
-            actions.sleep(0.1)
-            prop_list = [("name",name)]
-            el = winui.focused_element()
-            print(f"we should be at the top: {el.name}")
-            print(f'prop_list: {prop_list}')
-            
-#            check if top element is what we are looking for
-            if not actions.user.element_match(winui.focused_element(),prop_list):
-                actions.key(name[0])
+        children = el.children
+        if children:
+            for child in children:
+                if actions.user.element_match(child,[("class_name",("UIItem"))]):
+                    el = child
+                    break
+            if el:
+                actions.user.act_on_element(el,"select")
+                actions.edit.file_start()
                 actions.sleep(0.1)
-#                check if first element starting with given character is what we are looking for
-                el = winui.focused_element()
+                prop_list = [("name",name)]
+                # check if top element is what we are looking for
+                el = actions.user.safe_focused_element()
                 if not actions.user.element_match(el,prop_list):
-                    print(f'el name: {actions.user.el_prop_val(el,"name")}')
-                    actions.key("up")
-                    actions.sleep(0.5)
-                    actions.user.key_to_matching_element("down",prop_list,delay = 0.02,avoid_cycles = True,limit = 75,sec_lim = 3)
-                
-            el = winui.focused_element()
-            if actions.user.element_match(winui.focused_element(),prop_list):
-                return el
-            else:
-                return None
-def current_folder():
-    root = winui.active_window().element
-    print(f'FUNCTION current_folder root: {root}')
-    # Okay here's the situation:
-    # The address bar is not reliable, might leave out the last subfolder or be empty string
-    # but the address bar the only place that we can get the letter drive
-    # It seems the only reliable way to get the current folder is to enter the address bar with a keyboard shortcut
-    # And even then it is very delicate, We need to obtain the value before pressing anything else,
-    # and only after obtaining the value can we press escape to get rid of the annoying popup
-    if root:
-        el = None
-        actions.key("ctrl-l")
-        if "dialog" in actions.user.el_prop_val(root,"printout"):
-            print("We are in a dialog...")
-            prop_seq = [
-                [("class_name","ReBarWindow32")],
-                [("class_name","Address Band Root")],
-                [("name","Loading"),("class_name","msctls_progress32")],
-                [("name","Address"),("class_name","ComboBox")],
-                [("name","Address"),("class_name","Edit")]
-            ]
-            el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
-        else:
-            print("We are in the main Windows Explorer app")
+                    # try typing out item name directly
+                    actions.insert(name)
+                    el = actions.user.wait_for_element(prop_list,time_limit = 0.2)
+                    if not el:
+                        # try getting to item with key presses
+                        actions.key("up")
+                        actions.sleep(0.5)
+                        actions.user.key_to_matching_element("down",prop_list,delay = 0.02,avoid_cycles = True,limit = 20,sec_lim = 3,verbose = False)
+                el = actions.user.safe_focused_element()
+                if actions.user.element_match(el,prop_list):
+                    return el
+                else:
+                    return None
+def current_path(path_type: str = "directory"):
+    # make sure something is selected
+    path = actions.user.file_manager_current_path()
+    path = path.replace(" - File Explorer","")
+    if os.path.isdir(path):
+        return path
+    else:
+        # User has not selected option to place path in window title
+        # We're going to have to do this the hard way
+        
+        # Obtain file items panel
+        root = actions.user.window_root()
+        prop_seq = [
+            [("class_name","ShellTabWindowClass")],
+            [("class_name","DUIViewWndClassName")],
+            [("name","Items View"),("class_name","UIItemsView")],
+        ]
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        if el:
+            selection = actions.user.el_prop_val(el,"selection")
+            if not selection:
+                # need to select something
+                actions.user.explorer_select_items_panel()
+            # open up the more button
             prop_seq = [
                 [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
-                [("class_name","AutoSuggestBox")],
-                [("name","Address Bar"),("class_name","Textbox")]
+                [("class_name","ApplicationBar"),("automation_id","FileExplorerCommandBar")],
+                [("class_name","Button"),("automation_id","MoreButton")]
             ]
             el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
-        if el:
-            val = actions.user.el_prop_val(el,"value")
-            print(f'current folder: {val}')
-            # Press escape NOW to get rid of the popup
-            actions.sleep(0.2)
-            actions.key("esc")
-            actions.user.explorer_select_items_panel()
-            return val
+            if el:
+                actions.user.act_on_element(el,"invoke")
+                # invoke the copy path button
+                prop_seq = [
+                    [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+                    [("class_name","ApplicationBar"),("automation_id","FileExplorerCommandBar")],
+                    [("name","Popup"),("class_name","Popup"),("automation_id","OverflowPopup")],
+                    [("name","Copy path"),("class_name","AppBarButton")]
+                ]
+                el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+                if el:
+                    actions.user.act_on_element(el,"invoke")
+                    path = actions.edit.selected_text()
+                    # File explorer annoyingly puts the path in quotes
+                    path = path.strip('"')
+                    actions.user.explorer_select_items_panel()
+
+                    if path_type == "directory" or path_type == "folder":
+                        return os.path.dirname(path)
+                    elif path_type == "file":
+                        return os.path.basename(path)
+                    else:
+                        return path
+            
+
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
-    global current_folder_items
-    folder = current_folder()
+    global current_path_items
+    folder = current_path("directory")
+    print(f'folder: {folder}')
     if folder:
         # catch situation where folder cannot be found
         if folder == "" or folder is None:
             print("FUNCTION: retrieve_item_list ERROR: cannot obtain folder path")
             return 
         get_files = item_type == "file"
-        current_folder_items = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) == get_files]
+        current_path_items = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) == get_files]
         if ext != '':
             n = len(ext)
-            current_folder_items = [item for item in current_folder_items if item[-n:] == ext]
-        out = actions.user.text_to_spoken_forms(current_folder_items)
+            current_path_items = [item for item in current_path_items if item[-n:] == ext]
+        spoken_form_dict = actions.user.create_spoken_forms_from_list(current_path_items)
+        # print(f'spoken_form_dict: {dict(itertools.islice(spoken_form_dict.items(), 20))}')
+        # print(f'len(spoken_form_dict): {len(spoken_form_dict)}')
+#        out = actions.user.text_to_spoken_forms(current_path_items)
+        # print(f'out: {dict(itertools.islice(out.items(), 20))}')
+        # print(f'len(out): {len(out)}')
 #        actions.user.explorer_select_items_panel()
-        return out
+        return spoken_form_dict
 
 ext_dict = {
     "project":"aprx",
@@ -154,11 +170,10 @@ def dynamic_file(_) -> dict[str,str]:
 
 @ctx.dynamic_list("user.dynamic_folder")
 def dynamic_folder(spoken_form) -> dict[str,str]:
+    # NOTE: Sometimes this doesn't work in dialogs even though the return value is correct, 
+    #        the talon command ends up being the lowercase version of the key, not the associated dictionary value
     # NOTE: It looks like you are not allowed to call an action from inside a dynamic list in another module
-    print(f"FUNCTION dynamic_folder")
-    print(f"spoken_form: {spoken_form}")
     dynamic_output = retrieve_item_list("folder")
-    # print(f'dynamic_output: {dynamic_output}')
     return dynamic_output
 
 time_last_pop = 0
@@ -166,18 +181,23 @@ num_recent_pops = 0
 
 @mod.action_class
 class Actions:
-    def explorer_process_item(name: str, item_type: str = "file",action: str = "select"):
-        """Attempts to open the item with a given name and type (file over folder)"""
+    def explorer_process_item(name: str = "", item_type: str = "file",action: str = "select"):
+        """Attempts to open the item with a given name and type (file over folder), or else the currently selected item"""
         print(f"FUNCTION: explorer_process_item ({item_type} {name})")
-        el = retrieve_item(name,item_type)
+        if name == "":
+            el = actions.user.safe_focused_element()
+        else:
+            el = retrieve_item(name,item_type)
         if el:
-            if action == "open":
-                actions.user.act_on_element(el,"invoke")
-            elif action == "select":
-                actions.user.act_on_element(el,"select")
-            elif action == "cut":
-                actions.user.act_on_element(el,"select")
-                actions.key("ctrl-x")
+            prop_list = [("class_name","UIItem")]
+            if actions.user.element_match(el,prop_list):
+                if action == "open":
+                    actions.user.act_on_element(el,"invoke")
+                elif "select" in action:
+                    actions.user.act_on_element(el,action)
+                elif action == "cut":
+                    actions.user.act_on_element(el,"select")
+                    actions.key("ctrl-x")
     def explorer_select_items_panel():
         """Uses windows accessibility to select file panel"""
         root = explorer_window()
@@ -197,7 +217,7 @@ class Actions:
                 el.selectionitem_pattern.add_to_selection()
     def explorer_select_navigation_panel():
         """Uses windows accessibility to select navigation panel"""
-        root = winui.active_window().element
+        root = actions.user.window_root()
         print(f'root: {root} root.name: {root.name}')
         prop_seq = [
         	[("class_name","ShellTabWindowClass")],
@@ -216,7 +236,7 @@ class Actions:
                         actions.user.act_on_element(el,"select")
     def explorer_copy_folder():
         """Returns the folder path"""
-        folder = current_folder()
+        folder = current_path()
         clip.set_text(folder) # for backwards compatibility; please use return value
         return folder
     def explorer_copy_full_path():
@@ -229,7 +249,7 @@ class Actions:
     def explorer_navigate_to_folder(path: str):
         """navigates to given folder in ff explorer like application or dialog"""
         actions.key("alt-d")
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         actions.sleep(0.1)
         success = False
         i = 0
@@ -253,7 +273,7 @@ class Actions:
             # actions.sleep(0.9)
             # def open_with_app(prop_list,app_name):
                 # actions.sleep(0.5)
-                # el = winui.focused_element()
+                # el = actions.user.safe_focused_element()
                 # if el:
                     # if actions.user.element_match(el,prop_list):
                         # actions.key("right")
@@ -263,7 +283,7 @@ class Actions:
             # actions.user.key_to_element_by_prop_list("up",prop_list,final_func = lambda: open_with_app(prop_list,app_name))
         actions.key("menu")
         actions.sleep(1)
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         parent = el.parent
         print(f'parent: {parent}')
         prop_seq = [
@@ -273,7 +293,7 @@ class Actions:
         if el:
             if actions.user.element_match(el,prop_seq[-1]):
                 actions.user.act_on_element(el,"expand")
-                el = winui.focused_element()
+                el = actions.user.safe_focused_element()
                 parent = el.parent
                 print(f'parent: {parent}')
                 prop_seq = [
@@ -287,7 +307,8 @@ class Actions:
         """Shows, hides, toggles or resizes the designated column"""
         # Tab to the column heading element
         prop_list = [("class_name","UIColumnHeader")]
-        if not actions.user.element_match(ui.focused_element(),prop_list):
+        el = actions.user.safe_focused_element()
+        if not actions.user.element_match(el,prop_list):
 #            actions.user.key_to_matching_element("tab",prop_list)
             actions.user.explorer_select_items_panel()
             actions.key("tab")
@@ -298,7 +319,7 @@ class Actions:
         if col_name != '':
             # Go down to the desired column
             actions.sleep(0.1)
-            root = winui.active_window().element
+            root = actions.user.window_root()
             print(f'root #1: {root}') # if we can catch this maybe we can make it quicker
             if root:
                 actions.sleep(0.1) # apparently this needs a long time
@@ -309,7 +330,7 @@ class Actions:
                 # el = actions.user.find_el_by_prop_seq(prop_seq,root)
                 actions.insert(col_name)
                 actions.sleep(0.2)
-                el = winui.focused_element()
+                el = actions.user.safe_focused_element()
                 print(f'el: {el}')
                 if el:
                     pattern = el.scrollitem_pattern
@@ -345,12 +366,12 @@ class Actions:
         print(col_name)
         prop_list = [("class_name","UIColumnHeader")]
         actions.user.key_to_matching_element("tab",prop_list)
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         if el:
             if actions.user.element_match(el,prop_list):
                 prop_list = [("name",f"{col_name}.*")]
                 actions.user.key_to_matching_element("right",prop_list,limit = 15)
-                el = winui.focused_element()
+                el = actions.user.safe_focused_element()
                 if el:
                     if actions.user.element_match(el,prop_list):
                         actions.user.act_on_element(el,"double-click")
@@ -367,35 +388,40 @@ class Actions:
             if "ExpandCollapse" in el.patterns:
                 print("expanding...")
                 actions.user.act_on_element(el,"expand")
+                actions.sleep(0.5)
+                actions.key("down up")
+            else:
+                actions.sleep(1)
+                actions.key("enter")
     def explorer_special_group(group_name: str):
         """Attempts to navigate to the recent files section of the files panel"""
         # First we need to open the HOME item in the navigation panel
-        root = winui.active_window().element
+        root = actions.user.window_root()
         print(f'root: {root}')
         # This is stupid but we're going to select another item first for consistency
         prop_seq = [
         	[("class_name","ShellTabWindowClass")],
         	[("class_name","DUIViewWndClassName")],
         	[("name","Navigation Pane"),("class_name","SysTreeView32")],
-        	[("name","Desktop")],
-        	[("name","Gallery")]
+        	[("name","Desktop")]
         ]
-        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
         if el:
-            # select the desktop item
-            print(f'el: {el}')
-            actions.user.act_on_element(el,"select")
-            # select the home item
-            prop_seq[-1] = [("name","Home")]
-            el = actions.user.find_el_by_prop_seq(prop_seq,root)
+            prop_list = [("name","Home")]
+            children = actions.user.el_prop_val(el,"children")
+            # return 
+            el = actions.user.matching_child(el,prop_list)
             if el:
+                # select the desktop item
                 print(f'el: {el}')
                 actions.user.act_on_element(el,"select")
+                actions.user.wait_for_element(prop_list,time_limit = 2)
                 actions.key("enter")
-                # wait for the recommended button to be selected
+#                    wait for the recommended button to be selected
                 prop_list = [("name","Recommended.*")]
                 el = actions.user.wait_for_element(prop_list,time_limit = 2,verbose = True)
                 if not el:
+                    print("Trying the tab key...")
                     actions.key("tab")
                 el = actions.user.wait_for_element(prop_list,time_limit = 2,verbose = True)                
                 print(f'el: {el}')
@@ -403,21 +429,17 @@ class Actions:
                     actions.user.act_on_element(el,"collapse")
                     actions.sleep(0.5)
                     actions.key("down")
-#                   explorer will revert back to recommended group one time
+ #                     explorer will revert back to recommended group one time
                     el = actions.user.wait_for_element(prop_list,time_limit = 2)
                     if el:
                         actions.key("down")
-                        el = actions.user.safe_focused_element()
-                        print(f'el: {el}')
-                        prop_list = [("name",group_name)]
-                        if not actions.user.element_match(el,prop_list):
-                            actions.user.key_to_matching_element("right",prop_list,limit = 3,sec_lim = 1.5)
-                        actions.key("enter down")
+                        actions.sleep(1)
+                        actions.key("down")
 
 
     def explorer_filter():
         """Opens the filter by button"""
-        root = winui.active_window().element
+        root = actions.user.window_root()
         prop_seq = [
         	[("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
         	[("class_name","ApplicationBar")],

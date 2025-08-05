@@ -8,6 +8,7 @@ mode: command
 file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
 folder {user.explorer_action} {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_folder,"folder",explorer_action)
+(file|folder) {user.explorer_action}$: user.explorer_process_item("","",explorer_action)
 open with {user.app}$: user.explorer_open_with(app)
 {user.file_ext} {user.explorer_action} {user.dynamic_file_with_ext}$: 
 	print("talon file: {dynamic_file_with_ext}")
@@ -21,7 +22,14 @@ move to folder {user.dynamic_folder}$:
 	key("ctrl-v")
 	sleep(1.0)
 	key("alt-up")
-file {user.dynamic_file} move to {user.dynamic_folder}$:
+move to parent [folder]$:
+	user.explorer_select_items_panel()
+	edit.cut()
+	sleep(0.1)
+	user.file_manager_open_parent()
+	sleep(0.7)
+	key("ctrl-v")	
+file {user.dynamic_file} move to [folder] {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_file,"file","cut")
 	user.explorer_process_item(dynamic_folder,"folder","open")
 	sleep(0.7)
@@ -153,3 +161,5 @@ prepend <user.text>:
 	key(enter)
 	sleep(0.4)
 	key(home down:3)
+	
+test current path: print("{user.file_manager_current_path()}")
