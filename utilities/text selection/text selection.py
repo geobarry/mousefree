@@ -61,7 +61,7 @@ def find_target(trg: re.Pattern,
         Returns a ax.TextRange object or None"""
     # Handle case of no TextRange input
     if text_range is None:
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         if "Text" not in el.patterns:
             print("Error in function find_target: focused element does not have text pattern")
             return None
@@ -94,7 +94,7 @@ def get_scope(scope_dir: str = "DOWN",
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
         return 
-    el = winui.focused_element()
+    el = actions.user.safe_focused_element()
     if "Text" not in el.patterns:
         print("Error in function get_scope: focused element does not have text pattern")
         return 
@@ -336,7 +336,7 @@ class Actions:
     def winax_go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        el = winui.focused_element()
+        el = actions.user.safe_focused_element()
         if "Text" in el.patterns:
             try:
                 cur_range = el.text_pattern.selection[0]

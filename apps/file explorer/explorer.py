@@ -23,6 +23,7 @@ ctx = Context()
 
 def explorer_window():
     """Gets root window, whether in main application or dialog"""
+    print("EXPLORER_WINDOW")
     root = actions.user.window_root()
     c = actions.user.el_prop_val(root,"class_name")
     if c == None or not "#" in c:
@@ -32,7 +33,7 @@ def explorer_window():
     return root
 def retrieve_item(name: str, item_type: str = "file"):
     """Returns the file or folder ax.Element from the items view"""
-    print(f"FUNCTION: retrieve_item {item_type} (name: {name})")
+    print(f"RETRIEVE_ITEM {item_type} (name: {name})")
     root = explorer_window()
     prop_seq = [
         [("class_name","DUIViewWndClassName")],
@@ -121,7 +122,25 @@ def current_path(path_type: str = "directory"):
                         return os.path.basename(path)
                     else:
                         return path
-            
+        # If that fails, we are in a dialog
+        print("GETTING CURRENT PATH FROM DIALOG")
+        root = actions.user.window_root()
+        prop_seq = [
+#        	[("name","Save As"),("class_name","#32770")],
+        	[("class_name","ReBarWindow32")],
+        	[("class_name","Address Band Root")],
+        	[("name","Loading"),("class_name","msctls_progress32")],
+            [("class_name","Breadcrumb Parent")],
+        	[("name","Address.*")],
+#        	[("name","Address"),("class_name","Edit")]
+        ]
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        if el:
+            path = actions.user.el_prop_val(el,"name")
+            if path:
+                path = path.lstrip("Address: ")
+                return path
+        
 
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
@@ -173,6 +192,7 @@ def dynamic_folder(spoken_form) -> dict[str,str]:
     # NOTE: Sometimes this doesn't work in dialogs even though the return value is correct, 
     #        the talon command ends up being the lowercase version of the key, not the associated dictionary value
     # NOTE: It looks like you are not allowed to call an action from inside a dynamic list in another module
+    print("DYNAMIC_FOLDER")
     dynamic_output = retrieve_item_list("folder")
     return dynamic_output
 

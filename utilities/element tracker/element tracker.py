@@ -8,7 +8,7 @@ import time
 
 mod = Module()
 
-mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
+#mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
 
 # list for tracking a set of clickable points
 marked_elements = []

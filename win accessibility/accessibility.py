@@ -299,6 +299,8 @@ class Actions:
         r = []
         Q = []
         Q.append((cur_level,parent_id,el))    
+        print("MATCHING_DESCENDANTS")
+        print(f'time_limit: {time_limit}')
         stopper = actions.user.stopper(time_limit)
         while len(Q) > 0:        
             cur_level,parent_id,el = Q.pop(0)
@@ -328,12 +330,12 @@ class Actions:
         return r
     def matching_descendant(el: ax.Element, prop_list: list, gen: int, extra_gen: int = 0, verbose: bool = False):
         """Returns the descendant of the input element that matches the property list"""
-        el_list = actions.user.matching_descendants(el,prop_list,gen,extra_gen,verbose)
+        el_list = actions.user.matching_descendants(el,prop_list,gen,extra_gen,verbose = verbose)
         if el_list:
             if len(el_list) > 0:
                 return el_list[0]
         return None
-    def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, verbose: bool = False):
+    def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, time_limit: float = 5, verbose: bool = False):
         """Returns the first ancestor that meets prop_list conditions, or None if none is found"""
         if max_gen == -1:
             max_gen == 25
@@ -343,6 +345,7 @@ class Actions:
         while True:
             try:
                 if stopper.over():
+                    print("MATCHING_ANCESTOR time is over")
                     return 
                 stopper.increment()
                 el = actions.user.el_prop_val(el,"parent")
@@ -380,8 +383,6 @@ class Actions:
         for prop_list in prop_seq:
             extra_levels = 0
             valid_matches = perform_search(el_list,extra_levels)
-            if verbose:
-                print(f'prop_list: {prop_list} valid_matches: {valid_matches}')
             if stopper.over():
                 if verbose:
                     print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
@@ -391,10 +392,18 @@ class Actions:
                 extra_levels += 1
                 valid_matches = perform_search(el_list,extra_levels,False)
                 if stopper.over():
+                    if verbose:
+                        print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
                     return 
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
+                    for el in el_list:
+                        children = actions.user.el_prop_val(el,"children")
+                        for child in children:
+                            msg = actions.user.element_information(child,prop_list = ["name","class_name","printout"])
+                            print(f'child: {msg}')
+                        
                 el_list = []
                 break        
             else:

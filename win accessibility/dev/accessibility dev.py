@@ -209,7 +209,7 @@ class Actions:
                     prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
         r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
-        r = f"        root = action.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        r = f"        root = actions.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         clip.set_text(r)
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""
