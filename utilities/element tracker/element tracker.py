@@ -1,4 +1,4 @@
-from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui
+from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app
 from talon.windows import ax as ax, ui as winui
 from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
@@ -144,15 +144,17 @@ class element_tracker:
             self.traversal_function()
         # handle auto highlight
         self.update_highlight()
-el_track = element_tracker()
 
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
 winui.register("element_focus",handle_focus_change)
 
-   
-        
-    
+el_track = None
+def on_ready():
+    global el_track
+    el_track = element_tracker()
+    actions.user.auto_highlight(True)
+app.register("ready",on_ready)
 traversal_termination_function = None
 
 @mod.action_class
