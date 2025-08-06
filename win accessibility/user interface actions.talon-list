@@ -1,4 +1,5 @@
 list: user.ui_action
+# actions that can be used in conjunction with the function actions.user.act_on_element()
 -
 click on: click
 right click: right-click

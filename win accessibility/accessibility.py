@@ -228,7 +228,7 @@ class Actions:
             return False
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
-        root = action.user.window_root()
+        root = actions.user.window_root()
         elements = list(get_every_child(root,max_level = max_level))
         for el in elements:
             if actions.user.element_match(el,prop_list):            
@@ -236,12 +236,12 @@ class Actions:
         return False
     def element_list():
         """returns_a_list_of_all_elements"""
-        root = action.user.window_root()
+        root = actions.user.window_root()
         return list(get_every_child(root))
     def matching_element(prop_list: list, item_num: int = 0, max_level: int = 12,root: ax.Element = None):
         """returns the zero based nth item matching the property list, or None"""
         if root == None:
-            root = action.user.window_root()
+            root = actions.user.window_root()
         matches = actions.user.matching_elements(prop_list,max_level = max_level,root = root)
         if len(matches) > item_num:
             return matches[item_num]
@@ -252,7 +252,7 @@ class Actions:
         r = []
         # get list of elements
         if root == None:
-            root = action.user.window_root()
+            root = actions.user.window_root()
         elements = list(get_every_child(root,max_level = max_level))       
         # search for match
         for el in elements:
@@ -368,7 +368,7 @@ class Actions:
         if verbose:
             print("FUNCTION: actions.user.find_el_by_prop_seq()")
         if root == None:
-            root = action.user.window_root()
+            root = actions.user.window_root()
         el_list = [root]
         def perform_search(el_list,level,verbose = False):
             valid_matches = []        

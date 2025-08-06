@@ -95,6 +95,15 @@ replace [<user.ordinals>] next <user.win_nav_target> with <user.constructed_text
 replace [<user.ordinals>] previous <user.win_nav_target> with <user.constructed_text>$:
 	user.winax_replace_text(constructed_text, win_nav_target,"UP",ordinals or 1)
 
+# TEXT REMOVAL
+delete [<user.ordinals>] next {user.win_fwd_dyn_nav_trg}$:
+	user.winax_replace_text("", win_fwd_dyn_nav_trg,"DOWN",ordinals or 1)
+delete [<user.ordinals>] previous {user.win_bkwd_dyn_nav_trg}$:
+	user.winax_replace_text("", win_bkwd_dyn_nav_trg,"UP",ordinals or 1)
+delete [<user.ordinals>] next <user.win_nav_target>$:
+	user.winax_replace_text("", win_nav_target,"DOWN",ordinals or 1)
+delete [<user.ordinals>] previous <user.win_nav_target>$:
+	user.winax_replace_text("", win_nav_target,"UP",ordinals or 1)
 
 # EXTEND CURRENT SELECTION
 	# examples spoken forms:

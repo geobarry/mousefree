@@ -10,4 +10,4 @@ panel (items|files): user.explorer_select_items_panel()
 go parent: key(alt-up)
 ^file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
 folder open {user.dynamic_folder}$: user.explorer_process_item(dynamic_folder,"folder","open")
-
+new folder: user.explorer_dialog_new_folder()

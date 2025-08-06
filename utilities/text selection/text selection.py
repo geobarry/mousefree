@@ -300,10 +300,13 @@ class Actions:
         """Replaces target with the new text"""
         def replace_process(orig_text):
             with clip.revert():
-                clip.set_text(new_text)
                 actions.sleep(0.2)
-                actions.edit.paste()
-                actions.sleep(0.15)
+                if new_text == "":
+                    actions.key("backspace")
+                else:
+                    clip.set_text(new_text)
+                    actions.edit.paste()
+                    actions.sleep(0.15)
         process_selection(replace_process,trg,scope_dir,ordinal)
     def winax_format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Applies formatter to targeted text"""
