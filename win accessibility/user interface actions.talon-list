@@ -4,7 +4,9 @@ list: user.ui_action
 click on: click
 right click: right-click
 hover
-go select:select
+select:select
 invoke
 highlight
 label
+expand
+collapse

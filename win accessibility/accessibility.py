@@ -348,13 +348,16 @@ class Actions:
                     print("MATCHING_ANCESTOR time is over")
                     return 
                 stopper.increment()
-                el = actions.user.el_prop_val(el,"parent")
+                if el:
+                    el = actions.user.el_prop_val(el,"parent")
                 if el:
                     if verbose:
                         msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
                         print(f'msg: {msg}')
                     if actions.user.element_match(el,prop_list):
                         return el
+                else:
+                    return None
             except Exception as error:
                 print("FUNCTION matching_ancestor: ancestor not found :(")
                 print(f'error: {error}')
@@ -563,7 +566,7 @@ class Actions:
                 print(f"Element doesn't match property list... :(")
                 print(f"element properties: {actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])}")
                 return None
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=10, escape_key: str=None, delay: float = 0.03):
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=200, escape_key: str=None, delay: float = 0.03):
         """press key until element with exact value for one property is reached"""
         prop_list = [(prop,val)]
         actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
@@ -571,11 +574,12 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
-    def wait_for_element(prop_list: list, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
+    def wait_for_element(prop_list: list, el_func: Callable = actions.user.safe_focused_element, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
         """Waits until an element matching the property list becomes focused, and returns that element or None"""
         stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
         while True:
-            el = actions.user.safe_focused_element()
+            el = el_func()
+            # el = actions.user.safe_focused_element()
             if verbose:
                 print(f'el: {el} name: {el.name} prop_list: {prop_list}')
             if el:
