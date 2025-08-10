@@ -299,8 +299,6 @@ class Actions:
         r = []
         Q = []
         Q.append((cur_level,parent_id,el))    
-        print("MATCHING_DESCENDANTS")
-        print(f'time_limit: {time_limit}')
         stopper = actions.user.stopper(time_limit)
         while len(Q) > 0:        
             cur_level,parent_id,el = Q.pop(0)

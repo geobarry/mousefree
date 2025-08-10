@@ -53,6 +53,12 @@ go recent: user.explorer_special_group("Recent")
 go favorites: user.explorer_special_group("Favorites")
 go shared: user.explorer_special_group("Shared")
 
+new options: user.explorer_show_button_options("New")
+sort options: user.explorer_show_button_options("Sort")
+view options: user.explorer_show_button_options("View")
+more options: user.explorer_show_button_options("More options")
+{user.explorer_app_bar_item}: user.explorer_invoke_app_bar_item(explorer_app_bar_item)
+
 # ALTERNATE VIEWS OF ITEMS PANEL
 view large (icons|thumbnails): key(ctrl-shift-1)
 view medium (icons|thumbnails): key(ctrl-shift-2)

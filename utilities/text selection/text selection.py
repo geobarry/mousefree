@@ -95,23 +95,30 @@ def get_scope(scope_dir: str = "DOWN",
         print("Error in function get_scope: scope_unit not valid")
         return 
     el = actions.user.safe_focused_element()
-    if "Text" not in el.patterns:
-        print("Error in function get_scope: focused element does not have text pattern")
-        return 
-    # Get scope as a text range
-    cur_range = el.text_pattern.selection[0]
-    print(f"selection_distance: {settings.get('user.win_selection_distance')}")
-    # avoid selecting anything in current selection#
-    if scope_dir.upper() == "UP":
-        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
-    if scope_dir.upper() == "DOWN":
-        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
-    if scope_dir.upper() != "UP":
-        cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
-    if scope_dir.upper() != "DOWN":
-        cur_range.move_endpoint_by_unit("Start",scope_unit,-1*settings.get("user.win_selection_distance"))
-    print(f'FUNCTION get_scope return range text: {cur_range.text}')
-    return cur_range
+    if el:
+        pattern_list = actions.user.el_prop_val(el,'patterns')
+        if pattern_list:
+            if "Text" not in pattern_list:
+                print("Error in function get_scope: focused element does not have text pattern")
+                return 
+            # Get scope as a text range
+            pattern = el.text_pattern
+            if pattern:
+                selection_list = pattern.selection
+                if selection_list:
+                    if len(selection_list) > 0:
+                        cur_range = selection_list[0]
+                        if cur_range:
+                            # avoid selecting anything in current selection#
+                            if scope_dir.upper() == "UP":
+                                cur_range.move_endpoint_by_range("End","Start",target = cur_range)
+                                d = -1*settings.get("user.win_selection_distance")
+                                cur_range.move_endpoint_by_unit("Start",scope_unit,d)
+                            elif scope_dir.upper() == "DOWN":
+                                cur_range.move_endpoint_by_range("Start","End",target = cur_range)
+                                cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
+                            print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
+                            return cur_range
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
     # get textRange so we can return cursor to original position

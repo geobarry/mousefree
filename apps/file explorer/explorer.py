@@ -18,6 +18,7 @@ mod.list("dynamic_file_with_ext",desc = "Experimental dynamic list with input ar
 mod.list("explorer_context_option",desc = "Context many options available for files in Windows File Explorer")
 mod.list("subfolder",desc = "Subfolder names common to many folders")
 mod.list("explorer_action",desc = "Actions you can perform on files or folders in explorer")
+mod.list("explorer_app_bar_item",desc = "Commands available from the application bar")
 
 ctx = Context()
 
@@ -140,8 +141,30 @@ def current_path(path_type: str = "directory"):
             if path:
                 path = path.lstrip("Address: ")
                 return path
-        
-
+def app_bar_button(button_name: str):        
+    root = actions.user.window_root()
+    prop_seq = [
+        [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+        [("automation_id","FileExplorerCommandBar")],
+    ]
+    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+    if el:
+        prop_list = [("name",button_name),("class_name",".*Button")]    
+        button = actions.user.matching_child(el,prop_list)
+        if not button:
+            # window is too small, try more options button
+            more_button_prop_list = [("name","More options"),("class_name","Button")]
+            more_button = actions.user.matching_child(el,more_button_prop_list)
+            if more_button:
+                actions.user.act_on_element(more_button,'invoke')
+                sort_prop_list = [("name","Sort")]
+                actions.user.wait_for_element(sort_prop_list,time_limit = 1)
+                if button_name != "Sort":
+                    actions.user.key_to_matching_element("down",prop_list,limit = 10,sec_lim = 1)
+            button = actions.user.wait_for_element(prop_list,time_limit = 1)
+        print(f'button: {button}')
+        if button:
+            actions.user.act_on_element(button,'invoke')
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
@@ -218,6 +241,54 @@ class Actions:
                 elif action == "cut":
                     actions.user.act_on_element(el,"select")
                     actions.key("ctrl-x")
+    def explorer_show_button_options(button_name: str):
+        """Selects and expands the given button (sort, view, more)"""
+        actions.key("esc:5")
+        button = app_bar_button(button_name)
+    def explorer_invoke_app_bar_item(item_sequence: str):
+        """Invokes the given button on the app bar"""
+        item_list = item_sequence.split("|")
+
+        if len(item_list) > 0:
+            print(f'first button: |{item_list[0]}|')
+            item = item_list[0].strip(" ")
+            print(f'item: |{item}|')
+            actions.user.explorer_show_button_options(item)
+            print("ASPARAGUS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+#            return 
+            
+            for item in item_list[1:]:
+                prop_list = [("class_name",".*MenuFlyout.*Item")]
+                el = actions.user.wait_for_element(prop_list)
+                print(f'el: {el}')
+                item = item.strip(" ")
+                print(f'item: {item}')
+                prop_list = [("name",item)]
+                root = actions.user.window_root()
+                prop_seq = [
+#                    [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+                    [("name","Popup"),("class_name","Popup")],
+                    [("class_name","MenuFlyout")],
+                    [("name",item),("class_name",".*MenuFlyout.*Item")]
+                ]
+                el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)                
+                if not el:
+                    break 
+                else:
+                    pattern_list = actions.user.el_prop_val(el,'patterns')
+                    actions.user.act_on_element(el,'select')
+                    actions.sleep(0.3)
+                    if 'ExpandCollapse' in pattern_list:
+                        actions.user.act_on_element(el,'expand')
+                    elif 'Toggle' in pattern_list:
+                        actions.user.act_on_element(el,'toggle')
+                    elif 'Invoke' in pattern_list:
+                        actions.user.act_on_element(el,'invoke')
+                    else:
+                        break 
+                actions.sleep(0.3)
+            if len(item_list) > 2:
+                actions.key(f"esc:{len(item_list) - 1}")
     def explorer_select_items_panel():
         """Uses windows accessibility to select file panel"""
         root = explorer_window()
