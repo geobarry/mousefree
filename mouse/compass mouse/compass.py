@@ -347,6 +347,10 @@ def bearing(m) -> float:
         else:
             return b1 + float(m[1])
 
+@mod.capture(rule="<user.number_prose_unprefixed>")
+def real_number(m) -> float:
+    return float(str(m))
+
 @mod.action_class
 class Actions:
     def compass_enable(bearing: float = -999,display_mode: int = -1):
