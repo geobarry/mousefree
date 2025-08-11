@@ -81,11 +81,9 @@ A radial grid is displayed to guide direction and distance specification. Here a
   * The outer edge of the red circle is 30 pixels
   
 ## Command Mode Management
-Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. Upon initialization:
-  * Command Mode is turned off 
-  * Compass Mode is turned on
+Compass has been designed to allow for short voice commands while avoiding misrecognitions that can disrupt your workflow. When you start up the compass mouse by saying something like "Compass North", you will enter *compass mode* which is a special mode that only allows mouse related commands.
 
-To return to Command Mode:
+To return to Command Mode, do any of the following:
   * Say "Exit Compass"
   * Perform a mouse action ("click" (or "touch"), "right-click", "drag end", "wheel downer")
   * Wait 15 seconds
