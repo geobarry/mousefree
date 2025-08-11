@@ -50,7 +50,7 @@ class compass:
         cron.cancel(self.job)
         self.canvas.close()
         self.canvas = None
-        actions.user.grid_close()
+        # actions.user.grid_close()
         actions.mode.enable("command")
         actions.mode.disable("user.compass")
         self.enabled = False

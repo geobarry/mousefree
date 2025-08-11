@@ -88,6 +88,21 @@ class Actions:
                 print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
             finally:
                 retrieving = False
+    def winax_active_window_rectangle():
+        global retrieving
+        wait_for_access()
+        if retrieving:
+            print("WINAX_ACTIVE_WINDOW_RECTANGLE: unable to retrieve element because another retrieval is in process")
+        else:        
+            retrieving = True
+            try:
+                w = winui.active_window()
+                if w:
+                    return w.rect
+            except Exception as error:
+                print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
+            finally:
+                retrieving = False
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
         pt = actions.user.el_prop_val(el,"clickable_point")
