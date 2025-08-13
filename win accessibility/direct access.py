@@ -13,20 +13,22 @@ import io
 retrieving = False
 
 mod = Module()
+
  
- 
-def wait_for_access(time_limit: float = 1):
-    # if currently retrieving, attempt to buy time
-    interval = 0.05
-    stopper = actions.user.stopper(time_limit)
-    while retrieving:
-        # print(f"waiting... {stopper.elapsed()}")
-        if stopper.over():
-            return None
-        actions.sleep(interval)
+
 
 @mod.action_class
 class Actions:
+    def wait_for_access(time_limit: float = 1):
+        """if currently retrieving, attempt to buy time; returns True if access is available"""
+        interval = 0.05
+        stopper = actions.user.stopper(time_limit)
+        while retrieving:
+            # print(f"waiting... {stopper.elapsed()}")
+            if stopper.over():
+                return False
+            actions.sleep(interval)
+        return True
     def set_winax_retrieving(state: bool = True):
         """Used this to prevent windows accessibility freezes"""
         global retrieving
@@ -38,7 +40,7 @@ class Actions:
     def safe_focused_element():
         """This is intended to be a safe way to obtain the currently focused element. Will return none if unable to retrieve."""
         global retrieving
-        wait_for_access()
+        actions.user.wait_for_access()
         if retrieving:
             print(f"FUNCTION safe_focused_element could not retrieve element because another retrieval is in process")
             return None
@@ -63,7 +65,7 @@ class Actions:
     def window_root():
         """Retrieves the root element of the active window"""
         global retrieving
-        wait_for_access()
+        actions.user.wait_for_access()
         if retrieving:
             print("WINDOW_ROOT: unable to retrieve element because another retrieval is in process")
         else:
@@ -77,7 +79,7 @@ class Actions:
     def winax_main_screen():
         """retrieves the main screen from windows UI"""
         global retrieving
-        wait_for_access()
+        actions.user.wait_for_access()
         if retrieving:
             print("FUNCTION winax_main_screen: unable to retrieve element because another retrieval is in process")
         else:
@@ -89,8 +91,9 @@ class Actions:
             finally:
                 retrieving = False
     def winax_active_window_rectangle():
+        """The rectangle of the active window"""
         global retrieving
-        wait_for_access()
+        actions.user.wait_for_access()
         if retrieving:
             print("WINAX_ACTIVE_WINDOW_RECTANGLE: unable to retrieve element because another retrieval is in process")
         else:        
@@ -210,7 +213,7 @@ class Actions:
         """Returns the property value or None if the property value cannot be retrieved"""
         if not el:
             return 
-        wait_for_access()
+        actions.user.wait_for_access()
         global retrieving
 #        print(f"FUNCTION: el_prop_val() - retrieving: {actions.user.winax_retrieving()}")
         if retrieving:
@@ -352,6 +355,19 @@ class Actions:
                     if "Selection" in el.patterns:
                         print("*****************************")
                         return el.selection_pattern.selection
+                elif prop_name.lower() == "text_selection":
+                    if 'Text' in el.patterns:
+                        pattern = el.text_pattern
+                        if pattern:
+                            selection_list = pattern.selection
+                            if selection_list:
+                                if len(selection_list) > 0:
+                                    selection = selection_list[0]
+                                    if as_text:
+                                        return selection.text
+                                    else:
+                                        return selection
+                        
             except Exception as error:
                 print(f'EL_PROP_VAL prop_name: {prop_name} | error: {error}')
                 if as_text:

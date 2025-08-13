@@ -11,3 +11,5 @@ enabled: is_enabled
 keyboard focusable:is_keyboard_focusable
 rectangle: rect
 children
+expand collapse state: expand_collapse_state
+text selection: text_selection

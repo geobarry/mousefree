@@ -1,4 +1,4 @@
-from talon.windows import ax as ax,ui as winui
+from talon.windows import ax as ax
 from talon import app, Context,Module,actions,ctrl,ui,settings,clip
 import re
 import itertools
@@ -33,25 +33,33 @@ def precise_target_and_position(target: re.Pattern,
     t = re.sub(r"'","[’']",t)
     target = re.compile(t, re.IGNORECASE)
     # find all instances of the target within the text range text
-    t = text_range.text
-    m = re.findall(target,t)
-    if m and len(m) >= ordinal:
-        # determine precise target and loop parameters to iterate through preceding matches
-        if search_dir.upper() == "UP":
-            precise_trg = m[-ordinal]
-            start,stop,step = len(m) - 1, len(m) - ordinal, -1
-        else:
-            precise_trg = m[ordinal - 1]
-            start,stop,step = 0,ordinal - 1,1
-        # precise_ordinal is index of target within windows accessibility search
-        # i.e. number of times needed to iterate forward or backward
-        precise_ordinal = 1
-        for i in range(start,stop,step):
-            if m[i] == precise_trg:
-                precise_ordinal += 1
-        return (precise_trg,precise_ordinal)
-    else:
-        return (None,None)
+    if actions.user.wait_for_access():
+        actions.user.set_winax_retrieving(True)
+        try:
+            t = text_range.text
+            m = re.findall(target,t)
+            if m and len(m) >= ordinal:
+                # determine precise target and loop parameters to iterate through preceding matches
+                if search_dir.upper() == "UP":
+                    precise_trg = m[-ordinal]
+                    start,stop,step = len(m) - 1, len(m) - ordinal, -1
+                else:
+                    precise_trg = m[ordinal - 1]
+                    start,stop,step = 0,ordinal - 1,1
+                # precise_ordinal is index of target within windows accessibility search
+                # i.e. number of times needed to iterate forward or backward
+                precise_ordinal = 1
+                for i in range(start,stop,step):
+                    if m[i] == precise_trg:
+                        precise_ordinal += 1
+                return (precise_trg,precise_ordinal)
+        except Exception as error:
+            print(f"TEXT SELECTION PRECISE TARGET AND POSITION error:\n{error}")
+            return (None,None)
+        finally:
+            actions.user.set_winax_retrieving(False)
+    return (None,None)
+    
 def find_target(trg: re.Pattern, 
                 text_range: ax.TextRange = None,
                 search_dir: str = "DOWN",
@@ -65,27 +73,35 @@ def find_target(trg: re.Pattern,
         if "Text" not in el.patterns:
             print("Error in function find_target: focused element does not have text pattern")
             return None
-        text_range = el.text_pattern.selection[0]
-    # Use regex to find exact match text and its position
-    precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
+        text_range = actions.user.el_prop_val(el,'text_selection')
+    if text_range:
+        # Use regex to find exact match text and its position
+        precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
 
-    if precise_trg != None:
-        # Iteratively search for precise target using windows accessibility
-        back = search_dir.upper() == "UP"
-        r = text_range.find_text(precise_trg,backward = back)
-        while precise_ordinal > 1:
-            actions.sleep(0.05)
-            precise_ordinal -= 1
-            if search_dir.upper() == "UP":
-                text_range.move_endpoint_by_range("End","Start",target = r)
-            else:
-                text_range.move_endpoint_by_range("Start","End",target = r)
-            r = text_range.find_text(precise_trg,backward = back)            
-            r.select()
-        return r
-    else:
-        print("Target not found :(")
-        return None
+        if precise_trg != None:
+            # Iteratively search for precise target using windows accessibility
+            back = search_dir.upper() == "UP"
+            if actions.user.wait_for_access():
+                actions.user.set_winax_retrieving(True)
+                try:
+                    r = text_range.find_text(precise_trg,backward = back)
+                    while precise_ordinal > 1:
+                        actions.sleep(0.05)
+                        precise_ordinal -= 1
+                        if search_dir.upper() == "UP":
+                            text_range.move_endpoint_by_range("End","Start",target = r)
+                        else:
+                            text_range.move_endpoint_by_range("Start","End",target = r)
+                        r = text_range.find_text(precise_trg,backward = back)            
+                        r.select()
+                    return r
+                except Exception as error:
+                    print(f"TEXT SELECTION FIND TARGET error:\n{error}")
+                finally:
+                    actions.user.set_winax_retrieving(False)
+        else:
+            print("Target not found :(")
+            return None
 def get_scope(scope_dir: str = "DOWN",
                 scope_unit: str = "Line"):
     """Returns a text range corresponding to the search scope"""
@@ -96,31 +112,31 @@ def get_scope(scope_dir: str = "DOWN",
         return 
     el = actions.user.safe_focused_element()
     if el:
-        pattern_list = actions.user.el_prop_val(el,'patterns')
-        if pattern_list:
-            if "Text" not in pattern_list:
-                print("Error in function get_scope: focused element does not have text pattern")
-                return 
-            # Get scope as a text range
-            pattern = el.text_pattern
-            if pattern:
-                selection_list = pattern.selection
-                if selection_list:
-                    if len(selection_list) > 0:
-                        cur_range = selection_list[0]
-                        if cur_range:
-                            # avoid selecting anything in current selection#
-                            if scope_dir.upper() == "UP":
-                                cur_range.move_endpoint_by_range("End","Start",target = cur_range)
-                                d = -1*settings.get("user.win_selection_distance")
-                                cur_range.move_endpoint_by_unit("Start",scope_unit,d)
-                            elif scope_dir.upper() == "DOWN":
-                                cur_range.move_endpoint_by_range("Start","End",target = cur_range)
-                                cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
-                            print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
-                            return cur_range
+        cur_range = actions.user.el_prop_val(el,'text_selection')
+        if cur_range:
+            if actions.user.wait_for_access():
+                actions.user.set_winax_retrieving(True)
+                try:
+                    # avoid selecting anything in current selection#
+                    if scope_dir.upper() == "UP":
+                        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
+                        d = -1*settings.get("user.win_selection_distance")
+                        cur_range.move_endpoint_by_unit("Start",scope_unit,d)
+                    elif scope_dir.upper() == "DOWN":
+                        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
+                        cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
+                    print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
+                    return cur_range
+                except Exception as error:
+                    print(f"TEXT SELECTION GET SCOPE error:\n{error}")
+                finally:
+                    actions.user.set_winax_retrieving(False)
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
+    # ********************************
+    # RESUME ACCESSIBILITY ERROR PROOFING HERE
+    # ********************************
+    
     # get textRange so we can return cursor to original position
     el = actions.user.safe_focused_element()
     if el:
