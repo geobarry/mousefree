@@ -1,6 +1,7 @@
 list: user.ui_action
 # actions that can be used in conjunction with the function actions.user.act_on_element()
 -
+click
 click on: click
 right click: right-click
 hover
@@ -11,3 +12,4 @@ label
 expand
 collapse
 toggle
+scroll into view: scroll_into_view

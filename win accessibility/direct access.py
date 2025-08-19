@@ -62,6 +62,50 @@ class Actions:
                 return None
             finally:
                 retrieving = False
+    def main_window_element():
+        """Attempts to retrieve the main window of the active app"""
+        global retrieving
+        actions.user.wait_for_access()
+        if retrieving:
+            print("MAIN_WINDOW: unable to retrieve element because another retrieval is in process")
+        else:
+            retrieving = True
+            try:
+                a = winui.active_app()
+                win_list = a.windows()
+                r = None
+                size_max = 0
+                for w in win_list:
+                    if not w.hidden:
+                        if w.title != "":
+                            rect = w.rect
+                            if rect:
+                                size = rect.width * rect.height
+                                if size > size_max:
+                                    size_max = size
+                                    r = w
+                print(f'MAIN_WINDOW: {r}')
+                el = r.element
+                print(f'el: {el}')
+                return el
+            except Exception as error:
+                print(f"MAIN_WINDOW encountered an error:\n {error}")
+            finally:
+                retrieving = False        
+    def root_element():
+        """Retrieves whatever windows UI thinks is the root element"""
+        global retrieving
+        actions.user.wait_for_access()
+        if retrieving:
+            print("ROOT_ELEMENT: unable to retrieve element because another retrieval is in process")
+        else:
+            retrieving = True
+            try:
+                return ax.get_root_element()
+            except Exception as error:
+                print(f"ROOT_ELEMENT encountered an error:\n {error}")
+            finally:
+                retrieving = False        
     def window_root():
         """Retrieves the root element of the active window"""
         global retrieving

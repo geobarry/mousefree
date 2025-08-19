@@ -18,9 +18,8 @@ and mode: user.zen
 # user.nav_key includes things like tab, arrow keys, f6
 # user.ax_target is just any spoken phrase. It will be translated 
 #  into regex for continuation and catching homophones
-^<user.nav_key> until <user.ax_target>$: user.key_to_element(nav_key,"n={ax_target}.*")
+^<user.nav_key> until <user.ax_target>$:  user.key_to_elem_by_val(nav_key,ax_target) 
 ^<user.nav_key> until <user.ordinals> <user.ax_target>$: user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1)
-^<user.nav_key> grab next <user.ax_target>$: user.key_to_elem_by_val(nav_key,ax_target)
 ^<user.nav_key> includes [<user.ordinals>] <user.ax_target>$:
 	x = ordinals or 1
 	user.key_to_elem_by_val(nav_key,".*{ax_target}.*","name",ordinals or 1)

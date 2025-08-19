@@ -1,6 +1,7 @@
 os: windows
-and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio).*/
-and win.title: /(Open|Save|Publish|Insert|Export).*/
+and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio|Triangulation_Visualization).*/
+and win.title: /(Open|Save|Publish|Insert|Load|Export).*/
+
 -
 # SUBSET OF COMMON COMMANDS FROM MAIN EXPLORER APPLICATION,
 # FOR APPLICATIONS THAT USE STANDARD FILE SELECTION DIALOG

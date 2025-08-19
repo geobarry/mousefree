@@ -133,34 +133,28 @@ def get_scope(scope_dir: str = "DOWN",
                     actions.user.set_winax_retrieving(False)
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
+    # get textRange so we can return cursor to original position
+    el = actions.user.safe_focused_element()
+    if el:
+        init_range = actions.user.el_prop_val(el,'text_selection')
+        if init_range:
+            # find target
+            t = actions.user.winax_select_text(trg,scope_dir,ordinal)
+            print(f'trg: {trg} -- t: {t.text}')
+            # perform processing function
+            processing_function(t.text)
+            # return to original selection
+            if init_range != None:
+                actions.sleep(0.1)
+                init_range.select()
+def scroll_to_selection(r,init_rect = None):
+    """Scrolls to the input text range"""
     # ********************************
     # RESUME ACCESSIBILITY ERROR PROOFING HERE
     # ********************************
     
-    # get textRange so we can return cursor to original position
-    el = actions.user.safe_focused_element()
-    if el:
-        init_range = None
-        if "Text2" in el.patterns:
-            selection = el.text_pattern2.selection
-        if "Text" in el.patterns:
-            selection = el.text_pattern.selection
-        if selection:
-            if len(selection) > 0:
-                init_range = selection[0]
-                # find target
-                t = actions.user.winax_select_text(trg,scope_dir,ordinal)
-                print(f'trg: {trg} -- t: {t.text}')
-                # perform processing function
-                processing_function(t.text)
-                # return to original selection
-                if init_range != None:
-                    actions.sleep(0.1)
-                    init_range.select()
-def scroll_to_selection(r,init_rect = None):
-    """Scrolls to the input text range"""
     # Attempt to scroll into view
-    # Would like to make it so that the selected items grows to the center of the screen
+    # Would like to make it so that the selected items goes to the center of the screen
     # but so far attempts to do that have failed to work consistently
     # hmm... seems like scroll into view only works going down...
     try:

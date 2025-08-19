@@ -399,8 +399,11 @@ class Actions:
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
+                    
                     for el in el_list:
+                        print(f'el: {el}')
                         children = actions.user.el_prop_val(el,"children")
+                        print(f'children: {children}')
                         for child in children:
                             msg = actions.user.element_information(child,prop_list = ["name","class_name","printout"])
                             print(f'child: {msg}')
@@ -554,7 +557,7 @@ class Actions:
                             break
                         if first_el.__eq__(el):
                             print(f"Cycled back to first element... :(")
-                            break
+#                            break
                 else:
                     print(f"Element is None... :(")
                     break
