@@ -376,7 +376,9 @@ class Actions:
             # print(f'el_list: {el_list}')
             # print(f'prop_list: {prop_list}')
             for el in el_list:
-                valid_matches += actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
+                x = actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
+                if x:
+                    valid_matches += x
             return valid_matches
         stopper = actions.user.stopper(time_limit)
         if verbose:

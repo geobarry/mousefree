@@ -8,6 +8,7 @@ from talon.windows import ax as ax, ui as winui
 from io import StringIO
 from contextlib import redirect_stdout
 from talon.types import Point2d as Point2d
+from typing import Callable
 import io
 
 retrieving = False
@@ -16,9 +17,22 @@ mod = Module()
 
  
 
-
 @mod.action_class
 class Actions:
+    def safe_access(access_func: Callable,msg: str):
+        """Returns the value of access_func or None if in the middle of retrieving"""
+        global retrieving
+        actions.user.wait_for_access()
+        if retrieving:
+            print(f"{msg}: unable to retrieve element because another retrieval is in process")
+        else:
+            retrieving = True
+            try:
+                return access_func()
+            except Exception as error:
+                print(f"{msg} encountered an error:\n {error}")
+            finally:
+                retrieving = False        
     def wait_for_access(time_limit: float = 1):
         """if currently retrieving, attempt to buy time; returns True if access is available"""
         interval = 0.05
@@ -421,3 +435,10 @@ class Actions:
             finally:
                 retrieving = False
 
+    def el_pattern(el: ax.Element, pattern_name: str):
+        """Retrieves the element pattern object"""
+        def access_func():
+            func_name = f"{pattern_name.lower()}_pattern"
+            pattern = getattr(el,func_name)
+            return pattern
+        return actions.user.safe_access(access_func,"EL_PATTERN")
