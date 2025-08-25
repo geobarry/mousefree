@@ -211,7 +211,7 @@ class Actions:
     def get_property_list(prop_str: str):
         """creates a property list from a string of the form n = ..., c = ..., a = ..."""
         r = []
-        prop_name = {"n":"name","c":"class_name","a":"automation_id"}
+        prop_name = {"n":"name","c":"class_name","a":"automation_id","p":"printout"}
         props = prop_str.split(",")
         for prop in props:
             if prop != '':
@@ -292,7 +292,7 @@ class Actions:
         or continues the search up to the given number of extra generations"""
         if verbose:
             print("FUNCTION matching_descendants...")
-            print(f'prop_list: {prop_list}')
+            print(f'root: {el} prop_list: {prop_list}')
         cur_level = 0
         el_id = -1
         parent_id = -1
@@ -307,6 +307,8 @@ class Actions:
                 try:
                     if el:
                         children = el.children
+                        if verbose:
+                            print(f'children: {children}')
                         if children:
                             for child in children:
                                 if stopper.over():
