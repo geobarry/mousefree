@@ -71,10 +71,12 @@ def retrieve_item(name: str, item_type: str = "file"):
                 else:
                     return None
 def current_path(path_type: str = "directory"):
+    print("CURRENT_PATH function")
     # make sure something is selected
     path = actions.user.file_manager_current_path()
     path = path.replace(" - File Explorer","")
     if os.path.isdir(path):
+        print("got path from title")
         return path
     else:
         # User has not selected option to place path in window title
@@ -88,9 +90,11 @@ def current_path(path_type: str = "directory"):
             [("name","Items View"),("class_name","UIItemsView")],
         ]
         el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
+        print(f'ITEMS VIEW el: {el}')
         if el:
             selection = actions.user.el_prop_val(el,"selection")
             if not selection:
+                print("selecting items panel...")
                 # need to select something
                 actions.user.explorer_select_items_panel()
             # open up the more button
@@ -100,6 +104,7 @@ def current_path(path_type: str = "directory"):
                 [("class_name","Button"),("automation_id","MoreButton")]
             ]
             el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+            print(f'MORE BUTTON el: {el}')
             if el:
                 actions.user.act_on_element(el,"invoke")
                 # invoke the copy path button
@@ -109,22 +114,32 @@ def current_path(path_type: str = "directory"):
                     [("name","Popup"),("class_name","Popup"),("automation_id","OverflowPopup")],
                     [("name","Copy path"),("class_name","AppBarButton")]
                 ]
+                actions.user.wait_for_access(time_limit = 3)
                 el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+                print(f'COPY PATH BUTTON el: {el}')
                 if el:
-                    actions.user.act_on_element(el,"invoke")
+                    actions.user.wait_for_access()
+                    
+                    actions.sleep(0.1)
+                    actions.user.act_on_element(el,"select")
+                    actions.user.act_on_element(el,'invoke')
+                    actions.user.act_on_element(el,'click')
+                    actions.sleep(3)
                     path = actions.edit.selected_text()
-                    # File explorer annoyingly puts the path in quotes
-                    path = path.strip('"')
-                    actions.user.explorer_select_items_panel()
+                    print(f'path: {path}')
+                    if path:
+                        if path != '':
+                            # File explorer annoyingly puts the path in quotes
+                            path = path.strip('"')
+                            actions.user.explorer_select_items_panel()
 
-                    if path_type == "directory" or path_type == "folder":
-                        return os.path.dirname(path)
-                    elif path_type == "file":
-                        return os.path.basename(path)
-                    else:
-                        return path
-        # If that fails, we are in a dialog
-        print("GETTING CURRENT PATH FROM DIALOG")
+                            if path_type == "directory" or path_type == "folder":
+                                return os.path.dirname(path)
+                            elif path_type == "file":
+                                return os.path.basename(path)
+                            else:
+                                return path
+                # If that fails, we are in a dialog
         root = actions.user.window_root()
         prop_seq = [
 #        	[("name","Save As"),("class_name","#32770")],
@@ -169,6 +184,7 @@ def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
     global current_path_items
+    print("RETRIEVE_ITEM_LIST")
     folder = current_path("directory")
     print(f'folder: {folder}')
     if folder:
