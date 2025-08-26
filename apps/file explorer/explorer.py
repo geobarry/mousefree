@@ -248,15 +248,23 @@ class Actions:
         else:
             el = retrieve_item(name,item_type)
         if el:
-            prop_list = [("class_name","UIItem")]
+            prop_list = [("name",name),("class_name","UIItem")]
             if actions.user.element_match(el,prop_list):
                 if action == "open":
                     actions.user.act_on_element(el,"invoke")
                 elif "select" in action:
                     actions.user.act_on_element(el,action)
-                elif action == "cut":
+                elif action in ["copy","cut","delete"]:
                     actions.user.act_on_element(el,"select")
-                    actions.key("ctrl-x")
+                    el = actions.user.wait_for_element(prop_list)
+                    if el:
+                        if action == 'copy':
+                            actions.key("ctrl-c")
+                        elif action == 'cut':
+                            actions.key("ctrl-x")
+                        elif action == "delete":
+                            actions.key("del")
+
     def explorer_show_button_options(button_name: str):
         """Selects and expands the given button (sort, view, more)"""
         actions.key("esc:5")

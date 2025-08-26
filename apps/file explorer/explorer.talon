@@ -4,15 +4,11 @@ mode: user.zen
 mode: command
 -
 
-# ACTIONS ON FILES AND FOLDERS IN ITEMS PANEL
-file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
-folder {user.explorer_action} {user.dynamic_folder}$:
-	user.explorer_process_item(dynamic_folder,"folder",explorer_action)
+# ACTIONS ON FILES AND FOLDERS IN MAIN (FILE) PANEL
+
+## Actions on currently selected a file(s) or folder(s)
+
 (file|folder) {user.explorer_action}$: user.explorer_process_item("","",explorer_action)
-open with {user.app}$: user.explorer_open_with(app)
-{user.file_ext} {user.explorer_action} {user.dynamic_file_with_ext}$: 
-	print("talon file: {dynamic_file_with_ext}")
-	user.explorer_process_item(dynamic_file_with_ext,"file",explorer_action)
 move to folder {user.dynamic_folder}$:
 	user.explorer_select_items_panel()
 	edit.cut()
@@ -29,11 +25,26 @@ move to parent [folder]$:
 	user.file_manager_open_parent()
 	sleep(0.7)
 	key("ctrl-v")	
+
+## Actions on files or folders identified dynamically from file/folder names
+##  examples:
+##   "file open <first word or first couple words of file name>"
+##   "folder delete <first couple words of folder name>"
+
+file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
+folder {user.explorer_action} {user.dynamic_folder}$:
+	user.explorer_process_item(dynamic_folder,"folder",explorer_action)
 file {user.dynamic_file} move to [folder] {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_file,"file","cut")
 	user.explorer_process_item(dynamic_folder,"folder","open")
 	sleep(0.7)
 	key("ctrl-v")
+
+# miscellaneous - needs refactoring to fit into above organization
+open with {user.app}$: user.explorer_open_with(app)
+{user.file_ext} {user.explorer_action} {user.dynamic_file_with_ext}$: 
+	print("talon file: {dynamic_file_with_ext}")
+	user.explorer_process_item(dynamic_file_with_ext,"file",explorer_action)
 {user.explorer_context_option}$:
 	user.explorer_context_action(explorer_context_option)
 
