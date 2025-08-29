@@ -22,10 +22,12 @@ mouse to window [{user.handle_position}]:
 
 # ADDITIONAL WHEEL MOVEMENT
 wheel up element:
-	user.mouse_to_focused_element_handle(handle_position or "center")
+	user.mouse_to_focused_element_handle(handle_position or "center",100)
+	sleep(0.1)
 	user.mouse_scroll_up()
 wheel down element:
-	user.mouse_to_focused_element_handle(handle_position or "center")
+	user.mouse_to_focused_element_handle(handle_position or "center",100)
+	sleep(0.1)
 	user.mouse_scroll_down()
 # EXPERIMENTAL
 get screen bounds: user.get_screen_bounds()
