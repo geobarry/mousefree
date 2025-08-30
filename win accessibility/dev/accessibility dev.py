@@ -55,6 +55,7 @@ class Actions:
                             "help_text","automation_id",
                             "printout",
                             "patterns","access_key",
+                            "text","value",
                             "is_keyboard_focusable","is_enabled",
                             "rect.height","legacy.name","legacy.description"
                         ]

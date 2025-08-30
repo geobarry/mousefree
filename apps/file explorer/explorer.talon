@@ -3,7 +3,7 @@ app.exe: explorer.exe
 mode: user.zen
 mode: command
 -
-
+test folder: user.explorer_test()
 # ACTIONS ON FILES AND FOLDERS IN MAIN (FILE) PANEL
 
 ## Actions on currently selected a file(s) or folder(s)

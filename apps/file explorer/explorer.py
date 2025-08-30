@@ -70,92 +70,122 @@ def retrieve_item(name: str, item_type: str = "file"):
                     return el
                 else:
                     return None
-def current_path(path_type: str = "directory"):
-    print("CURRENT_PATH function")
-    # make sure something is selected
+def current_folder_from_title():
     path = actions.user.file_manager_current_path()
     path = path.replace(" - File Explorer","")
     if os.path.isdir(path):
         print("got path from title")
         return path
     else:
-        # User has not selected option to place path in window title
-        # We're going to have to do this the hard way
-        
-        # Obtain file items panel
-        root = actions.user.window_root()
+        return None
+def current_folder_from_menu():
+    # This is still inconsistent, and sometimes doesn't return anything
+    # and sometimes operates on selected item but sometimes on containing folder
+    print("CURRENT_FOLDER_FROM_MENU")
+    # Obtain file items panel
+    actions.user.explorer_select_items_panel()
+    root = actions.user.window_root()
+    print(f'root: {root}')
+    prop_seq = [
+        [("class_name","ShellTabWindowClass")],
+        [("class_name","DUIViewWndClassName")],
+        [("name","Items View"),("class_name","UIItemsView")],
+    ]
+    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+    print(f'ITEMS VIEW el: {el}')
+    if el:
+        selection = actions.user.el_prop_val(el,"selection")
+        if not selection:
+            print("selecting items panel...")
+            # need to select something
+            actions.user.explorer_select_items_panel()
+        # open up the more button
         prop_seq = [
-            [("class_name","ShellTabWindowClass")],
-            [("class_name","DUIViewWndClassName")],
-            [("name","Items View"),("class_name","UIItemsView")],
+            [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+            [("class_name","ApplicationBar"),("automation_id","FileExplorerCommandBar")],
+            [("class_name","Button"),("automation_id","MoreButton")]
         ]
-        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
-        print(f'ITEMS VIEW el: {el}')
+        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+        print(f'MORE BUTTON el: {el}')
         if el:
-            selection = actions.user.el_prop_val(el,"selection")
-            if not selection:
-                print("selecting items panel...")
-                # need to select something
-                actions.user.explorer_select_items_panel()
-            # open up the more button
+            actions.user.act_on_element(el,"invoke")
+            prop_list = [("class_name","AppBarButton")]
+            actions.user.wait_for_element(prop_list)
+            # invoke the copy path button
             prop_seq = [
                 [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
                 [("class_name","ApplicationBar"),("automation_id","FileExplorerCommandBar")],
-                [("class_name","Button"),("automation_id","MoreButton")]
+                [("name","Popup"),("class_name","Popup"),("automation_id","OverflowPopup")],
+                [("name","Copy path"),("class_name","AppBarButton")]
             ]
             el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
-            print(f'MORE BUTTON el: {el}')
+            print(f'COPY PATH BUTTON el: {el}')
             if el:
-                actions.user.act_on_element(el,"invoke")
-                # invoke the copy path button
-                prop_seq = [
-                    [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
-                    [("class_name","ApplicationBar"),("automation_id","FileExplorerCommandBar")],
-                    [("name","Popup"),("class_name","Popup"),("automation_id","OverflowPopup")],
-                    [("name","Copy path"),("class_name","AppBarButton")]
-                ]
-                actions.user.wait_for_access(time_limit = 3)
-                el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
-                print(f'COPY PATH BUTTON el: {el}')
-                if el:
-                    actions.user.wait_for_access()
-                    
-                    actions.sleep(0.1)
-                    actions.user.act_on_element(el,"select")
-                    actions.user.act_on_element(el,'invoke')
-                    actions.user.act_on_element(el,'click')
-                    actions.sleep(3)
-                    path = actions.edit.selected_text()
-                    print(f'path: {path}')
-                    if path:
-                        if path != '':
-                            # File explorer annoyingly puts the path in quotes
-                            path = path.strip('"')
-                            actions.user.explorer_select_items_panel()
-
-                            if path_type == "directory" or path_type == "folder":
-                                return os.path.dirname(path)
-                            elif path_type == "file":
-                                return os.path.basename(path)
-                            else:
-                                return path
-                # If that fails, we are in a dialog
-        root = actions.user.window_root()
-        prop_seq = [
-#        	[("name","Save As"),("class_name","#32770")],
-        	[("class_name","ReBarWindow32")],
-        	[("class_name","Address Band Root")],
-        	[("name","Loading"),("class_name","msctls_progress32")],
-            [("class_name","Breadcrumb Parent")],
-        	[("name","Address.*")],
-#        	[("name","Address"),("class_name","Edit")]
-        ]
-        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
-        if el:
-            path = actions.user.el_prop_val(el,"name")
-            if path:
-                path = path.lstrip("Address: ")
+                actions.user.act_on_element(el,'invoke')
+                path = clip.text().strip('"')
+                print(f'CLIP path: {path}')
+                # path is to item, so get parent folder
+                if path:
+                    path = os.path.dirname(path)
+                    print(f'----------> SELECT INVOKE path: {path}')
+                # clean up UI
+                actions.key("esc")
+                actions.user.explorer_select_items_panel()
                 return path
+
+def current_folder_from_dialog():
+    print("CURRENT_FOLDER_FROM_DIALOG")
+    root = actions.user.window_root()
+    prop_seq = [
+#        	[("name","Save As"),("class_name","#32770")],
+        [("class_name","ReBarWindow32")],
+        [("class_name","Address Band Root")],
+        [("name","Loading"),("class_name","msctls_progress32")],
+        [("class_name","Breadcrumb Parent")],
+        [("name","Address.*")],
+#        	[("name","Address"),("class_name","Edit")]
+    ]
+    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+    if el:
+        path = actions.user.el_prop_val(el,"name")
+        if path:
+            path = path.lstrip("Address: ")
+            return path
+def current_folder_from_address_bar():
+    # seems like this will require keyboard shortcut, won't work for special folders :(
+    print("CURRENT_FOLDER_FROM_ADDRESS_BAR")
+    root = actions.user.window_root()
+    print(f'root: {root}')
+    prop_seq = [
+        [("class_name","Microsoft.UI.Content.DesktopChildSiteBridge")],
+        [("class_name","AutoSuggestBox")],
+        [("name","Address Bar")]
+    ]
+    el = actions.user.find_el_by_prop_seq(prop_seq,root)
+    print(f'el: {el}')
+    val = actions.user.el_prop_val(el,'value')
+    print(f'val: {val}')
+def current_folder(path_type: str = "directory"):
+    root = actions.user.window_root()
+    cls = actions.user.el_prop_val(root,'class_name')
+    if cls == "#32770":
+        print("****IN A DIALOG")
+        return current_folder_from_dialog()
+    else:
+        print("****MAIN EXPLORER WINDOW")
+        folder = current_folder_from_title()
+        if folder:
+            return folder
+        else:
+            # User has not selected option to place path in window title
+            # We're going to have to do this the hard way
+            # Try menu button
+            folder = current_folder_from_menu()
+            if folder:
+                return folder
+            else:
+                # If that fails, maybe we are in a dialog after all
+                return current_folder_from_dialog()
 def app_bar_button(button_name: str):        
     root = actions.user.window_root()
     prop_seq = [
@@ -183,9 +213,9 @@ def app_bar_button(button_name: str):
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
-    global current_path_items
+    global current_folder_items
     print("RETRIEVE_ITEM_LIST")
-    folder = current_path("directory")
+    folder = current_folder("directory")
     print(f'folder: {folder}')
     if folder:
         # catch situation where folder cannot be found
@@ -193,14 +223,14 @@ def retrieve_item_list(item_type: str = "file", ext: str = ""):
             print("FUNCTION: retrieve_item_list ERROR: cannot obtain folder path")
             return 
         get_files = item_type == "file"
-        current_path_items = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) == get_files]
+        current_folder_items = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) == get_files]
         if ext != '':
             n = len(ext)
-            current_path_items = [item for item in current_path_items if item[-n:] == ext]
-        spoken_form_dict = actions.user.create_spoken_forms_from_list(current_path_items)
+            current_folder_items = [item for item in current_folder_items if item[-n:] == ext]
+        spoken_form_dict = actions.user.create_spoken_forms_from_list(current_folder_items)
         # print(f'spoken_form_dict: {dict(itertools.islice(spoken_form_dict.items(), 20))}')
         # print(f'len(spoken_form_dict): {len(spoken_form_dict)}')
-#        out = actions.user.text_to_spoken_forms(current_path_items)
+#        out = actions.user.text_to_spoken_forms(current_folder_items)
         # print(f'out: {dict(itertools.islice(out.items(), 20))}')
         # print(f'len(out): {len(out)}')
 #        actions.user.explorer_select_items_panel()
@@ -240,6 +270,9 @@ num_recent_pops = 0
 
 @mod.action_class
 class Actions:
+    def explorer_test():
+        """test"""
+        current_folder_from_menu()
     def explorer_process_item(name: str = "", item_type: str = "file",action: str = "select"):
         """Attempts to open the item with a given name and type (file over folder), or else the currently selected item"""
         print(f"FUNCTION: explorer_process_item ({item_type} {name})")
@@ -322,7 +355,7 @@ class Actions:
             [("class_name","DUIListView")],
             [("class_name","UIItemsView")]
         ]        
-        el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = True)
+        el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
         # make sure that all items are selected
         if el:
             el_list = el.selection_pattern.selection
@@ -351,7 +384,7 @@ class Actions:
                         actions.user.act_on_element(el,"select")
     def explorer_copy_folder():
         """Returns the folder path"""
-        folder = current_path()
+        folder = current_folder()
         clip.set_text(folder) # for backwards compatibility; please use return value
         return folder
     def explorer_copy_full_path():

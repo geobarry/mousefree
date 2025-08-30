@@ -122,18 +122,9 @@ class Actions:
                 retrieving = False        
     def window_root():
         """Retrieves the root element of the active window"""
-        global retrieving
-        actions.user.wait_for_access()
-        if retrieving:
-            print("WINDOW_ROOT: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
-            try:
-                return winui.active_window().element
-            except Exception as error:
-                print(f"WINDOW_ROOT encountered an error:\n {error}")
-            finally:
-                retrieving = False
+        def access_func():
+            return winui.active_window().element
+        return actions.user.safe_access(access_func,"WINDOW_ROOT")
     def winax_main_screen():
         """retrieves the main screen from windows UI"""
         global retrieving
