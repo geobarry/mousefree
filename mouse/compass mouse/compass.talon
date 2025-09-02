@@ -6,12 +6,18 @@ mode: user.compass
 # SET DIRECTION
 # set the compasss direction, e.g. "north"
 
-[compass] <user.bearing>$:	user.compass_enable(user.bearing)
+[compass] <user.bearing>:	user.compass_enable(user.bearing)
 
 # ROTATE
 # rotate compass towards a compass direction, e.g. "30 east"
 
-[compass] <user.real_number> [degrees] <user.bearing>$: user.move_cardinal(real_number, user.bearing)
+[compass] <user.real_number> [degrees] <user.bearing>: user.move_cardinal(real_number, user.bearing)
+# not sure why this is needed but commands are not chaining!
+[compass] <user.real_number> [degrees] <user.bearing> go <number>: 
+	user.move_cardinal(real_number, user.bearing)
+	sleep(0.1)
+	user.fly_out(number,150)
+
 nudge <user.bearing>$: user.move_cardinal(0.3,user.bearing)
 
 # reverse direction  
@@ -19,7 +25,11 @@ nudge <user.bearing>$: user.move_cardinal(0.3,user.bearing)
 
 # MOVE
 # move specified distance in pixels, e.g. "go five hundred"
-go <number>$: user.fly_out(number,500)
+go <number>: user.fly_out(number,200)
+click <number>:
+	user.fly_out(number,90)
+	sleep(0.1)
+	mouse_click(0)
 move <number>$: user.fly_out(number,1000)
 walk <number>$: user.fly_out(number,3000)
 crawl <number>$: user.fly_out(number,8000)

@@ -64,10 +64,10 @@ go recent: user.explorer_special_group("Recent")
 go favorites: user.explorer_special_group("Favorites")
 go shared: user.explorer_special_group("Shared")
 
-new options: user.explorer_show_button_options("New")
-sort options: user.explorer_show_button_options("Sort")
-view options: user.explorer_show_button_options("View")
-more options: user.explorer_show_button_options("More options")
+menu new: user.explorer_show_button_options("New")
+menu sort: user.explorer_show_button_options("Sort")
+menu view: user.explorer_show_button_options("View")
+menu more [options]: user.explorer_show_button_options("More options")
 {user.explorer_app_bar_item}: user.explorer_invoke_app_bar_item(explorer_app_bar_item)
 
 # ALTERNATE VIEWS OF ITEMS PANEL

@@ -8,7 +8,7 @@ mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
 update_interval = 30
-fade_time = 5000 # five seconds
+fade_time = 10000 # five seconds
 
 def f_distance(from_pos,to_pos):
     return (((to_pos[0]-from_pos[0]) ** 2) + ((to_pos[1] - from_pos[1]) ** 2))**0.5
@@ -83,15 +83,21 @@ class compass:
             y2 = self.rect.y + self.rect.height - 1
             x2 = x - (y2 - y) * math.tan(theta)            
         return x2,y2
-    def distance_to_edge(self,x,y,bearing):
+    def distance_to_edge(self,x,y,bearing,all_screens = True):
         # calculate distance to canvas edge along bearing in pixels
         theta = math.radians(bearing)
         cos_theta = math.cos(theta)
         sin_theta = math.sin(theta)
-        h = self.rect.height
-        w = self.rect.width
-        s_x = self.rect.x
-        s_y = self.rect.y
+        if all_screens:
+            rect = self.rect
+        else:
+            s = actions.user.containing_screen(x,y)
+            rect = s.rect
+
+        h = rect.height
+        w = rect.width
+        s_x = rect.x
+        s_y = rect.y
 
         
         # get distances in vertical and horizontal directions
@@ -154,11 +160,16 @@ class compass:
         short_compass_mark_length = 50
         long_compass_mark_length = 100
         label_offset = 25
+        
+        spacing_sizes = {500:60,100:39,50:21,10:12}
+
+        # get universal data
         pos = ctrl.mouse_pos()
         cx = pos[0]
         cy = pos[1]
         max_dist = self.distance_to_edge(cx,cy,self.bearing)
-
+        screen_edge_dist = self.distance_to_edge(cx,cy,self.bearing,False)
+        
         # DRAW GRID
         startBearing = max(0,self.bearing)
         if mode_label[self.display_mode] in ['heavy','medium','light','tiny']:
@@ -227,7 +238,6 @@ class compass:
                     spacings += [50,10]
                     label_spacings += [100]
             
-            spacing_sizes = {500:60,100:39,50:21,10:12}
             if mode_label[self.display_mode] == 'medium':
                 spacing_sizes = {500:60,100:25,50:11,10:3}    
             if mode_label[self.display_mode] == 'light':
@@ -280,8 +290,7 @@ class compass:
                     hash_len = spacing_sizes[500]
                     radii = []
                     min_int_ratio = 10 # minimum interval ratio
-                    if max_dist > min_int_ratio * hash_len:
-                        radii = [0.6]
+                    radii = [0.2,0.6]
                     if mode_label[self.display_mode] == 'heavy':
                         if max_dist > 3 * min_int_ratio * hash_len:
                             radii = [0.2,0.5,0.8]
@@ -290,18 +299,19 @@ class compass:
                     # draw dial marks at radii
                     for brg_adj in range(31):
                         spacing_size_id = 500 if brg_adj%10==0 else 100 if brg_adj%5==0 else 50
-                        hash_len = spacing_sizes[spacing_size_id]/2
+                        hash_len = spacing_sizes[spacing_size_id]*0.75
                         b = self.bearing + brg_adj * left_right
-                        dial_radius = [int(max_dist * x) for x in radii]
+                        dial_radius = [int(screen_edge_dist * x) for x in radii]
                         for out_dist in dial_radius:
                             start_x,start_y = self.pot_of_gold(cx,cy,out_dist - hash_len/2,b)
                             line_aliased(start_x,start_y, hash_len,b)
                             # label spokes every ten degrees
                             if brg_adj % 10 == 0:
-                                buffer = 10
-                                text_x,text_y = self.pot_of_gold(start_x,start_y,buffer+hash_len,b)
-                                label = "{}{}".format(str(abs(brg_adj)), cardinal)
-                                text_aliased(label,text_x,text_y,18)
+                                if out_dist > 300:
+                                    buffer = 10
+                                    text_x,text_y = self.pot_of_gold(start_x,start_y,buffer+hash_len,b)
+                                    label = "{}{}".format(str(abs(brg_adj)), cardinal)
+                                    text_aliased(label,text_x,text_y,18)
     def check_for_updates(self):
         if self.enabled:
             if self.display_mode == resting_display_mode:
@@ -364,7 +374,7 @@ class Actions:
             print(f'bearing: {bearing}')
             if not bearing:
                 bearing = 0
-        compass_object.display_mode = display_mode
+        compass_object.display_mode = int(display_mode)
         compass_object.enable(bearing)
         compass_object.elapsed_ms = 0
 

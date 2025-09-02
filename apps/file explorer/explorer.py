@@ -122,6 +122,7 @@ def current_folder_from_menu():
             print(f'COPY PATH BUTTON el: {el}')
             if el:
                 actions.user.act_on_element(el,'invoke')
+                actions.sleep(0.2)
                 path = clip.text().strip('"')
                 print(f'CLIP path: {path}')
                 # path is to item, so get parent folder
