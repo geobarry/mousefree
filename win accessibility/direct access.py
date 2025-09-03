@@ -108,6 +108,7 @@ class Actions:
                 retrieving = False        
     def root_element():
         """Retrieves whatever windows UI thinks is the root element"""
+        return actions.user.safe_access(ax.get_root_element,"ROOT_ELEMENT")
         global retrieving
         actions.user.wait_for_access()
         if retrieving:
@@ -146,7 +147,6 @@ class Actions:
             if w:
                 return w.rect
         return actions.user.safe_access(access_func,"WINAX_ACTIVE_WINDOW_RECTANGLE")
-
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
         pt = actions.user.el_prop_val(el,"clickable_point")
@@ -263,8 +263,12 @@ class Actions:
             retrieving = True
             try:
                 # handle virtualized elements
-                if "VirtualizedItem" in el.patterns:
-                    el.virtualizeditem_pattern.realize()
+                pattern_list = el.patterns
+                if pattern_list:
+                    if "VirtualizedItem" in pattern_list:
+                        pattern = el.virtualizeditem_pattern
+                        if pattern:
+                            pattern.realize()
                 if prop_name.lower() == "name":
                     return el.name
                 elif prop_name.lower() == "pid":

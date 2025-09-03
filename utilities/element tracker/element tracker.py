@@ -171,6 +171,9 @@ class Actions:
     def currently_highlighting():
         """Returns boolean representing current highlighting state"""
         return el_track.auto_highlight
+    def currently_labelling():
+        """Returns bulling representing current labeling state"""
+        return el_track.auto_label
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
         if el:
