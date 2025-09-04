@@ -15,9 +15,11 @@ marked_elements = []
 
 class element_tracker:
     def __init__(self):        
-        self.screen = actions.user.winax_main_screen()
         self.canvas = None
-        self.update_screen(self.screen)
+        rect = actions.user.get_screen_bounds()
+        self.canvas = canvas.Canvas.from_rect(rect)
+        self.canvas.register('draw',self.draw_canvas)
+        self.canvas.freeze()
         self.rectangles = []
         self.labels = []
         self.auto_highlight = False
@@ -29,17 +31,8 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("500ms", self.update_highlight)
-    def update_screen(self, s):
-        # updates canvas to input screen 
-        if s:
-            self.screen = s
-            if self.canvas:
-                self.canvas.close()
-            self.canvas = canvas.Canvas.from_screen(s)
-            self.canvas.register('draw', self.draw_canvas) 
-            self.canvas.freeze() # uncomment this line for debugging
-            
+        self.job = cron.interval("3000ms", self.update_highlight)
+
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -58,41 +51,47 @@ class element_tracker:
         self.labels = []
         self.canvas.freeze() # this forces canvas redraw
     def draw_canvas(self, canvas):
-        paint = canvas.paint
-        paint.color = 'f3f'
-        paint.style = paint.Style.STROKE
-        paint.stroke_width = 5
-        def highlight_element(rect,lbl,paint):
-            if rect != None:
-                canvas.draw_round_rect(rect,11,11,paint)
-            if lbl != '':
+        # return 
+        try:
+            # print("DRAW_CANVAS")
+            paint = canvas.paint
+            paint.color = 'f3f'
+            paint.style = paint.Style.STROKE
+            paint.stroke_width = 5
+            def highlight_element(rect,lbl,paint):
                 if rect != None:
-                    paint.stroke_width = 2
-                    if len(lbl) > 50:
-                        lbl = lbl[:50]
-                    # determine label placement
-                    # assume text dimensions
-                    lbl_wd = 600
-                    lbl_ht = 30
-                    top_margin = rect.y
-                    btm_margin = canvas.height - rect.y - rect.height
-                    if top_margin > btm_margin:
-                        y = max(rect.y - lbl_ht, 0)
-                    else:
-                        y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
-                    x = min(rect.x,canvas.width - lbl_wd)
-                    actions.user.text_aliased(lbl,x,y,46,canvas)        
-        if len(self.rectangles) > 0:
-            for idx in range(len(self.rectangles)):
-                rect = self.rectangles[idx]
-                lbl = self.labels[idx]
-                highlight_element(rect,lbl,paint)
-        if self.auto_highlight or self.auto_label:
-            # references to self.focused_element inside this function
-            # will interfere with talon command canvas somehow, 
-            # so we structure this so that we don't need to refer to 
-            # self.focused_element here
-            highlight_element(self.focused_rect,self.focused_label,paint)
+                    canvas.draw_round_rect(rect,11,11,paint)
+                if lbl != '':
+                    if rect != None:
+                        paint.stroke_width = 2
+                        if len(lbl) > 50:
+                            lbl = lbl[:50]
+                        # determine label placement
+                        # assume text dimensions
+                        lbl_wd = 600
+                        lbl_ht = 30
+                        top_margin = rect.y
+                        btm_margin = canvas.height - rect.y - rect.height
+                        if top_margin > btm_margin:
+                            y = max(rect.y - lbl_ht, 0)
+                        else:
+                            y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
+                        x = min(rect.x,canvas.width - lbl_wd)
+                        actions.user.text_aliased(lbl,x,y,46,canvas)        
+            if len(self.rectangles) > 0:
+                # print(f"rectangles: {len(self.rectangles)}")
+                for idx in range(len(self.rectangles)):
+                    rect = self.rectangles[idx]
+                    # print(f'drawing rect: {rect}')
+                    canvas_rect = canvas.rect
+                    # print(f'canvas_rect: {canvas_rect}')
+                    # print(f'highlighted     rect: {rect}')
+                    lbl = self.labels[idx]
+                    highlight_element(rect,lbl,paint)
+            if self.auto_highlight or self.auto_label:
+                highlight_element(self.focused_rect,self.focused_label,paint)
+        except Exception as error:
+            print(f'DRAW_CANVAS error: {error}')
     def disable(self):
         self.canvas.close()
         self.canvas = None
@@ -111,18 +110,15 @@ class element_tracker:
                         rectangle_found = True
                         if rect != self.focused_rect:
                             self.focused_rect = rect
-                            s = screen.containing(rect.x,rect.y)
-                            if not s == self.screen:
-                                self.update_screen(s)
                             if self.auto_label:
                                 print("FUNCTION update_highlight")
                                 self.focused_label = el.name
                                 print(f"focused_label: self.focused_label")
-                            self.canvas.freeze() # this forces canvas redraw
+#                            self.canvas.freeze() # this forces canvas redraw
                         if not self.auto_label:
                             if self.focused_label != "":
                                 self.focused_label = ""
-                                self.canvas.freeze() # this forces canvas redraw
+                                # self.canvas.freeze() # this forces canvas redraw
                 else:
                     pass
             if not rectangle_found:
@@ -131,11 +127,7 @@ class element_tracker:
             self.canvas.freeze()
         except Exception as error:
             print(f'FUNCTION update_highlight - error: {error}')
-#            self.check_focused_element()            
-
-
     def handle_focus_change(self,el):
-        # print("FUNCTION handle_focus_change")
         if el:           
             self.focused_element = el
         # handle automatic element traversal
@@ -144,6 +136,7 @@ class element_tracker:
             self.traversal_function()
         # handle auto highlight
         self.update_highlight()
+
 
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
@@ -177,11 +170,16 @@ class Actions:
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
         if el:
+            print(f'HIGHLIGHT_ELEMENT el: {el}')
             rect = actions.user.el_prop_val(el,"rect")
+            print(f'rect: {rect}')
             if rect:
                 if len(lbl) > 50:
                     lbl = lbl[:50]
                 el_track.add_element(rect,lbl)
+                
+                return 
+        print("HIGHLIGHT_ELEMENT: unable to highlight element")
     def highlight_rectangle(rect: rect):
         """Highlights input rectangle without associated element"""
         el_track.add_element(rect,"")
@@ -197,13 +195,18 @@ class Actions:
     def clear_highlights():
         """Removes all ui elements from the highlight list"""
         el_track.clear_elements()
+
     def focused_element():
         """manages windows focused element retrieval;
            places request only if there is no other request in process;
            returns currently focused element"""
 #        el_track.check_focused_element()
         return el_track.focused_element
-
+    def reset_element_tracker():
+        """deletes the element tracker and creates a new one. """
+        global el_track
+        del el_track
+        el_track = element_tracker()
 
     def initialize_traversal(traversal_function: Callable, 
         sec_lim: float = 5,

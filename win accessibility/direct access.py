@@ -190,6 +190,7 @@ class Actions:
                 elif action == "double-click":
                     ctrl.mouse_click(times = 2)
                 elif action == "highlight":
+                    retrieving = False
                     actions.user.highlight_element(el)
                 elif action == "label":
                     actions.user.highlight_element(el,el.name)

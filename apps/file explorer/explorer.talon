@@ -3,7 +3,6 @@ app.exe: explorer.exe
 mode: user.zen
 mode: command
 -
-test folder: user.explorer_test()
 # ACTIONS ON FILES AND FOLDERS IN MAIN (FILE) PANEL
 
 ## Actions on currently selected a file(s) or folder(s)
@@ -94,89 +93,4 @@ column {user.explorer_column} narrower [<number>]:
 
 
 # IDIOSYNCRATIC COMMANDS
-new file:
-	key(alt-up)
-	sleep(0.2)
-	key(enter)
-	sleep(1.0)
-	key(menu)
-	sleep(0.2)
-	key(w 1)
-	sleep(0.2)
-	key(up:3)
 new folder: key(ctrl-shift-n)
-clone window:
-	key(alt-d ctrl-c super)
-	sleep(0.2)
-	insert("File Explorer")
-	key(enter)
-	sleep(0.5)
-	key(super-right)
-	sleep(1.5)
-	key(alt-d)
-	sleep(1.5)
-	key(ctrl-v enter)
-create animation$: 
-	user.explorer_open_path_in_terminal()
-	sleep(1.0)
-	msg = "ffmpeg -framerate 30 -i k_%d.png -c:v libx264 -r 30 -pix_fmt yuv420p animation.mp4"
-	insert(msg)
-create animations from sub folders$: user.explorer_create_animations_from_subfolders()
-compress video [file]$: user.compress_video_file()
-start server: user.explorer_start_server()
-open file locator$:
-	# grab path to current folder
-	key(alt-d)
-	sleep(0.5)
-	edit.copy()
-	# launch file locator
-	key(super)
-	sleep(1.0)
-	insert("filelocator")
-	sleep(1.0)
-	key(enter)
-	sleep(1.5)
-	# remove default file name and enter the folder path
-	key(del)
-	key(tab:2)
-	sleep(1)
-	edit.paste()
-	sleep(1)
-	key(shift-tab)
-
-open jupyter [notebook]$:
-	# grab path to current folder
-	key(alt-d)
-	sleep(0.5)
-	edit.copy()
-	# open the python command prompt
-	key(super)
-	sleep(0.5)
-	insert("python command prompt")
-	sleep(0.5)
-	key(enter)
-	sleep(2.5)
-	# change directories and open jupyter notebook
-	insert("cd ")
-	sleep(0.5)
-	edit.paste()
-	sleep(0.5)
-	key(enter)
-	sleep(0.5)
-	insert("jupyter notebook")
-	key(enter)
-	
-process desire to learn downloads:
-	user.process_desire_to_learn_downloads()
-prepend <user.text>:
-	key(f2)
-	sleep(0.2)
-	x = edit.selected_text()
-	sleep(0.2)
-	insert("{text} {x}")
-	sleep(0.4)
-	key(enter)
-	sleep(0.4)
-	key(home down:3)
-	
-test current path: print("{user.file_manager_current_path()}")
