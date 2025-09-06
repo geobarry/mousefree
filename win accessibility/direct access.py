@@ -33,6 +33,15 @@ class Actions:
                 print(f"{msg} encountered an error:\n {error}")
             finally:
                 retrieving = False        
+    def window_root():
+        """Retrieves the root element of the active window"""
+        def access_func():
+            return winui.active_window().element
+        return actions.user.safe_access(access_func,"WINDOW_ROOT")
+    def root_element():
+        """Retrieves whatever windows UI thinks is the root element"""
+        return actions.user.safe_access(ax.get_root_element,"ROOT_ELEMENT")
+
     def wait_for_access(time_limit: float = 1):
         """if currently retrieving, attempt to buy time; returns True if access is available"""
         interval = 0.05
@@ -52,94 +61,57 @@ class Actions:
         global retrieving
         return retrieving
     def safe_focused_element():
-        """This is intended to be a safe way to obtain the currently focused element. Will return none if unable to retrieve."""
-        global retrieving
-        actions.user.wait_for_access()
-        if retrieving:
-            print(f"FUNCTION safe_focused_element could not retrieve element because another retrieval is in process")
-            return None
-        else:
-            retrieving = True
+        """Safely obtains the currently focused element. Returns None if retrieval fails."""
+        def access_func():
             try:
-                el = winui.focused_element()
-                return el
+                return winui.focused_element()
             except Exception as error:
                 print("FUNCTION safe_focused_element could not retrieve element due to error")
-                print(f'error: {error}')
+                print(f"error: {error}")
                 print("Attempting to retrieve from generic UI")
                 try:
-                    el = ui.focused_element()
-                    return el
+                    return ui.focused_element()
                 except Exception as error:
                     print("Retrieval from generic UI also raised an error")
-                    print(f'error: {error}')
+                    print(f"error: {error}")
                 return None
-            finally:
-                retrieving = False
+
+        return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT")
+
     def main_window_element():
         """Attempts to retrieve the main window of the active app"""
-        global retrieving
-        actions.user.wait_for_access()
-        if retrieving:
-            print("MAIN_WINDOW: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
+        def access_func():
             try:
                 a = winui.active_app()
                 win_list = a.windows()
                 r = None
                 size_max = 0
                 for w in win_list:
-                    if not w.hidden:
-                        if w.title != "":
-                            rect = w.rect
-                            if rect:
-                                size = rect.width * rect.height
-                                if size > size_max:
-                                    size_max = size
-                                    r = w
-                print(f'MAIN_WINDOW: {r}')
+                    if not w.hidden and w.title != "":
+                        rect = w.rect
+                        if rect:
+                            size = rect.width * rect.height
+                            if size > size_max:
+                                size_max = size
+                                r = w
+                print(f"MAIN_WINDOW: {r}")
                 el = r.element
-                print(f'el: {el}')
+                print(f"el: {el}")
                 return el
             except Exception as error:
                 print(f"MAIN_WINDOW encountered an error:\n {error}")
-            finally:
-                retrieving = False        
-    def root_element():
-        """Retrieves whatever windows UI thinks is the root element"""
-        return actions.user.safe_access(ax.get_root_element,"ROOT_ELEMENT")
-        global retrieving
-        actions.user.wait_for_access()
-        if retrieving:
-            print("ROOT_ELEMENT: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
-            try:
-                return ax.get_root_element()
-            except Exception as error:
-                print(f"ROOT_ELEMENT encountered an error:\n {error}")
-            finally:
-                retrieving = False        
-    def window_root():
-        """Retrieves the root element of the active window"""
-        def access_func():
-            return winui.active_window().element
-        return actions.user.safe_access(access_func,"WINDOW_ROOT")
+                return None
+
+        return actions.user.safe_access(access_func, "MAIN_WINDOW_ELEMENT")
     def winax_main_screen():
-        """retrieves the main screen from windows UI"""
-        global retrieving
-        actions.user.wait_for_access()
-        if retrieving:
-            print("FUNCTION winax_main_screen: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
+        """Retrieves the main screen from Windows UI"""
+        def access_func():
             try:
                 return winui.main_screen()
             except Exception as error:
                 print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
-            finally:
-                retrieving = False
+                return None
+        return actions.user.safe_access(access_func, "WINAX_MAIN_SCREEN")
     def winax_active_window_rectangle():
         """The rectangle of the active window"""
         def access_func():
@@ -232,6 +204,7 @@ class Actions:
         """Attempts to set the given property value of the given element"""
         if not el:
             return 
+        actions.user.wait_for_access()
         if actions.user.winax_retrieving():
             return 
         actions.user.set_winax_retrieving(True)
@@ -246,11 +219,12 @@ class Actions:
                 if "Text" in el.patterns:
                     pattern = el.text_pattern
                     pattern.text = val
+            return True
         except:
             return 
         finally:
             actions.user.set_winax_retrieving(False)
-            return True
+
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
         if not el:

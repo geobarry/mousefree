@@ -7,6 +7,7 @@ class time_stopper:
         self.start_time = time.perf_counter()
         self.count_limit = counter_limits
         self.n = [0]*len(self.count_limit)
+        self.manual_break = False
     def increment(self,counter_number = 0):
         if counter_number < len(self.count_limit):
             self.n[counter_number]+=1
@@ -16,6 +17,9 @@ class time_stopper:
         elapsed_sec = cur_time - self.start_time
         return elapsed_sec
     def over(self):
+        if self.manual_break:
+            print(f"Stopper stopped due to manual break")
+            return True
         for i in range(len(self.count_limit)):
             if self.count_limit[i] > 0:
                 if self.n[i] >= self.count_limit[i]:
@@ -28,7 +32,8 @@ class time_stopper:
             return True
         else:
             return False
-
+    def stop(self):
+        self.manual_break = True
 
 mod = Module()
 

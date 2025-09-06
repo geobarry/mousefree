@@ -8,15 +8,8 @@ mode: command
 ## Actions on currently selected a file(s) or folder(s)
 
 (file|folder) {user.explorer_action}$: user.explorer_process_item("","",explorer_action)
-move to folder {user.dynamic_folder}$:
-	user.explorer_select_items_panel()
-	edit.cut()
-	sleep(0.1)
-	user.explorer_process_item(dynamic_folder,"folder","open")
-	sleep(0.7)
-	key("ctrl-v")
-	sleep(1.0)
-	key("alt-up")
+
+move to folder {user.dynamic_folder}$: user.explorer_move_to(dynamic_folder)
 move to parent [folder]$:
 	user.explorer_select_items_panel()
 	edit.cut()
@@ -57,8 +50,12 @@ go <user.system_path> {user.subfolder}$: user.explorer_navigate_to_folder("{syst
 panel (items|files): user.explorer_select_items_panel()
 panel navigation: user.explorer_select_navigation_panel()
 [panel] address bar: key(alt-d)
-copy full path: user.explorer_copy_full_path()
-copy folder: user.explorer_copy_folder()
+copy full path: 
+	x = user.explorer_current_path()
+	clip.set_text("{x}")
+copy folder:
+	folder = user.explorer_current_folder()
+	clip.set_text("{folder}")
 go recent: user.explorer_special_group("Recent")
 go favorites: user.explorer_special_group("Favorites")
 go shared: user.explorer_special_group("Shared")
