@@ -253,6 +253,7 @@ class Actions:
         """Attempts to open the item with a given name and type (file over folder), or else the currently selected item"""
         if name == "":
             el = actions.user.safe_focused_element()
+            name = actions.user.el_prop_val(el,'name')
         else:
             el = retrieve_item(name,item_type)
         if el:
@@ -279,36 +280,43 @@ class Actions:
         button = app_bar_button(button_name)
     def explorer_invoke_app_bar_item(item_sequence: str):
         """Invokes the given button on the app bar"""
+        # THIS ISN'T WORKING FOR ITEMS UNDER "MORE OPTIONS"
         item_list = item_sequence.split("|")
         if len(item_list) > 0:
             item = item_list[0].strip(" ")
             actions.user.explorer_show_button_options(item)
             for item in item_list[1:]:
+                # wait for any item to be in focus
                 prop_list = [("class_name",".*MenuFlyout.*Item")]
                 el = actions.user.wait_for_element(prop_list)
-                item = item.strip(" ")
-                prop_list = [("name",item)]
-                root = actions.user.window_root()
-                prop_seq = [
-                    [("name","Popup"),("class_name","Popup")],
-                    [("class_name","MenuFlyout")],
-                    [("name",item),("class_name",".*MenuFlyout.*Item")]
-                ]
-                el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)                
-                if not el:
-                    break 
-                else:
-                    pattern_list = actions.user.el_prop_val(el,'patterns')
-                    actions.user.act_on_element(el,'select')
-                    actions.sleep(0.3)
-                    if 'ExpandCollapse' in pattern_list:
-                        actions.user.act_on_element(el,'expand')
-                    elif 'Toggle' in pattern_list:
-                        actions.user.act_on_element(el,'toggle')
-                    elif 'Invoke' in pattern_list:
-                        actions.user.act_on_element(el,'invoke')
-                    else:
+                if el:
+                    # finds the element we want
+                    print(f'el: {el}')
+                    parent = actions.user.el_prop_val(el,'parent')
+                    print(f'parent: {parent}')
+                    item = item.strip(" ")
+                    prop_list = [("name",item)]
+                    root = actions.user.window_root()
+                    prop_seq = [
+                        [("name","Popup"),("class_name","Popup")],
+                        [("class_name","MenuFlyout")],
+                        [("name",item),("class_name",".*MenuFlyout.*Item")]
+                    ]
+                    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)                
+                    if not el:
                         break 
+                    else:
+                        pattern_list = actions.user.el_prop_val(el,'patterns')
+                        actions.user.act_on_element(el,'select')
+                        actions.sleep(0.3)
+                        if 'ExpandCollapse' in pattern_list:
+                            actions.user.act_on_element(el,'expand')
+                        elif 'Toggle' in pattern_list:
+                            actions.user.act_on_element(el,'toggle')
+                        elif 'Invoke' in pattern_list:
+                            actions.user.act_on_element(el,'invoke')
+                        else:
+                            break 
                 actions.sleep(0.3)
             if len(item_list) > 2:
                 actions.key(f"esc:{len(item_list) - 1}")
@@ -360,25 +368,27 @@ class Actions:
             if folder:
                 return f"{folder}\\{file_name}"
     def explorer_navigate_to_folder(path: str):
-        """navigates to given folder in ff explorer like application or dialog"""
+        """navigates to given folder in file explorer like application or dialog"""
         actions.key("alt-d")
-        el = actions.user.safe_focused_element()
-        actions.sleep(0.1)
-        success = False
-        i = 0
-        while success == False and i < 10:
-            try:
-                el.value_pattern.value = path
-                success = True
-            except:
-                i += 1
-                actions.sleep(0.1)
+        prop_list = [("name","Address.*")]
+        el = actions.user.wait_for_element(prop_list)
+        if el:
+            actions.insert(path)
         actions.sleep(0.1)
         actions.key("enter")
+        el = actions.user.safe_focused_element()
+        actions.sleep(1)
+        el = actions.user.safe_focused_element()
+        actions.key("esc")
         actions.user.explorer_select_items_panel()
-    def explorer_move_to(dest_folder: str,return_orig_folder: bool = True):
+    def explorer_move_to(path: str,ancestor_lvl: int = 0,subfolder: str = '',movement: str = 'stash'):
         """Moves selected item(s) to the destination folder safely"""
-        print(f'dest_folder: {dest_folder}')
+        # construct destination folder
+        if path == '':
+            path = actions.user.explorer_current_folder()
+        if ancestor_lvl > 0:
+            path = str(Path(path).parents[ancestor_lvl - 1])
+        dest_folder = path if subfolder == '' else f'{path}\\{subfolder}'
         # navigate to the items panel if we are not already there
         actions.user.explorer_select_items_panel()
         prop_list = [("class_name","UIItem")]
@@ -386,27 +396,25 @@ class Actions:
         if el:
             # copy folder to clipboard
             actions.key("ctrl-x")
-            actions.sleep(0.5)
+            actions.sleep(0.5) # wait until user has time to visually confirm
             # move into destination folder
-            actions.user.explorer_process_item(dest_folder,"folder","open")
+            actions.user.explorer_navigate_to_folder(dest_folder)
             cur_folder = actions.user.explorer_current_folder()
-            cur_folder = os.path.basename(cur_folder)
             # wait for current folder to change
             stopper = actions.user.stopper(sec_lim = 1)
             while not stopper.over():
                 actions.sleep(0.05)
                 cur_folder = actions.user.explorer_current_folder()
-                cur_folder = os.path.basename(cur_folder)                
                 if cur_folder == dest_folder:
                     stopper.stop()
             if cur_folder == dest_folder:
                 # paste item
                 actions.key("ctrl-v")
-                # returned to original folder
-                if return_orig_folder:
+                # return to original folder
+                if movement == 'stash':
                     # wait until user has time to visually confirm
-                    actions.sleep(0.3)
-                    actions.key("alt-up")
+                    actions.sleep(0.75)
+                    actions.key("alt-left")
         
     def explorer_open_with(app_name: str):
         """Opens currently selected file with app"""

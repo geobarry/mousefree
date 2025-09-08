@@ -336,12 +336,7 @@ class Actions:
                     rect = el.rect
                     if rect:
                         return el.rect.height
-                elif prop_name.lower() == "value":
-                    if "Value" in el.patterns:
-                        return el.value_pattern.value
-                elif prop_name.lower() == "value.is_read_only":
-                    if "Value" in el.patterns:
-                        return el.value_pattern.is_read_only
+
                 elif prop_name.lower() == "legacy.value":
                     if "LegacyIAccessible" in el.patterns:
                         return el.legacyiaccessible_pattern.value
@@ -368,6 +363,13 @@ class Actions:
                             return None
                 elif prop_name.lower() == "parent":
                     return el.parent.name if as_text else el.parent
+
+                elif prop_name.lower() == "value":
+                    if "Value" in el.patterns:
+                        return el.value_pattern.value
+                elif prop_name.lower() == "value.is_read_only":
+                    if "Value" in el.patterns:
+                        return el.value_pattern.is_read_only
                 elif prop_name.lower() == "expand_collapse_state":
                     if "ExpandCollapse" in el.patterns:
                         return el.expandcollapse_pattern.state

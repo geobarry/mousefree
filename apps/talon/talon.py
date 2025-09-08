@@ -113,7 +113,7 @@ class Actions:
         else:
             return False
 
-    def go_talon_setting(setting_path: str):
+    def go_talon_menu(menu_path: str):
         """Opens up a specific talon setting; path should be labels in taskbar separated by commas"""
         highlighting = actions.user.currently_highlighting()
         labelling = actions.user.currently_labelling()
@@ -137,9 +137,9 @@ class Actions:
                 # Speech Recognition	#32768
                 # Desktop 1	#32769
 
-                print(f'setting_path: {setting_path}')
+                print(f'menu_path: {menu_path}')
     #            return 
-                item_list = setting_path.split(",")
+                item_list = menu_path.split(",")
                 print(f'item_list: {item_list}')
                 desktop = actions.user.root_element()
                 print(f'desktop: {desktop}')
@@ -154,7 +154,7 @@ class Actions:
                                     prop_list = [("name",item)]
                                     el = actions.user.matching_child(root,prop_list)
                                     msg = actions.user.el_prop_val(el,'printout')
-                                    print(f'FUNCTION go_talon_setting: el = {msg} | looking for |{item}|')
+                                    print(f'FUNCTION go_talon_menu: el = {msg} | looking for |{item}|')
                                     if el:
                                         # we want to highlight element, but highlight will be hidden behind taskbar
                                         actions.user.reset_element_tracker()
@@ -181,7 +181,7 @@ class Actions:
                                     else:
                                         return 
         except Exception as error:
-            print(f"error in GO_TALON_SETTING: {error}")
+            print(f"error in go_talon_menu: {error}")
         finally:
             # return to original highlighting/labelling state
             actions.user.auto_highlight(highlighting)

@@ -383,23 +383,43 @@ class Actions:
                     valid_matches += x
             return valid_matches
         stopper = actions.user.stopper(time_limit)
+        verbose = True
         if verbose:
             print(f'FUNCTION find_el_by_prop_seq() root: {root}')
+        stopper = actions.user.stopper()
         for prop_list in prop_seq:
+            # NEW METHOD TO SEARCH EXTRA LEVELS MORE EFFICIENTLY
+            valid_matches = []
             extra_levels = 0
-            valid_matches = perform_search(el_list,extra_levels)
-            if stopper.over():
-                if verbose:
-                    print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
-                return 
+            parent_list = el_list
+            while len(valid_matches) == 0 and extra_levels <= extra_search_levels:
+                next_parents = []
+                for parent in parent_list:
+                    children = actions.user.el_prop_val(parent,'children')
+                    if children:
+                        next_parents += children
+                        for child in children:
+                            if stopper.over():
+                                return
+                            if actions.user.element_match(child,prop_list):
+                                valid_matches.append(child)
+                parent_list = next_parents
+                extra_levels += 1            
+            # OLD METHOD
+            # valid_matches = perform_search(el_list,extra_levels)
+            # if stopper.over():
+                # if verbose:
+                    # print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
+                # return 
             # print(f'len(valid_matches): {len(valid_matches)}')
-            while len(valid_matches) == 0 and extra_levels < extra_search_levels:
-                extra_levels += 1
-                valid_matches = perform_search(el_list,extra_levels,False)
-                if stopper.over():
-                    if verbose:
-                        print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
-                    return 
+            # while len(valid_matches) == 0 and extra_levels < extra_search_levels:
+                # extra_levels += 1
+                # valid_matches = perform_search(el_list,extra_levels,False)
+                # if stopper.over():
+                    # if verbose:
+                        # print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
+                    # return 
+
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
@@ -408,9 +428,10 @@ class Actions:
                         print(f'el: {el}')
                         children = actions.user.el_prop_val(el,"children")
                         print(f'children: {children}')
-                        for child in children:
-                            msg = actions.user.element_information(child,prop_list = ["name","class_name","printout"])
-                            print(f'child: {msg}')
+                        if children:
+                            for child in children:
+                                msg = actions.user.element_information(child,prop_list = ["name","class_name","printout"])
+                                print(f'child: {msg}')
                         
                 el_list = []
                 break        

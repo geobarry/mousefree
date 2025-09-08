@@ -5,20 +5,27 @@ mode: command
 -
 # ACTIONS ON FILES AND FOLDERS IN MAIN (FILE) PANEL
 
-## Actions on currently selected a file(s) or folder(s)
+## CURRENTLY SELECTED
+## Commands that perform actions on currently selected file(s) or folder(s)
+##  examples:
+##   "folder open"
+##   "file cut"
+##   "move into <name of any visible subfolder>"
+##   "stash into parent folder"
+##   "move/stash into <one of your named system paths>"
 
-(file|folder) {user.explorer_action}$: user.explorer_process_item("","",explorer_action)
+(file|folder) {user.explorer_action}$: user.explorer_process_item('','',explorer_action)
 
-move to folder {user.dynamic_folder}$: user.explorer_move_to(dynamic_folder)
-move to parent [folder]$:
-	user.explorer_select_items_panel()
-	edit.cut()
-	sleep(0.1)
-	user.file_manager_open_parent()
-	sleep(0.7)
-	key("ctrl-v")	
+move into folder {user.dynamic_folder}$: user.explorer_move_to('',0,dynamic_folder,'move')
+move into parent [folder]$: user.explorer_move_to('',1,'','move')
+move into {user.system_paths}: user.explorer_move_to(system_paths,0,'','move')
 
-## Actions on files or folders identified dynamically from file/folder names
+stash into folder {user.dynamic_folder}$: user.explorer_move_to('',0,dynamic_folder,'stash')
+stash into parent [folder]$: user.explorer_move_to('',1,'','stash')
+stash into {user.system_paths}: user.explorer_move_to(system_paths,0,'','stash')
+	
+## BY SPOKEN FORM
+## Commands that perform actions on files or folders designated by name
 ##  examples:
 ##   "file open <first word or first couple words of file name>"
 ##   "folder delete <first couple words of folder name>"
@@ -43,23 +50,22 @@ open with {user.app}$: user.explorer_open_with(app)
 # NAVIGATION TO SYSTEM PATHS
 # override default because default doesn't work consistently, leaves drop down hanging
 go <user.system_path>$: user.explorer_navigate_to_folder(system_path)
-# if you have a common naming convention for subfolders, create a talon list and use the following:
+# if you have a common naming convention for subfolders, create a talon list called subfolder and use the following:
 go <user.system_path> {user.subfolder}$: user.explorer_navigate_to_folder("{system_path}\\{subfolder}")
 
-# UI NAVIGATION
-panel (items|files): user.explorer_select_items_panel()
-panel navigation: user.explorer_select_navigation_panel()
-[panel] address bar: key(alt-d)
-copy full path: 
-	x = user.explorer_current_path()
-	clip.set_text("{x}")
-copy folder:
-	folder = user.explorer_current_folder()
-	clip.set_text("{folder}")
+# these are a bit experimental
 go recent: user.explorer_special_group("Recent")
 go favorites: user.explorer_special_group("Favorites")
 go shared: user.explorer_special_group("Shared")
 
+# UI NAVIGATION
+# Panels
+panel (main|files): user.explorer_select_items_panel()
+panel navigation: user.explorer_select_navigation_panel()
+address bar: key(alt-d)
+
+# Toolbar drop-downs
+# These don't look like menus in other programs, but essentially they are
 menu new: user.explorer_show_button_options("New")
 menu sort: user.explorer_show_button_options("Sort")
 menu view: user.explorer_show_button_options("View")
@@ -91,3 +97,9 @@ column {user.explorer_column} narrower [<number>]:
 
 # IDIOSYNCRATIC COMMANDS
 new folder: key(ctrl-shift-n)
+copy full path: 
+	x = user.explorer_current_path()
+	clip.set_text("{x}")
+copy folder:
+	folder = user.explorer_current_folder()
+	clip.set_text("{folder}")
