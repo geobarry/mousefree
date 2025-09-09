@@ -287,20 +287,17 @@ class Actions:
             actions.user.explorer_show_button_options(item)
             for item in item_list[1:]:
                 # wait for any item to be in focus
-                prop_list = [("class_name",".*MenuFlyout.*Item")]
+                prop_list = [("class_name",".*MenuFlyout.*Item|AppBarButton")]
                 el = actions.user.wait_for_element(prop_list)
                 if el:
                     # finds the element we want
-                    print(f'el: {el}')
                     parent = actions.user.el_prop_val(el,'parent')
-                    print(f'parent: {parent}')
                     item = item.strip(" ")
                     prop_list = [("name",item)]
                     root = actions.user.window_root()
                     prop_seq = [
                         [("name","Popup"),("class_name","Popup")],
-                        [("class_name","MenuFlyout")],
-                        [("name",item),("class_name",".*MenuFlyout.*Item")]
+                        [("name",item),("class_name",".*MenuFlyout.*Item|AppBarButton")]
                     ]
                     el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)                
                     if not el:

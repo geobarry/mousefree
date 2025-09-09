@@ -29,6 +29,8 @@ def precise_target_and_position(target: re.Pattern,
     
     # handle homophones, single quotes 
     # incoming target should have regular straight quotes
+    if not text_range:
+        return 
     t = modify_regex_include_homophones(target.pattern)
     t = re.sub(r"'","[’']",t)
     target = re.compile(t, re.IGNORECASE)
@@ -70,35 +72,31 @@ def find_target(trg: re.Pattern,
     # Handle case of no TextRange input
     if text_range is None:
         el = actions.user.safe_focused_element()
-        if "Text" not in el.patterns:
-            print("Error in function find_target: focused element does not have text pattern")
-            return None
-        text_range = actions.user.el_prop_val(el,'text_selection')
+        if el:
+            pattern_list = actions.user.el_prop_val(el,'patterns')
+            if pattern_list:
+                if "Text" not in pattern_list:
+                    print("Error in function find_target: focused element does not have text pattern")
+                    return None
+                text_range = actions.user.el_prop_val(el,'text_selection')
     if text_range:
         # Use regex to find exact match text and its position
         precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
-
         if precise_trg != None:
             # Iteratively search for precise target using windows accessibility
             back = search_dir.upper() == "UP"
-            if actions.user.wait_for_access():
-                actions.user.set_winax_retrieving(True)
-                try:
-                    r = text_range.find_text(precise_trg,backward = back)
-                    while precise_ordinal > 1:
-                        actions.sleep(0.05)
-                        precise_ordinal -= 1
-                        if search_dir.upper() == "UP":
-                            text_range.move_endpoint_by_range("End","Start",target = r)
-                        else:
-                            text_range.move_endpoint_by_range("Start","End",target = r)
-                        r = text_range.find_text(precise_trg,backward = back)            
-                        r.select()
-                    return r
-                except Exception as error:
-                    print(f"TEXT SELECTION FIND TARGET error:\n{error}")
-                finally:
-                    actions.user.set_winax_retrieving(False)
+            r = actions.user.safe_access(lambda: text_range.find_text(precise_trg,backward = back),"FIND_TARGET (a)")
+            if r:
+                while precise_ordinal > 1:
+                    # iterate to find next instance
+                    precise_ordinal -= 1
+                    # eliminate portion of text range up to and including previous instance
+                    if search_dir.upper() == "UP":
+                        actions.user.safe_access(lambda: text_range.move_endpoint_by_range("End","Start",target = r),"FIND_TARGET (b)")
+                    else:
+                        actions.user.safe_access(lambda: text_range.move_endpoint_by_range("Start","End",target = r),"FIND_TARGET (c)")
+                    r = actions.user.safe_access(lambda: text_range.find_text(precise_trg,backward = back)            , "FIND_TARGET (d)")
+                return r
         else:
             print("Target not found :(")
             return None
@@ -114,23 +112,17 @@ def get_scope(scope_dir: str = "DOWN",
     if el:
         cur_range = actions.user.el_prop_val(el,'text_selection')
         if cur_range:
-            if actions.user.wait_for_access():
-                actions.user.set_winax_retrieving(True)
-                try:
-                    # avoid selecting anything in current selection#
-                    if scope_dir.upper() == "UP":
-                        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
-                        d = -1*settings.get("user.win_selection_distance")
-                        cur_range.move_endpoint_by_unit("Start",scope_unit,d)
-                    elif scope_dir.upper() == "DOWN":
-                        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
-                        cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance"))
-                    print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
-                    return cur_range
-                except Exception as error:
-                    print(f"TEXT SELECTION GET SCOPE error:\n{error}")
-                finally:
-                    actions.user.set_winax_retrieving(False)
+            # avoid selecting anything in current selection#
+            if scope_dir.upper() == "UP":
+                actions.user.safe_access(lambda:cur_range.move_endpoint_by_range("End","Start",target = cur_range),"GET_SCOPE (a)")
+                d = -1*settings.get("user.win_selection_distance")
+                actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("Start",scope_unit,d),"GET_SCOPE (b)")
+            elif scope_dir.upper() == "DOWN":
+                actions.user.safe_access(lambda: cur_range.move_endpoint_by_range("Start","End",target = cur_range),"GET_SCOPE (c)")
+                actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance")),"GET_SCOPE(d)")
+            print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
+            return cur_range
+
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
     # get textRange so we can return cursor to original position
@@ -146,7 +138,7 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
             # return to original selection
             if init_range != None:
                 actions.sleep(0.1)
-                init_range.select()
+                actions.user.safe_access(lambda: init_range.select(),"PROCESS_SELECTION")
 def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
     # ********************************
@@ -157,11 +149,7 @@ def scroll_to_selection(r,init_rect = None):
     # Would like to make it so that the selected items goes to the center of the screen
     # but so far attempts to do that have failed to work consistently
     # hmm... seems like scroll into view only works going down...
-    try:
-        actions.sleep(0.1)
-        r.scroll_into_view(align_to_top = True)
-    except Exception as error:
-        print(f"FUNCTION: scroll_to_selection\n{error}") # some apps or windows versions don't have bounding rectangles yet?
+    actions.user.safe_access(lambda: r.scroll_into_view(align_to_top = True), "SCROLL_TO_SELECTION")
 def modify_regex_include_homophones(t: str):
     word_list = re.findall(r"\w+",t)
     word_list = set(word_list)
@@ -179,20 +167,23 @@ ctx = Context()
 def win_dynamic_nav_target(_) -> str:
     el = actions.user.safe_focused_element()
     if el:
-        if "Text" in el.patterns:
+        pattern_list = actions.user.el_prop_val(el,'patterns')
+        if "Text" in pattern_list:
             cur_range = get_scope("both","Line",15)
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_DYNAMIC_NAV_TARGET")
             return f"""
-            {cur_range.text}
+            {txt}
             """
 
 @ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
 def win_fwd_dyn_nav_trg(_) -> str:
     el = actions.user.safe_focused_element()
     if el:
-        print(f'el: {el}')
-        if "Text" in el.patterns:
+        pattern_list = actions.user.el_prop_val(el,'patterns')
+        if "Text" in pattern_list:
             cur_range = get_scope("DOWN","Line")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_FWD_DYN_NAV_TRG")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
             t = re.sub(r"’","'",t)
             return f"""
             {t}
@@ -202,13 +193,12 @@ def win_fwd_dyn_nav_trg(_) -> str:
 def win_bkwd_dyn_nav_trg(_) -> str:
     print("FUNCTION: backwards dynamic navigation target")
     el = actions.user.safe_focused_element()
-    print(f'el: {el}')
     if el:
         pattern_list = el.patterns
-        print(f'pattern_list: {pattern_list}')
         if "Text" in pattern_list:
             cur_range = get_scope("UP","Line")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', cur_range.text)
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_BKWD_DYN_NAV_TRG")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
             t = re.sub(r"’","'",t)
             print(f't: {t}')
             return f"""
@@ -357,28 +347,31 @@ class Actions:
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = actions.user.safe_focused_element()
-        if "Text" in el.patterns:
+        pattern_list = actions.user.el_prop_val(el,'patterns')
+        if "Text" in pattern_list:
             try:
-                cur_range = el.text_pattern.selection[0]
-                # for automatic scrolling; should be moved to separate function for other operations
-                init_rect = None
-                trg_rect = None
-                try:
-                    init_rect = cur_range.bounding_rectangles[0]
-                except Exception as error:
-                    pass # some apps or windows versions don't have bounding rectangles yet?
-                r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
-                if r != None:
-                    src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
-                    trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                    r.move_endpoint_by_range(src_pos,trg_pos,target = r)
-                    r.select()
-                    scroll_to_selection(r,init_rect)
+                pattern = actions.user.el_pattern(el,"text")
+                if pattern:
+                    cur_range = actions.user.safe_access(lambda: pattern.selection[0],"WINAX_GO_TEXT (a)")
+                    if cur_range:
+                        # for automatic scrolling; should be moved to separate function for other operations
+                        init_rect = None
+                        trg_rect = None
+                        init_rect = actions.user.safe_access(lambda: cur_range.bounding_rectangles[0], "WINAX_GO_TEXT (b)")
+                        if init_rect:
+                            r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                            if r != None:
+                                src_pos = "End" if before_or_after.upper() == "BEFORE" else "Start"
+                                trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
+                                actions.user.safe_access(lambda: r.move_endpoint_by_range(src_pos,trg_pos,target = r),"WINAX_GO_TEXT (c)")
+                                actions.user.safe_access(lambda: r.select(),"WINAX_GO_TEXT (d)")
+                                scroll_to_selection(r,init_rect)
             except:
                 print("unhandled exception in windows accessibility text selection; reverting to old method")
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
         	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+# *** stall-proofed up to here ***
     def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
