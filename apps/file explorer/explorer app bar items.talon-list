@@ -36,7 +36,5 @@ copy path: More options | Copy path
 #select all: More options | Select all
 select none: More options | Select none
 invert selection: More options | Invert selection
-folder properties: More options | Properties
-folder options: More options | Options
-file properties: More options | Properties
-file options: More options | Options
+properties: More options | Properties
+options: More options | Options
