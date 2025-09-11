@@ -366,6 +366,7 @@ class Actions:
             root: ax.Element = None, 
             extra_search_levels: int = 2, 
             time_limit: float = 5,
+            ordinal: int = 1,
             verbose: bool = False):
         """Finds element by working down from root"""
         if verbose:
@@ -441,8 +442,10 @@ class Actions:
                     print(f"found {prop_list}")
         if verbose:
             print(f"found {len(el_list)} matches")
-        if len(el_list) > 0:
-            return el_list[0]
+        if len(el_list) >= ordinal:
+            print(f'len(el_list): {len(el_list)}')
+            print(f'ordinal: {ordinal}')
+            return el_list[ordinal-1]
         else:
             return None
 

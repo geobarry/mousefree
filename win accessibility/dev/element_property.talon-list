@@ -13,4 +13,6 @@ rectangle: rect
 children
 parent
 expand collapse state: expand_collapse_state
+text
+value
 text selection: text_selection
