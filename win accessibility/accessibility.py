@@ -384,7 +384,6 @@ class Actions:
                     valid_matches += x
             return valid_matches
         stopper = actions.user.stopper(time_limit)
-        verbose = True
         if verbose:
             print(f'FUNCTION find_el_by_prop_seq() root: {root}')
         stopper = actions.user.stopper()
@@ -443,8 +442,6 @@ class Actions:
         if verbose:
             print(f"found {len(el_list)} matches")
         if len(el_list) >= ordinal:
-            print(f'len(el_list): {len(el_list)}')
-            print(f'ordinal: {ordinal}')
             return el_list[ordinal-1]
         else:
             return None

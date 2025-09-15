@@ -14,4 +14,4 @@ expand
 collapse
 toggle
 scroll into view: scroll_into_view
-scroll: scroll_into view
+scroll: scroll_into_view
