@@ -64,18 +64,12 @@ class Actions:
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
             try:
-                return winui.focused_element()
+                el = winui.focused_element()
+                if el:
+                    return el
             except Exception as error:
                 print("FUNCTION safe_focused_element could not retrieve element due to error")
-                print(f"error: {error}")
-                print("Attempting to retrieve from generic UI")
-                try:
-                    return ui.focused_element()
-                except Exception as error:
-                    print("Retrieval from generic UI also raised an error")
-                    print(f"error: {error}")
                 return None
-
         return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT")
 
     def main_window_element():
