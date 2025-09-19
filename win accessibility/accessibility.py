@@ -223,21 +223,30 @@ class Actions:
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         if el:
-            return match(el,prop_list,conjunction,mod_func,verbose)
+            actions.user.el_tracker_pause_updating()
+            r = match(el,prop_list,conjunction,mod_func,verbose)
+            actions.user.el_tracker_resume_updating()
+            return r
         else:
             return False
     def element_exists(prop_list: list,max_level: int = 7):
         """Returns true if an element where the given properties exists"""
+        actions.user.el_tracker_pause_updating()
         root = actions.user.window_root()
         elements = list(get_every_child(root,max_level = max_level))
         for el in elements:
             if actions.user.element_match(el,prop_list):            
+                actions.user.el_tracker_resume_updating()
                 return True
+        actions.user.el_tracker_resume_updating()
         return False
     def element_list():
         """returns_a_list_of_all_elements"""
+        actions.user.el_tracker_pause_updating()
         root = actions.user.window_root()
-        return list(get_every_child(root))
+        r = list(get_every_child(root))
+        actions.user.el_tracker_resume_updating()
+        return r
     def matching_element(prop_list: list, item_num: int = 0, max_level: int = 12,root: ax.Element = None):
         """returns the zero based nth item matching the property list, or None"""
         if root == None:
@@ -249,6 +258,7 @@ class Actions:
             return None
     def matching_elements(prop_list: list, max_level: int = 12, root: ax.Element = None):
         """Returns a list of all UI elements under the root that match the property list"""
+        actions.user.el_tracker_pause_updating()
         r = []
         # get list of elements
         if root == None:
@@ -262,6 +272,7 @@ class Actions:
                     r.append(el)
             except Exception as error:
                 print(f'error: {error}')
+        actions.user.el_tracker_resume_updating()
         return r  
     def count_matching_children(el: ax.Element,prop_list: list):
         """Returns the number of children matching the property list conditions"""
@@ -290,6 +301,7 @@ class Actions:
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, time_limit: float = 5,verbose: bool = False):
         """Returns the matching descendants of the input element at the given generation, 
         or continues the search up to the given number of extra generations"""
+        actions.user.el_tracker_pause_updating()
         if verbose:
             print("FUNCTION matching_descendants...")
             print(f'root: {el} prop_list: {prop_list}')
@@ -327,6 +339,7 @@ class Actions:
                                         r.append(child)
                 except Exception as error:
                     print(f'error: {error}')
+        actions.user.el_tracker_resume_updating()
         return r
     def matching_descendant(el: ax.Element, prop_list: list, gen: int, extra_gen: int = 0, verbose: bool = False):
         """Returns the descendant of the input element that matches the property list"""
@@ -337,6 +350,7 @@ class Actions:
         return None
     def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, time_limit: float = 5, verbose: bool = False):
         """Returns the first ancestor that meets prop_list conditions, or None if none is found"""
+        actions.user.el_tracker_pause_updating()
         if max_gen == -1:
             max_gen == 25
         el_list = [el]
@@ -346,6 +360,7 @@ class Actions:
             try:
                 if stopper.over():
                     print("MATCHING_ANCESTOR time is over")
+                    actions.user.el_tracker_resume_updating()
                     return 
                 stopper.increment()
                 if el:
@@ -355,12 +370,15 @@ class Actions:
                         msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
                         print(f'msg: {msg}')
                     if actions.user.element_match(el,prop_list):
+                        actions.user.el_tracker_resume_updating()
                         return el
                 else:
+                    actions.user.el_tracker_resume_updating()
                     return None
             except Exception as error:
                 print("FUNCTION matching_ancestor: ancestor not found :(")
                 print(f'error: {error}')
+                actions.user.el_tracker_resume_updating()
                 return None
     def find_el_by_prop_seq(prop_seq: list, 
             root: ax.Element = None, 
@@ -369,6 +387,7 @@ class Actions:
             ordinal: int = 1,
             verbose: bool = False):
         """Finds element by working down from root"""
+        actions.user.el_tracker_pause_updating()
         if verbose:
             print("FUNCTION: actions.user.find_el_by_prop_seq()")
         if root == None:
@@ -441,6 +460,7 @@ class Actions:
                     print(f"found {prop_list}")
         if verbose:
             print(f"found {len(el_list)} matches")
+        actions.user.el_tracker_resume_updating()
         if len(el_list) >= ordinal:
             return el_list[ordinal-1]
         else:

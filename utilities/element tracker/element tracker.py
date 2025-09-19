@@ -31,8 +31,8 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("5000ms", self.update_highlight)
-
+        self.job = cron.interval("300ms", self.update_highlight)
+        self.accessibility_check_paused = False
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -95,38 +95,37 @@ class element_tracker:
     def disable(self):
         self.canvas.close()
         self.canvas = None
-    def check_focused_element(self):
-        """retrieves new focused element unless already processing"""
-        self.focused_element = actions.user.safe_focused_element()
     def update_highlight(self):
-        try:
-            rectangle_found = False
-            if self.auto_highlight or self.auto_label:
-                el = actions.user.safe_focused_element()
-                if el:
-                    rect = None
-                    rect = actions.user.el_prop_val(el,"rect")
-                    if rect:
-                        rectangle_found = True
-                        if rect != self.focused_rect:
-                            self.focused_rect = rect
-                            if self.auto_label:
-                                print("FUNCTION update_highlight")
-                                self.focused_label = el.name
-                                print(f"focused_label: self.focused_label")
-#                            self.canvas.freeze() # this forces canvas redraw
-                        if not self.auto_label:
-                            if self.focused_label != "":
-                                self.focused_label = ""
-                                # self.canvas.freeze() # this forces canvas redraw
-                else:
-                    pass
-            if not rectangle_found:
-                self.focused_rect = None
-                self.focused_label = ""
-            self.canvas.freeze()
-        except Exception as error:
-            print(f'FUNCTION update_highlight - error: {error}')
+        """Updates the focused element using windows accessibility"""
+        if not self.accessibility_check_paused:
+            try:
+                rectangle_found = False
+                if self.auto_highlight or self.auto_label:
+                    el = actions.user.safe_focused_element()
+                    if el:
+                        rect = None
+                        rect = actions.user.el_prop_val(el,"rect")
+                        if rect:
+                            rectangle_found = True
+                            if rect != self.focused_rect:
+                                self.focused_rect = rect
+                                if self.auto_label:
+                                    print("FUNCTION update_highlight")
+                                    self.focused_label = el.name
+                                    print(f"focused_label: self.focused_label")
+    #                            self.canvas.freeze() # this forces canvas redraw
+                            if not self.auto_label:
+                                if self.focused_label != "":
+                                    self.focused_label = ""
+                                    # self.canvas.freeze() # this forces canvas redraw
+                    else:
+                        pass
+                if not rectangle_found:
+                    self.focused_rect = None
+                    self.focused_label = ""
+                self.canvas.freeze()
+            except Exception as error:
+                print(f'FUNCTION update_highlight - error: {error}')
     def handle_focus_change(self,el):
         if el:           
             self.focused_element = el
@@ -162,6 +161,14 @@ class Actions:
         """automatically highlight and label focused element"""
         el_track.auto_label = on
         el_track.update_highlight()
+    def el_tracker_pause_updating():
+        """pauses checking current focused element, but keeps highlighting"""
+        if el_track:
+            el_track.accessibility_check_paused = True
+    def el_tracker_resume_updating():
+        """resumes checking current focused element, but keeps highlighting"""
+        if el_track:
+            el_track.accessibility_check_paused = False
     def currently_highlighting():
         """Returns boolean representing current highlighting state"""
         return el_track.auto_highlight
@@ -201,7 +208,6 @@ class Actions:
         """manages windows focused element retrieval;
            places request only if there is no other request in process;
            returns currently focused element"""
-#        el_track.check_focused_element()
         return el_track.focused_element
     def reset_element_tracker():
         """deletes the element tracker and creates a new one. """
