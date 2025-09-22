@@ -123,8 +123,12 @@ def match(el: ax.Element,
     if len(prop_list) == 0:
         return True
     # handle case that property list is of the form [conjunction,list]
-    if prop_list[0] in ["AND","OR","and","or","And","Or"]:
-        r = match(el,prop_list[1],prop_list[0])
+    # if prop_list[0] in ["AND","OR","and","or","And","Or"]:
+        # r = match(el,prop_list[1],prop_list[0])
+    if prop_list[0] in ["OR","or","Or"]:
+        r = any(match(el,item,"OR",mod_func = mod_func,verbose = verbose) for item in prop_list[1])
+    elif prop_list[0] in ["AND","and","And"]:
+        r = all(match(el,item,"AND",mod_func = mod_func,verbose = verbose) for item in prop_list[1])
     # handle the case that property list is a list of (property, value) tuples
     elif conjunction.upper() == "AND":
         r =  all([eval_cond(prop,val) for prop,val in prop_list])
@@ -220,6 +224,15 @@ class Actions:
                     val = ["n",val[0]]
                 r.append((prop_name[val[0].strip()],val[1].strip()))
         return r
+    def get_property_sequence(prop_seq_str: str):
+        """creates a property sequence from a string of the form <prop_str>;<prop_str>..."""
+        prop_str_list = prop_seq_str.split(";")
+        r = []
+        for prop_str in prop_str_list:
+            prop_list = actions.user.get_property_list(prop_str)
+            r.append(prop_list)
+        return r
+        
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         if el:
@@ -380,12 +393,7 @@ class Actions:
                 print(f'error: {error}')
                 actions.user.el_tracker_resume_updating()
                 return None
-    def find_el_by_prop_seq(prop_seq: list, 
-            root: ax.Element = None, 
-            extra_search_levels: int = 2, 
-            time_limit: float = 5,
-            ordinal: int = 1,
-            verbose: bool = False):
+    def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
         """Finds element by working down from root"""
         actions.user.el_tracker_pause_updating()
         if verbose:

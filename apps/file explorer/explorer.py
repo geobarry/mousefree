@@ -415,44 +415,31 @@ class Actions:
         
     def explorer_open_with(app_name: str):
         """Opens currently selected file with app"""
-        # prop_list = [("class_name","UIItem")]
-        # make sure that we have an item selected
-        # if actions.user.element_match(winui.focused_element(),prop_list):
-            # actions.key("menu")
-            # prop_list = [("name","Open with")]
-            # actions.sleep(0.9)
-            # def open_with_app(prop_list,app_name):
-                # actions.sleep(0.5)
-                # el = actions.user.safe_focused_element()
-                # if el:
-                    # if actions.user.element_match(el,prop_list):
-                        # actions.key("right")
-                        # prop_list = [("name",f"{app_name}.*")]
-                        # actions.sleep(0.1)
-                        # actions.user.key_to_element_by_prop_list("down",prop_list)
-            # actions.user.key_to_element_by_prop_list("up",prop_list,final_func = lambda: open_with_app(prop_list,app_name))
         actions.key("menu")
         actions.sleep(1)
         el = actions.user.safe_focused_element()
-        parent = el.parent
-        print(f'parent: {parent}')
-        prop_seq = [
-        	[("name","Open with"),("class_name","AppBarButton")]
-        ]
-        el = actions.user.find_el_by_prop_seq(prop_seq,parent,verbose = True)            
         if el:
-            if actions.user.element_match(el,prop_seq[-1]):
-                actions.user.act_on_element(el,"expand")
-                el = actions.user.safe_focused_element()
-                parent = el.parent
-                print(f'parent: {parent}')
+            parent = actions.user.el_prop_val(el,'parent')
+            if parent:
                 prop_seq = [
-                    [("name",app_name),("class_name","MenuFlyoutItem")]
+                    [("name","Open with"),("class_name","AppBarButton")]
                 ]
-                el = actions.user.find_el_by_prop_seq(prop_seq,parent,verbose = True)
+                el = actions.user.find_el_by_prop_seq(prop_seq,parent,verbose = True)            
                 if el:
                     if actions.user.element_match(el,prop_seq[-1]):
-                        actions.user.act_on_element(el,"select")
+                        actions.user.act_on_element(el,"expand")
+                        el = actions.user.safe_focused_element()
+                        if el:
+                            parent = actions.user.el_prop_val(el,'parent')
+                            print(f'parent: {parent}')
+                            if parent:
+                                prop_seq = [
+                                    [("name",app_name),("class_name","MenuFlyoutItem")]
+                                ]
+                                el = actions.user.find_el_by_prop_seq(prop_seq,parent,verbose = True)
+                                if el:
+                                    if actions.user.element_match(el,prop_seq[-1]):
+                                        actions.user.act_on_element(el,"select")
     def explorer_manage_column(col_name: str = '', action: str = '', delta_width: int = -50):
         """Shows, hides, toggles or resizes the designated column"""
         # Tab to the column heading element

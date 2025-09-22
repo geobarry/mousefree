@@ -1,18 +1,37 @@
 list: user.element_property
 -
-name
-class: class_name
 automation: automation_id
-printout
+children
+class: class_name
+clickable point:clickable_point
+content element:is_content_element
+control element:is_control_element
+described by:described_by
+enabled: is_enabled
+expand collapse state: expand_collapse_state
+flows to:flows_to
 help text: help_text
 help: help_text
-patterns
-enabled: is_enabled
+item type:item_type
+item status:item_status
 keyboard focusable:is_keyboard_focusable
-rectangle: rect
-children
+legacy description:legacy.description
+legacy name:legacy.name
+legacy selection:legacy.selection
+legacy state:legacy.state
+name
+offscreen:is_offscreen
 parent
-expand collapse state: expand_collapse_state
+password:is_password
+patterns
+printout
+provider description:provider_description
+read only:value.is_read_only
+rectangle: rect
+rectangle width:rect.width
+rectangle height:rect.height
+selection
 text
-value
 text selection: text_selection
+value
+window handle:window_handle

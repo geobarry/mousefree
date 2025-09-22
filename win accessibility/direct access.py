@@ -69,6 +69,7 @@ class Actions:
                     return el
             except Exception as error:
                 print("FUNCTION safe_focused_element could not retrieve element due to error")
+                print(f'error: {error}')
                 return None
         return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT")
 

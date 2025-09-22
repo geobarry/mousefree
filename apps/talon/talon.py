@@ -36,6 +36,20 @@ class Actions:
             [("name",item_name),("class_name","SystemTray.NormalButton")]
         ]
         app_btn_list = [("class_name","SystemTray.NormalButton"),("name",r"^(?!Show Hidden Icons).*$")]
+        def super_b_for_taskbar():
+            # pressing super-b sometimes hits the windows start button instead of the taskbar button
+            # so we have to look for that
+            tray_props = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
+            start_btn_props = [("automation_id","StartButton")]
+            prop_list = ["or",[tray_props,start_btn_props]]
+            actions.key("super-b")
+            el = actions.user.wait_for_element(prop_list,time_limit = 1)
+            if el:
+                if actions.user.element_match(el,start_btn_props):
+                    # need to try again
+                    actions.key("super-b")
+                    el = actions.user.wait_for_element(tray_props)
+            return el
         # handle easy ones first
         el = actions.user.safe_focused_element()
         if el:
@@ -68,9 +82,11 @@ class Actions:
                 prop_list = [("name","T"),("class_name","Tray Window")]
                 if actions.user.element_match(el,prop_list):
                     print("situation 8 confirmed")
-                    actions.key("super-b")
-                    prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
-                    el = actions.user.wait_for_element(prop_list)
+                    # actions.key("super-b")
+                    # prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
+                    # el = actions.user.wait_for_element(prop_list)
+                    el = super_b_for_taskbar()
+                    print(f'el: {el}')
                     # now we are in situation 4
                 # 4 TRAY BUTTON SELECTED TRAY OPEN
                 prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
@@ -87,9 +103,12 @@ class Actions:
                             talon_btn = actions.user.find_el_by_prop_seq(talon_seq,root)
             if not talon_btn:
                 # 1-2. In a normal application
-                actions.key("super-b")
-                prop_list = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
-                el = actions.user.wait_for_element(prop_list)
+                print("situation 1-2")
+                # actions.key("super-b")
+                # prop_list = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
+                # el = actions.user.wait_for_element(prop_list)
+                el = super_b_for_taskbar()
+                print(f'el: {el}')
                 if el:
                     prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
                     if actions.user.element_match(el,prop_list):
@@ -121,63 +140,32 @@ class Actions:
         actions.user.auto_label(False)
         try:
             root = winui.root_element()
-            print(f'root: {root}')
             if actions.user.invoke_taskbar_item("Talon"):
-                # no longer works because tray items are not marked as focused elements,
-                # nor are they available from the active application I think
-                # they are available from def root_element() -> Element: ...
-                # Here are some example mouse element sequences:
-                # name	class_name
-                # Speech Recognition	
-                # Context	#32768
-                # Desktop 1	#32769
-                    
-                # name	class_name
-                # Install: Conformer D2 (2025-01-06) + Whisper	
-                # Speech Recognition	#32768
-                # Desktop 1	#32769
-
-                print(f'menu_path: {menu_path}')
-    #            return 
                 item_list = menu_path.split(",")
-                print(f'item_list: {item_list}')
                 desktop = actions.user.root_element()
-                print(f'desktop: {desktop}')
                 if desktop:
                     prop_list = [("name","Context")]
                     root = actions.user.matching_child(desktop,prop_list)
-                    print(f'root: {root}')
                     if root:
                         for i,item in enumerate(item_list):
                             if item:
                                 if item != "":                
                                     prop_list = [("name",item)]
                                     el = actions.user.matching_child(root,prop_list)
-                                    msg = actions.user.el_prop_val(el,'printout')
-                                    print(f'FUNCTION go_talon_menu: el = {msg} | looking for |{item}|')
                                     if el:
                                         # we want to highlight element, but highlight will be hidden behind taskbar
                                         actions.user.reset_element_tracker()
-                                        # rect = actions.user.el_prop_val(el,'rect')
-                                        # if rect:
-                                            # rect = Rect(rect.x-20,rect.y-20,rect.width+40,rect.height+40)
-                                            # actions.user.highlight_rectangle(rect)
                                         actions.user.act_on_element(el,'highlight')
                                         if i == len(item_list) - 1:
                                             actions.sleep(0.5)
                                         else:
                                             actions.sleep(0.25)
                                         actions.user.clear_highlights()
-                                        # actions.user.display_highlights()
-                                        # actions.user.clear_highlights()
                                         actions.user.act_on_element(el,"invoke")
                                         actions.sleep(0.1)
                                         actions.key("down")
                                         desktop = actions.user.root_element()
-                                        print(f'desktop: {desktop}')
                                         root = actions.user.matching_child(desktop,prop_list)
-                                        print(f'root: {root}')
-                                        # actions.sleep(0.2)
                                     else:
                                         return 
         except Exception as error:

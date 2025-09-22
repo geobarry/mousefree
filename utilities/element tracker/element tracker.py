@@ -113,11 +113,9 @@ class element_tracker:
                                     print("FUNCTION update_highlight")
                                     self.focused_label = el.name
                                     print(f"focused_label: self.focused_label")
-    #                            self.canvas.freeze() # this forces canvas redraw
                             if not self.auto_label:
                                 if self.focused_label != "":
                                     self.focused_label = ""
-                                    # self.canvas.freeze() # this forces canvas redraw
                     else:
                         pass
                 if not rectangle_found:
@@ -140,7 +138,7 @@ class element_tracker:
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
 
-# winui.register("element_focus",handle_focus_change)
+#winui.register("element_focus",handle_focus_change)
 
 el_track = None
 def on_ready():
