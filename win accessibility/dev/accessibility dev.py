@@ -81,7 +81,7 @@ class Actions:
         else:
             # Get property values, removing line breaks
             return  "\t".join([" ".join(str(actions.user.el_prop_val(el,prop,as_text = True)).splitlines()) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=20, delay: int = 0.03, verbose: bool = False):
+    def copy_elements_accessible_by_key(key: str, limit: int=20, avoid_repeat: bool = True, delay: int = 0.03, verbose: bool = False):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
         el = actions.user.safe_focused_element()
@@ -95,11 +95,11 @@ class Actions:
             actions.sleep(delay)
             el = actions.user.safe_focused_element()
             msg = actions.user.element_information(el, verbose = verbose)    
-            if i > limit or el.__eq__(orig_el):
-                print("pausing due to limit or reaching first element")
-                print(f'el: {el}')
-                print(f'orig_el: {orig_el}')
+            if i > limit:
                 break
+            if avoid_repeat:
+                if el.__eq__(orig_el):
+                    break
             i += 1
         clip.set_text("\n".join(messages))
     def copy_mouse_elements_to_clipboard():

@@ -11,6 +11,9 @@ report mouse location: user.report_mouse_location()
 ^copy focused element {user.element_property} sequence$: user.copy_focused_element_sequence(element_property)
 ^copy focused element {user.element_property} and {user.element_property} sequence$:
 	user.copy_focused_element_sequence("{element_property},{element_property_2}")
+^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
+^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
+^copy {user.nav_key} <number> elements$: user.copy_elements_accessible_by_key(nav_key,number,false)
 
 # ANCESTOR SEQUENCES
 ^copy focused element {user.element_property} {user.element_property} and {user.element_property} sequence$:
@@ -33,8 +36,9 @@ report mouse location: user.report_mouse_location()
 ^copy level <number> element information$: user.copy_elements_to_clipboard(number)
 ^copy level <number> element deep information:
 	user.copy_elements_to_clipboard(number,false)
-^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
-^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
+
+
+# 
 #
 
 # AUTOMATED METHODS FOR MS OFFICE HEADINGS
