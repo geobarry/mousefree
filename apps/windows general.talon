@@ -14,3 +14,6 @@ refocus: user.slow_key_press("alt:down tab left alt:up",0.1)
 # special command to focus on an explorer windows since windows has so many
 focus explorer: user.focus_explorer()
 focus outlook: user.focus_outlook()
+
+# taskbar
+safely remove hardware: user.invoke_taskbar_item("Safely Remove Hardware.*")
