@@ -41,9 +41,9 @@ class Actions:
             # so we have to look for that
             tray_props = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
             start_btn_props = [("automation_id","StartButton")]
-            prop_list = ["or",[tray_props,start_btn_props]]
+            prop_list = ["OR",[tray_props,start_btn_props]]
             actions.key("super-b")
-            el = actions.user.wait_for_element(prop_list,time_limit = 1)
+            el = actions.user.wait_for_element(prop_list,time_limit = 1,verbose = True)
             if el:
                 if actions.user.element_match(el,start_btn_props):
                     # need to try again

@@ -365,13 +365,10 @@ def real_number(m) -> float:
 class Actions:
     def compass_enable(bearing: float = -999,display_mode: int = -1):
         """Enable relative mouse guide"""
-        print(f"FUNCTION: compass_enable | bearing: {bearing} display_mode: {display_mode}")
-        print(f"compass bearing: {compass_object.bearing} | compass display mode: {compass_object.display_mode}")
         if display_mode == -1:
             display_mode = compass_object.active_display_mode
         if bearing == -999:
             bearing = compass_object.bearing
-            print(f'bearing: {bearing}')
             if not bearing:
                 bearing = 0
         compass_object.display_mode = int(display_mode)
@@ -426,7 +423,6 @@ class Actions:
             b = 360*random.random()
             trg = compass_object.pot_of_gold(init_x,init_y,d,b)
             actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
-            print(f'trg: {trg}')
             actions.sleep("50ms")
         actions.user.slow_mouse(round(trg[0]),round(trg[1]),50)
     def compass_set_default_display_mode(mode: str):

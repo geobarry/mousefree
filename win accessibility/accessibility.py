@@ -8,8 +8,7 @@ import re
 
 from copy import deepcopy
 import time
-from typing import Callable
-
+from typing import Callable, Any, List, Tuple
 n = 0
 start_time = None
 
@@ -45,19 +44,14 @@ def ax_target(m) -> str:
             t = t.replace(w,"(" + '|'.join(phone_list) + ")")
     return t
 
-def match(el: ax.Element, 
-            prop_list: list, 
-            conjunction: str="AND", 
-            mod_func: Callable = None, 
-            verbose: bool = False):
-    """Returns true if the element matches all of the properties in the property dictionary"""
-    # prop_list is either a list of form [(property, trg_val),...]
-    #     where trg_val is either a string ready to be compiled into a regex expression
-    #     or a regex expression
-    # or a list of ["OR",list] or ["AND",list]
-    # or just a string, in which case property will be "name"
-    # Conditions in the top level list are connected with an AND conjunction
-    # Modifier function should take input parameters prop_name:str,val: str and return a replacement value
+def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbose: bool = False) -> bool:
+    """
+    Evaluate a property list where prop_list is a possibly nested list windows automation element conditions in one of two forms:
+    (1) Simple list of zero or more conditions as tuples in the form of ("<prop_name>","<prop_val>").
+		A simple list is an "AND" list, i.e. it evaluates to True only if every tuple condition evaluates to True. Empty list -> True.
+		- or -
+	(2) Nested list in which the first item is a string boolean conjunction, and the second item is a list of valid property lists in either simple or nested form, i.e. ["OR", subprop_list] or ["AND", subprop_list].
+    """
     if verbose:
         print("FUNCTION: match")
         print(f'prop_list: {prop_list}')
@@ -67,13 +61,10 @@ def match(el: ax.Element,
             print(f'prop: {prop}')
             print(f'trg_val: {trg_val}')
         def value_match(prop_val,trg_val):
-            # if trg_val is a string, convert to a regex pa'ttern
+            # if trg_val is a string, convert to a regex pattern
             if verbose:
                 print("inside value_match sub function")
             if type(trg_val) != re.Pattern:
-#            if type(trg_val) == str:
-#               FOLLOWING MUST BE DONE BY CALLING FUNCTION
-#                trg_val = str(trg_val).replace("(","\\(").replace(")","\\)")
                 trg_val = re.compile(f"^{trg_val}$",re.IGNORECASE)
             if verbose:
                 print(f'trg_val: {trg_val}')
@@ -116,28 +107,34 @@ def match(el: ax.Element,
         print(prop_list)
         return True
     
-    # handle case that property list is a simple string
-    if type(prop_list) == str:
-        prop_list = [("name",prop_list)]
-    # handle case that property list is an empty list
+
+    if not isinstance(prop_list, list):
+        raise TypeError("match expects a list prop_list")
+
+    # empty list => True
     if len(prop_list) == 0:
         return True
-    # handle case that property list is of the form [conjunction,list]
-    # if prop_list[0] in ["AND","OR","and","or","And","Or"]:
-        # r = match(el,prop_list[1],prop_list[0])
-    if prop_list[0] in ["OR","or","Or"]:
-        r = any(match(el,item,"OR",mod_func = mod_func,verbose = verbose) for item in prop_list[1])
-    elif prop_list[0] in ["AND","and","And"]:
-        r = all(match(el,item,"AND",mod_func = mod_func,verbose = verbose) for item in prop_list[1])
-    # handle the case that property list is a list of (property, value) tuples
-    elif conjunction.upper() == "AND":
-        r =  all([eval_cond(prop,val) for prop,val in prop_list])
-    elif conjunction.upper() == "OR":
-        r = any([eval_cond(prop,val) for prop,val in prop_list])
-    # next line as for debugging
-    if verbose:
-        print(f"{r} | element: {el.name[:25]} | rule: {prop_list}")
-    return r
+
+    # helper to evaluate a single item which may be a tuple or a nested list
+    def eval_item(item: Any) -> bool:
+        if isinstance(item, tuple):
+            return eval_cond(item[0],item[1])
+        if isinstance(item, list):
+            return match(el,item,mod_func,verbose)
+        print(f'item: {item}')
+        raise TypeError("List items must be tuples or lists")
+
+    # operator form: ["OR" or "AND", subprop_list]
+    if len(prop_list) == 2 and isinstance(prop_list[0], str) and prop_list[0].upper() in ("OR", "AND"):
+        op = prop_list[0]
+        sub = prop_list[1]
+        if not isinstance(sub, list):
+            raise TypeError("Operator second argument must be a list prop_list")
+        values = [eval_item(item) for item in sub]
+        return any(values) if op.upper() == "OR" else all(values)
+
+    # plain list form: evaluate each element and require all True
+    return all(eval_item(item) for item in prop_list)
 
 def get_every_child(el: ax.Element, 
         cur_level: int = 0, 
@@ -214,6 +211,7 @@ class Actions:
         return ",".join(r)
     def get_property_list(prop_str: str):
         """creates a property list from a string of the form n = ..., c = ..., a = ..."""
+        print(f'prop_str: {prop_str}')
         r = []
         prop_name = {"n":"name","c":"class_name","a":"automation_id","p":"printout"}
         props = prop_str.split(",")
@@ -237,7 +235,7 @@ class Actions:
         """Returns true if the element matches all of the properties in the property dictionary"""
         if el:
             actions.user.el_tracker_pause_updating()
-            r = match(el,prop_list,conjunction,mod_func,verbose)
+            r = match(el,prop_list,mod_func,verbose)
             actions.user.el_tracker_resume_updating()
             return r
         else:

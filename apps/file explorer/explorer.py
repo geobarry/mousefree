@@ -343,14 +343,7 @@ class Actions:
         	[("name","Navigation Pane"),("class_name","SysTreeView32")],
         ]
         el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)   
-        if el:
-            if "Selection" in el.patterns:
-                pattern = el.selection_pattern
-                if pattern:
-                    el_list = pattern.selection
-                    if len(el_list) > 0:
-                        el = el_list[0]
-                        actions.user.act_on_element(el,"select")
+        actions.user.act_on_element(el,"select")
     def explorer_current_folder():
         """Returns the folder path"""
         return current_folder()
@@ -386,6 +379,7 @@ class Actions:
         if ancestor_lvl > 0:
             path = str(Path(path).parents[ancestor_lvl - 1])
         dest_folder = path if subfolder == '' else f'{path}\\{subfolder}'
+        dest_folder = os.path.expandvars(dest_folder)
         # navigate to the items panel if we are not already there
         actions.user.explorer_select_items_panel()
         prop_list = [("class_name","UIItem")]
@@ -402,9 +396,9 @@ class Actions:
             while not stopper.over():
                 actions.sleep(0.05)
                 cur_folder = actions.user.explorer_current_folder()
-                if cur_folder == dest_folder:
+                if cur_folder.lower() == dest_folder.lower():
                     stopper.stop()
-            if cur_folder == dest_folder:
+            if cur_folder.lower() == dest_folder.lower():
                 # paste item
                 actions.key("ctrl-v")
                 # return to original folder
