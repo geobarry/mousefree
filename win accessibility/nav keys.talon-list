@@ -6,5 +6,5 @@ left
 up
 down
 tab	
-bump: tab
+jump: tab
 funk six: f6
