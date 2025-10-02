@@ -11,12 +11,19 @@ new folder: user.explorer_dialog_new_folder()
 file name: user.explorer_dialog_file_name()
 file type$: user.explorer_dialog_file_type()
 file type {user.file_type_description}: user.explorer_dialog_file_type(file_type_description)
-button save: user.explorer_dialog_button("Save.*",false)
+
+dialog okay: user.explorer_dialog_button("OK",true)
+dialog open: user.explorer_dialog_button("Open",true)
 dialog save: user.explorer_dialog_button("Save.*",true)
-button cancel: user.explorer_dialog_button("Cancel",false)
 dialog cancel: user.explorer_dialog_button("Cancel",true)
-button Open: user.explorer_dialog_button("Open",false)
-dialog Open: user.explorer_dialog_button("Open",true)
+
+button okay: user.explorer_dialog_button("OK",false)
+button open: user.explorer_dialog_button("Open",false)
+button save: user.explorer_dialog_button("Save.*",false)
+button cancel: user.explorer_dialog_button("Cancel",false)
+
+
+
 
 # DIRECTORY NAVIGATION
 go <user.system_path>$: user.explorer_navigate_to_folder(system_path)
