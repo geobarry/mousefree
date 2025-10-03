@@ -273,7 +273,6 @@ class Actions:
                             actions.key("ctrl-x")
                         elif action == "delete":
                             actions.key("del")
-
     def explorer_show_button_options(button_name: str):
         """Selects and expands the given button (sort, view, more)"""
         actions.key("esc:5")
@@ -510,18 +509,25 @@ class Actions:
     def explorer_context_action(action_name: str):
         """Select option in context menu"""
         print(f"FUNCTION: explore_context_action({action_name})")
+        # OPEN CONTEXT MENU WITH KEYBOARD
         actions.key("menu")
+        # PRESS KEYS TO GET TO ACTION
         prop_list = [("name",action_name),("class_name","AppBarButton")]
         actions.user.key_to_matching_element("down",prop_list,delay = 0.1)
-        el = actions.user.safe_focused_element()
+        el = actions.user.wait_for_element(prop_list)
         if el:
-            print(f'el: {el}')
+            # EXPAND ACTION IF THAT IS AN OPTION
             if "ExpandCollapse" in el.patterns:
-                print("expanding...")
+                state = actions.user.el_prop_val(el,'expand_collapse_state')
+                actions.sleep(0.2)
                 actions.user.act_on_element(el,"expand")
-                actions.sleep(0.5)
-                actions.key("down up")
+                # wait for menu fly out to select first option
+                prop_list = [("class_name","MenuFlyout")]
+                el = actions.user.wait_for_element(prop_list)
+                if el:
+                    actions.key("down up")
             else:
+                # OTHERWISE PRESS THE ENTER KEY (?)
                 actions.sleep(1)
                 actions.key("enter")
     def explorer_special_group(group_name: str):
