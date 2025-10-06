@@ -93,7 +93,13 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
             finally:
                 return trg_val == clickable
         else:
-            prop_val = actions.user.el_prop_val(el, prop, as_text = True)
+            try:
+                prop_val = actions.user.el_prop_val(el, prop, as_text = True)
+            except Exception as error:
+                print("MATCH: error retrieving property value")
+                print(f'el: {el}')
+                print(f'prop: {prop}')
+                raise Exception(error)
             if mod_func:
                 prop_val = mod_func(prop,prop_val)
             if verbose:
