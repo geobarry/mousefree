@@ -18,7 +18,7 @@ mode: command
 
 move into folder {user.dynamic_folder}$: user.explorer_move_to('',0,dynamic_folder,'move')
 move into parent [folder]$: user.explorer_move_to('',1,'','move')
-move into <user.system_path>: user.explorer_move_to(system_paths,0,'','move')
+move into <user.system_path>: user.explorer_move_to(system_path,0,'','move')
 move into <user.system_path> {user.subfolder}: user.explorer_move_to("{system_path}\{subfolder}",0,'','move')
 
 stash into folder {user.dynamic_folder}$: user.explorer_move_to('',0,dynamic_folder,'stash')

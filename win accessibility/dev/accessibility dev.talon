@@ -37,15 +37,5 @@ report mouse location: user.report_mouse_location()
 ^copy level <number> element deep information:
 	user.copy_elements_to_clipboard(number,false)
 
-
-# 
-#
-
-# AUTOMATED METHODS FOR MS OFFICE HEADINGS
-# results are copied to clipboard for pasting into talon list file
-# ^copy ribbon headings$: user.copy_ribbon_headings_as_talon_list()
-#   ribbon heading must be selected (with black rectangle) and ribbon expanded before running following command:
-^copy ribbon elements$: user.copy_ribbon_elements_as_talon_list()
-
 # GENERAL DEBUGGING
 debug current: user.debug_app_window("USER DEBUG")

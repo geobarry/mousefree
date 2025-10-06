@@ -243,74 +243,7 @@ class Actions:
         print(f'el: {el}')
         actions.user.copy_element_ancestors(el,verbose)
 
-    def copy_ribbon_elements_as_talon_list():
-        """Copies to clipboard list of ribbon elements with accessible keyboard shortcut; 
-            assumes menu heading is selected with rectangle around it, and ribbon is expanded"""
-        i = 1
-        el = actions.user.safe_focused_element()
-        heading_access_key = clean(actions.user.el_prop_val(el,"access_key")) 
-        # convention: use menu heading name as prefix for every command
-        prefix = el.name
-        # press tab to get to the first command; note grayed out commands will not be reached
-        actions.key("tab")
-        el = actions.user.safe_focused_element()
-        first_name = f"{prefix} {clean(el.name)}"
-        first_access_key = clean(actions.user.el_prop_val(el,"access_key"))
-        print(f'first_access_key: {first_access_key}')
-        r = []
-        while True:
-            i += 1
-            if i > 60:
-                print("Stopping because exceeded count threshold")
-                break
-            actions.key("tab")
-            actions.sleep(0.05)
-            try:
-                el = actions.user.safe_focused_element()
-                name = f"{prefix} {clean(el.name)}"
-                access_key = clean(actions.user.el_prop_val(el,"access_key"))
-                print(f'{i} access_key: {access_key}')
-#                print(f'heading_access_key: {heading_access_key}')
-                # hello check that we're not back at the first element
-                if name == first_name and access_key == first_access_key:
-                    print("the same name and access key as first element")
-                    break
-                # check that access key begins with (but is not the same as) first access key
-                elif access_key.startswith(heading_access_key) and not access_key == heading_access_key:
-                    r.append((name,access_key))
-                else:
-                    # if access key is the same as first element but name is not, we have a phantom element
-                    print("access key does not match ribbon heading")
-                    pass
-            except Exception as error:
-                print(f'error: {error}')
-        print("Got to the end...")
-        msg = "\n".join([f"{key}:{val}" for key,val in r])
-        print(f'msg: {msg}')
-        clip.set_text(msg)
-    def copy_ribbon_headings_as_talon_list():
-        """Copies information on ribbon headings to the clipboard"""
-        actions.key("esc:5 alt")
-        actions.sleep(0.2)
-        i = 1
-        el = actions.user.safe_focused_element()
-        first_name = clean(el.name)
-        first_access_key = actions.user.el_prop_val(el,"access_key")
-        r = {}
-        r[first_name] = clean(first_access_key)
-        while True:
-            i += 1
-            if i > 100:
-                break
-            actions.key("right")
-            el = actions.user.safe_focused_element()
-            name = clean(el.name)
-            if name == first_name:
-                break
-            else:
-                access_key = actions.user.el_prop_val(el,"access_key")
-                r[name] = clean(access_key)
-        clip.set_text("\n".join([f"{key}:{val}" for key,val in r.items()]))
+
     def copy_descendant_sequences(root: ax.Element, 
                                 props: list = ["name","class_name"],
                                 include_patterns: list = ["Invoke"]):

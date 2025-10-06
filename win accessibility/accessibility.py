@@ -230,7 +230,14 @@ class Actions:
             prop_list = actions.user.get_property_list(prop_str)
             r.append(prop_list)
         return r
-        
+    def ax_action(action: str, prop_seq_str: str, verbose: bool = False):
+        """Finds element threw accessibility sequence from current window root, and performs action if found"""
+        root = actions.user.window_root()
+        if root:
+            prop_seq = actions.user.get_property_sequence(prop_seq_str)
+            el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = verbose)
+            if el:
+                actions.user.act_on_element(el,action)
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         if el:

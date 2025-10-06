@@ -31,7 +31,8 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.job = cron.interval("300ms", self.update_highlight)
+        self.interval = 300
+        self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         self.accessibility_check_paused = False
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
@@ -110,12 +111,12 @@ class element_tracker:
                             if rect != self.focused_rect:
                                 self.focused_rect = rect
                                 if self.auto_label:
-                                    print("FUNCTION update_highlight")
                                     self.focused_label = el.name
-                                    print(f"focused_label: self.focused_label")
                             if not self.auto_label:
                                 if self.focused_label != "":
                                     self.focused_label = ""
+                        else:
+                            pass
                     else:
                         pass
                 if not rectangle_found:
@@ -132,6 +133,7 @@ class element_tracker:
             print("Running traversal function...")
             self.traversal_function()
         # handle auto highlight
+        print("HANDLE_FOCUS_CHANGE")
         self.update_highlight()
 
 
