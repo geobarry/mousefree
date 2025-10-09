@@ -125,20 +125,26 @@ def get_scope(scope_dir: str = "DOWN",
 
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
     """Performs function on selected text and then returns cursor to original position"""
+    print(f"PROCESS_SELECTION trg: {trg}")
     # get textRange so we can return cursor to original position
     el = actions.user.safe_focused_element()
     if el:
         init_range = actions.user.el_prop_val(el,'text_selection')
-        if init_range:
-            # find target
-            t = actions.user.winax_select_text(trg,scope_dir,ordinal)
-            print(f'trg: {trg} -- t: {t.text}')
-            # perform processing function
-            processing_function(t.text)
-            # return to original selection
-            if init_range != None:
-                actions.sleep(0.1)
-                actions.user.safe_access(lambda: init_range.select(),"PROCESS_SELECTION")
+        t = actions.user.winax_select_text(trg,scope_dir,ordinal)
+        # perform processing function
+        if t:
+            txt = t.text
+            success = True
+        else:
+            txt = actions.edit.selected_text()
+            success = txt.upper() == trg.upper()
+        if success:
+            processing_function(txt)
+        # return to original selection
+        if init_range != None:
+            actions.sleep(0.2)
+            actions.user.safe_access(lambda: init_range.select(),"PROCESS_SELECTION")
+
 def scroll_to_selection(r,init_rect = None):
     """Scrolls to the input text range"""
     # ********************************
@@ -289,20 +295,22 @@ def win_nav_target(m) -> str:
 class Actions:
     def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Selects text using windows accessibility pattern if possible"""
-        trg = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
+        print(f"WINAX_SELECT_TEXT trg: {trg}")
+        regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         el = actions.user.safe_focused_element()
         if el:
             if "Text" in el.patterns:
                 try:
-                    r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                    r = find_target(regex,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                     if r != None:
                         r.select()
                         scroll_to_selection(r)
                         return r
                 except:
-                    actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
+                    actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
             else:
-                actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,1)
+                txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
+                actions.user.slide_selection_to_match(txt)
     def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
@@ -370,26 +378,32 @@ class Actions:
                 print("unhandled exception in windows accessibility text selection; reverting to old method")
                 actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
         else:
-        	actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-# *** stall-proofed up to here ***
+            txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,ordinal)
+            actions.user.slide_selection_to_match(txt)
+            if before_or_after.lower() == "before":
+                actions.key("left")
+            else:
+                actions.key("right")
     def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
         el = actions.user.safe_focused_element()
         if el:
-            if "Text" in el.patterns:
+            pattern_list = actions.user.el_prop_val(el,'patterns')
+            if "Text" in pattern_list:
                 try:
-                    cur_range = el.text_pattern.selection[0]
+                    cur_range = actions.user.safe_access(lambda: el.text_pattern.selection[0],"WINAX_EXTEND_SELECTION")
                     r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                     if r != None:
                         src_pos = "Start" if scope_dir.upper() == "UP" else "End"
                         trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
-                        cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r)
-                        cur_range.select()
+                        actions.user.safe_access(lambda: cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r),"WINAX_EXTEND_SELECTION")
+                        actions.user.safe_access(lambda: cur_range.select(),"WINAX EXTEND SELECTION")
                 except:
                     actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
             else:
                 actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+# *** stall-proofed up to here ***
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = actions.user.safe_focused_element()
