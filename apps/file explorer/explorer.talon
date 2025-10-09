@@ -35,10 +35,10 @@ stash into <user.system_path> {user.subfolder}: user.explorer_move_to("{system_p
 file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
 folder {user.explorer_action} {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_folder,"folder",explorer_action)
-file {user.dynamic_file} move to [folder] {user.dynamic_folder}$:
+file {user.dynamic_file} move into [folder] {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_file,"file","cut")
 	user.explorer_process_item(dynamic_folder,"folder","open")
-	sleep(0.7)
+	sleep(2)
 	key("ctrl-v")
 
 # miscellaneous - needs refactoring to fit into above organization
@@ -81,7 +81,7 @@ view small (icons|thumbnails): key(ctrl-shift-3)
 view list: key(ctrl-shift-4)
 view (detailed|details): key(ctrl-shift-6)
 view distraction free: key(ctrl-shift-5)
-filter: user.explorer_filter()
+filter by: user.explorer_filter()
 
 # COLUMN MANAGEMENT
 sort by {user.explorer_column}: user.explorer_sort_by(explorer_column)
