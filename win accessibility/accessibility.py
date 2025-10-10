@@ -644,9 +644,10 @@ class Actions:
         stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
         while True:
             el = el_func()
-            # el = actions.user.safe_focused_element()
             if verbose:
-                print(f'el: {el} name: {el.name} prop_list: {prop_list}')
+                name = actions.user.el_prop_val(el,'name')
+                printout = actions.user.el_prop_val(el,'printout')
+                print(f'el: {printout} name: {name} prop_list: {prop_list}')
             if el:
                 if actions.user.element_match(el,prop_list):
                     return el
@@ -654,7 +655,19 @@ class Actions:
                 return None
             stopper.increment(0)
             actions.sleep(delay)
-
+    def wait_for_matching_ancestor(prop_list: list, delay: float = 0.2, time_limit: float = 5):
+        """Waits until the focused element has an ancestor that matches the property list"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            el = actions.user.safe_focused_element()
+            if el:
+                el = actions.user.matching_ancestor(el,prop_list)
+                if el:
+                    return el
+            if stopper.over():
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)        
     def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
         """Searches for first element with given property value and invokes it."""
         prop_list = [prop,val]
