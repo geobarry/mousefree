@@ -1,0 +1,6 @@
+NOTES ON CAUSES OF UIAUTOMATION STALLS
+1. Calling a method of a UI element that doesn't have that method
+2. Calling a method of a UI element that no longer exists
+3. Calling a UI function/method when another UI function/method is still being processed
+4. Asking for something from an app that has higher privileges than talon (?) (I'm talking to you Microsoft Excel)
+   - Solution: run app as administrator
