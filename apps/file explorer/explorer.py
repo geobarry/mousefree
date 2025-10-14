@@ -319,6 +319,7 @@ class Actions:
     def explorer_select_items_panel():
         """Uses windows accessibility to select file panel"""
         root = explorer_window()
+        # print(f'type(root): {type(root)}')
         # get to file container
         prop_seq = [
             [("class_name","DUIViewWndClassName")],
