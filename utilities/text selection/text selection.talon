@@ -7,6 +7,8 @@ and mode: user.zen
 
 # SETTINGS
 selection distance <number>: user.winax_set_selection_distance(number)
+accessible text on: user.winax_text(true)
+accessible text off: user.winax_text(false)
 
 # ABOUT NAVIGATION TARGETS
 # "Dynamic" navigation targets (win_fwd_dyn_nav_trg, win_bkwd_dyn_nav_trg) 
