@@ -178,6 +178,7 @@ class Actions:
         actions.user.copy_elements_to_clipboard(levels,root = el)
     def element_ancestors(el: ax.Element, max_gen: int = -1):
         """Returns a list of element ancestors including current element"""
+        print("ELEMENT_ANCESTORS")
         if max_gen == -1:
             max_gen = 200
         el_list = [el]
@@ -189,6 +190,7 @@ class Actions:
                 break
             try:
                 el = actions.user.el_prop_val(el,"parent")
+                print(f'el: {el}')
                 if el:
                     el_list.append(el)
             except Exception as error:
@@ -199,18 +201,23 @@ class Actions:
         """copies python code for property sequence to access element to clipboard"""
         el_list = actions.user.element_ancestors(el)
         el_list.reverse()
+        print(f'el_list: {el_list}')
         props = props.split(",")
         props = [x.strip() for x in props]
         prop_seq = []
         for el in el_list:
             prop_list = []
             for prop in props:
-                val = actions.user.el_prop_val(el,prop,as_text = True)
+                try:
+                    val = actions.user.el_prop_val(el,prop,as_text = True)
+                except:
+                    val = ''
                 if val != '':
                     prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
         r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
         r = f"        root = actions.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        print(f'r: {r}')
         clip.set_text(r)
     def copy_element_ancestors(el: ax.Element, verbose: bool = False):
         """Copies information on element ancestors to clipboard"""

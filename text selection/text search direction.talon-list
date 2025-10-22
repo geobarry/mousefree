@@ -1,0 +1,8 @@
+list: user.search_dir
+-
+next:DOWN
+previous:UP
+UP
+DOWN
+INSIDE
+BOTH

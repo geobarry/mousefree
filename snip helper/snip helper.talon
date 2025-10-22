@@ -1,4 +1,6 @@
 os: windows
+# For snipping areas of the screen
+# Needs to be updated to utilize/integrate with community
 -
 snip screen$: user.snip_screen()
 snip window$: user.snip_window()

@@ -9,13 +9,16 @@ mod = Module()
 
 mod.setting("win_selection_distance",type = int,default = 20,
             desc = "Number of lines to search forward or backwards")
-mod.setting("winax_text",type = bool,default = True)
+mod.setting("winax_text",type = bool,default = True,
+            desc = "Whether or not to use accessibility text selection functions. If False, will use default text selection functions even if accessibility text pattern is present.")
 
-mod.list("text_search_direction","directions from cursor in which text can be searched")
+mod.list("search_dir","directions from cursor in which text can be searched")
 mod.list("text_search_unit","units of text that can be searched for in windows accessibility")
 mod.list("win_dynamic_nav_target")
-mod.list("win_fwd_dyn_nav_trg")
-mod.list("win_bkwd_dyn_nav_trg")
+mod.list("win_next_dyn_nav_trg")
+mod.list("win_previous_dyn_nav_trg")
+mod.list("win_inside_dyn_nav_trg")
+mod.list("win_any_dyn_nav_trg")
 mod.list("text_special_pattern","patterns to search for with text selection")
 
 def precise_target_and_position(target: re.Pattern, 
@@ -101,10 +104,10 @@ def find_target(trg: re.Pattern,
         else:
             print("Target not found :(")
             return None
-def get_scope(scope_dir: str = "DOWN",
-                scope_unit: str = "Line"):
-    """Returns a text range corresponding to the search scope"""
-    print(f"get_scope - win_selection_distance: {settings.get('user.win_selection_distance')}")
+def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool = False):
+    """Returns a text range corresponding to the search scope. Valid scope directions include UP,DOWN,BOTH,INSIDE"""
+    if verbose:
+        print(f"get_scope - win_selection_distance: {settings.get('user.win_selection_distance')}")
     # Error Checking
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
@@ -113,15 +116,28 @@ def get_scope(scope_dir: str = "DOWN",
     if el:
         cur_range = actions.user.el_prop_val(el,'text_selection')
         if cur_range:
-            # avoid selecting anything in current selection#
             if scope_dir.upper() == "UP":
+                # go to beginning of current selection
                 actions.user.safe_access(lambda:cur_range.move_endpoint_by_range("End","Start",target = cur_range),"GET_SCOPE (a)")
+                # extend up
                 d = -1*settings.get("user.win_selection_distance")
                 actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("Start",scope_unit,d),"GET_SCOPE (b)")
             elif scope_dir.upper() == "DOWN":
+                # go to end of current selection
                 actions.user.safe_access(lambda: cur_range.move_endpoint_by_range("Start","End",target = cur_range),"GET_SCOPE (c)")
+                # extend down
                 actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance")),"GET_SCOPE(d)")
-            print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
+            elif scope_dir.upper() == "BOTH":
+                # extend down
+                actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("End",scope_unit,settings.get("user.win_selection_distance")),"GET_SCOPE(d)")
+                # extend up
+                d = -1*settings.get("user.win_selection_distance")
+                actions.user.safe_access(lambda: cur_range.move_endpoint_by_unit("Start",scope_unit,d),"GET_SCOPE (b)")
+            elif scope_dir.upper() == "INSIDE":
+                # do nothing
+                pass
+            if verbose:
+                print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
             return cur_range
 
 def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
@@ -132,6 +148,8 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     if el:
         init_range = actions.user.el_prop_val(el,'text_selection')
         t = actions.user.winax_select_text(trg,scope_dir,ordinal)
+        print(f'txt: {t}')
+        
         # perform processing function
         if t:
             txt = t.text
@@ -182,29 +200,29 @@ def win_dynamic_nav_target(_) -> str:
             {txt}
             """
 
-@ctx.dynamic_list("user.win_fwd_dyn_nav_trg")
-def win_fwd_dyn_nav_trg(_) -> str:
+@ctx.dynamic_list("user.win_next_dyn_nav_trg")
+def win_next_dyn_nav_trg(_) -> str:
     el = actions.user.safe_focused_element()
     if el:
         pattern_list = actions.user.el_prop_val(el,'patterns')
         if "Text" in pattern_list:
             cur_range = get_scope("DOWN","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_FWD_DYN_NAV_TRG")
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
             t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
             t = re.sub(r"’","'",t)
             return f"""
             {t}
             """
 
-@ctx.dynamic_list("user.win_bkwd_dyn_nav_trg")
-def win_bkwd_dyn_nav_trg(_) -> str:
+@ctx.dynamic_list("user.win_previous_dyn_nav_trg")
+def win_previous_dyn_nav_trg(_) -> str:
     print("FUNCTION: backwards dynamic navigation target")
     el = actions.user.safe_focused_element()
     if el:
         pattern_list = el.patterns
         if "Text" in pattern_list:
             cur_range = get_scope("UP","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_BKWD_DYN_NAV_TRG")
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_PREVIOUS_DYN_NAV_TRG")
             t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
             t = re.sub(r"’","'",t)
             print(f't: {t}')
@@ -212,11 +230,49 @@ def win_bkwd_dyn_nav_trg(_) -> str:
             {t}
             """
 
+@ctx.dynamic_list("user.win_inside_dyn_nav_trg")
+def win_inside_dyn_nav_trg(_) -> str:
+    print("FUNCTION: backwards dynamic navigation target")
+    el = actions.user.safe_focused_element()
+    if el:
+        pattern_list = el.patterns
+        if "Text" in pattern_list:
+            cur_range = get_scope("INSIDE","Line")
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_INSIDE_DYN_NAV_TRG")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
+            t = re.sub(r"’","'",t)
+            print(f't: {t}')
+            return f"""
+            {t}
+            """
+
+@ctx.dynamic_list("user.win_any_dyn_nav_trg")
+def win_any_dyn_nav_trg(_) -> str:
+    print("FUNCTION: backwards dynamic navigation target")
+    el = actions.user.safe_focused_element()
+    if el:
+        pattern_list = el.patterns
+        if "Text" in pattern_list:
+            cur_range = get_scope("BOTH","Line")
+            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_ANY_DYN_NAV_TRG")
+            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
+            t = re.sub(r"’","'",t)
+            print(f't: {t}')
+            return f"""
+            {t}
+            """
+
+
 def process_text_capture(m) -> (str,bool):
     """Takes either a navigation target or spoken output capture
         and returns tuple of 
         (text without homophone processing, bool=homophones_allowed)"""
     include_homophones = False
+    print(f'm: {m}')
+    print(f'm: {type(m[0])}')
+    print(f'm: {m.__dir__()}')
+    print(dir(m))    
+    print(f"WORD: {hasattr(m,'word')}")
     if hasattr(m,"any_alphanumeric_key"):
         t = re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
     elif hasattr(m,"delimiter_pair"):
@@ -253,9 +309,10 @@ def process_text_capture(m) -> (str,bool):
         t = m.app
     elif hasattr(m,"font"):
         t = m.font
-    elif hasattr(m,"prose_formatter"):
-        t = actions.user.formatted_text(m.prose,m.prose_formatter)
-        # later should change this to True to allow for searching by
+    elif hasattr(m,"formatters"):
+        print("formatter found")
+        t = actions.user.formatted_text(m.prose,m.formatters)
+        # later should change this to TRUE to allow for searching by
         # formatter, but that will probably entail returning the formatter
         # to be processed by the final function into a regex expression
         # that distinguishes the same set of words formatted in different ways
@@ -266,9 +323,10 @@ def process_text_capture(m) -> (str,bool):
 # spoken form consistency; the only difference
 # is that this should return text to paste into a document, 
 # rather than text to search for. So no Regular Expressions.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | {user.prose_formatter} <user.prose>")
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | <user.formatters> <user.prose>")
 def constructed_text(m) -> str:
-    """Output of spoken text construction for windows text selection"""
+    """Output of spoken text Construction for windows text selection"""
+    print("CONSTRUCTED_TEXT")
     t, include_homophones = process_text_capture(m)
     return t
         
@@ -298,7 +356,7 @@ class Actions:
         """Selects text using windows accessibility pattern if possible"""
         print(f"WINAX_SELECT_TEXT trg: {trg}")
         regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
-        use_winax = ctx.settings["user.winax_text"]
+        use_winax = settings.get("user.winax_text")
         if use_winax:
             el = actions.user.safe_focused_element()
             if el:
@@ -359,7 +417,7 @@ class Actions:
     def winax_go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        use_winax = ctx.settings["user.winax_text"]
+        use_winax = settings.get("user.winax_text")
         if use_winax:
             el = actions.user.safe_focused_element()
             pattern_list = actions.user.el_prop_val(el,'patterns')
@@ -396,7 +454,7 @@ class Actions:
     def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
-        use_winax = ctx.settings["user.winax_text"]
+        use_winax = settings.get("user.winax_text")
         if use_winax:
             el = actions.user.safe_focused_element()
             if el:

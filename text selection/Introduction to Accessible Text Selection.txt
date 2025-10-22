@@ -2,7 +2,7 @@ windows accessibility text selection
 loosely modeled after navigation commands found in talon community
 requires that software has correctly implemented windows Ui automation
 tested and works well in Microsoft word, power point and outlook, with some caveats
-most notably, it seems to sometimes be messed up by bullets 
+most notably, it seems to sometimes be messed up by bullets in Microsoft Word & Powerpoint
 
 We will go through patterns using keywords select, extend, replace and go
 these patterns can be used on either dynamic or static targets

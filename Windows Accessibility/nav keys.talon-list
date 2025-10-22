@@ -1,0 +1,10 @@
+list: user.nav_key
+# navigation keys
+-
+right
+left
+up
+down
+tab	
+jump: tab
+funk six: f6
