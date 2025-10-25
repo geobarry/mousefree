@@ -37,6 +37,7 @@ def precise_target_and_position(target: re.Pattern,
         return 
     t = modify_regex_include_homophones(target.pattern)
     t = re.sub(r"'","[’']",t)
+    print(f't: {t}')
     target = re.compile(t, re.IGNORECASE)
     # find all instances of the target within the text range text
     if actions.user.wait_for_access():
@@ -45,6 +46,7 @@ def precise_target_and_position(target: re.Pattern,
             t = text_range.text
             m = re.findall(target,t)
             if m and len(m) >= ordinal:
+                print(f'm: {m}')
                 # determine precise target and loop parameters to iterate through preceding matches
                 if search_dir.upper() == "UP":
                     precise_trg = m[-ordinal]
@@ -180,6 +182,8 @@ def modify_regex_include_homophones(t: str):
     word_list = set(word_list)
     for w in word_list:
         phone_list = actions.user.homophones_get(w)
+        phone_list = sorted(phone_list,key = lambda x: len(x))
+        phone_list.reverse()
         if phone_list:
             t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
     # accommodate formatting by allowing non-letter characters between words
