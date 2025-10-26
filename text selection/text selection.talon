@@ -39,11 +39,6 @@ go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_targ
 {user.search_dir} <number_small> {user.text_search_unit}$: 
 	user.winax_move_by_unit(text_search_unit,search_dir,number_small)
 
-go down to {user.win_next_dyn_nav_trg}$:
-	user.winax_go_text(win_next_dyn_nav_trg,"DOWN","after",1)
-go up to {user.win_previous_dyn_nav_trg}$:
-	user.winax_go_text(win_previous_dyn_nav_trg,"UP","before",1)
-
 
 # SELECTION
 	# example spoken forms:
@@ -57,10 +52,10 @@ select [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_s
 select [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_select_text(win_inside_dyn_nav_trg,"inside",ordinals or 1)
 select [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-select [<user.ordinals>] next <user.win_nav_target>$: user.winax_select_text(win_nav_target,"DOWN",ordinals or 1)
-select [<user.ordinals>] previous <user.win_nav_target>$: user.winax_select_text(win_nav_target,"UP",ordinals or 1)
+select [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_select_text(win_nav_target,search_dir,ordinals or 1)
 
 select {user.text_search_unit}$: user.winax_select_unit(text_search_unit)
+
 
 # HOMOPHONE CORRECTION
 	# example spoken forms:
@@ -71,17 +66,19 @@ phones [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_p
 phones [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_phones_text(win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
 phones [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_phones_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-phones [<user.ordinals>] next <user.win_nav_target>$: user.winax_phones_text(win_nav_target,"DOWN",ordinals or 1)
-phones [<user.ordinals>] previous <user.win_nav_target>$: user.winax_phones_text(win_nav_target,"UP",ordinals or 1)
+phones [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_phones_text(win_nav_target,search_dir,ordinals or 1)
+
 
 # FORMATTING CORRECTION
+	# example spoken forms:
+	#	format title previous asparagus
+	#	format third next word there
 format <user.formatters> [<user.ordinals>] next {user.win_next_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_next_dyn_nav_trg,"DOWN",ordinals or 1)
 format <user.formatters> [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_previous_dyn_nav_trg,"UP",ordinals or 1)
 format <user.formatters> [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
 format <user.formatters> [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-format <user.formatters> [<user.ordinals>] next <user.win_nav_target>$: user.winax_format_text(user.formatters, win_nav_target,"DOWN",ordinals or 1)
-format <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$: user.winax_format_text(user.formatters, win_nav_target,"UP",ordinals or 1)
+format <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_format_text(user.formatters, win_nav_target,search_dir,ordinals or 1)
 
 format <user.formatters> <user.formatters> [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
 	user.winax_format_text(formatters_1, win_next_dyn_nav_trg,"DOWN",ordinals or 1)
@@ -96,12 +93,10 @@ format <user.formatters> <user.formatters> [<user.ordinals>] any {user.win_any_d
 	user.winax_format_text(formatters_1, win_any_dyn_nav_trg,"UP",ordinals or 1)
 	user.winax_format_text(formatters_2, win_any_dyn_nav_trg,"UP",ordinals or 1)
 
-format <user.formatters> <user.formatters> [<user.ordinals>] next <user.win_nav_target>$:
-	user.winax_format_text(formatters_1, win_nav_target,"DOWN",ordinals or 1)
-	user.winax_format_text(formatters_2, win_nav_target,"DOWN",ordinals or 1)
-format <user.formatters> <user.formatters> [<user.ordinals>] previous <user.win_nav_target>$:
-	user.winax_format_text(formatters_1, win_nav_target,"UP",ordinals or 1)
-	user.winax_format_text(formatters_2, win_nav_target,"UP",ordinals or 1)
+format <user.formatters> <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+	user.winax_format_text(formatters_1, win_nav_target,search_dir,ordinals or 1)
+	user.winax_format_text(formatters_2, win_nav_target,search_dir,ordinals or 1)
+
 
 
 # TEXT REPLACEMENT

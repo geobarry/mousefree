@@ -14,7 +14,6 @@ mod.setting("winax_text",type = bool,default = True,
 
 mod.list("search_dir","directions from cursor in which text can be searched")
 mod.list("text_search_unit","units of text that can be searched for in windows accessibility")
-mod.list("win_dynamic_nav_target")
 mod.list("win_next_dyn_nav_trg")
 mod.list("win_previous_dyn_nav_trg")
 mod.list("win_inside_dyn_nav_trg")
@@ -149,18 +148,11 @@ def process_selection(processing_function,trg: str, scope_dir: str = "DOWN", ord
     el = actions.user.safe_focused_element()
     if el:
         init_range = actions.user.el_prop_val(el,'text_selection')
-        t = actions.user.winax_select_text(trg,scope_dir,ordinal)
-        print(f'txt: {t}')
-        
+        # perform selection
+        t = actions.user.winax_select_text(trg,scope_dir,ordinal)        
         # perform processing function
         if t:
-            txt = t.text
-            success = True
-        else:
-            txt = actions.edit.selected_text()
-            success = txt.upper() == trg.upper()
-        if success:
-            processing_function(txt)
+            processing_function(t)
         # return to original selection
         if init_range != None:
             actions.sleep(0.2)
@@ -192,80 +184,37 @@ def modify_regex_include_homophones(t: str):
 
 ctx = Context()
 
-@ctx.dynamic_list("user.win_dynamic_nav_target")
-def win_dynamic_nav_target(_) -> str:
-    el = actions.user.safe_focused_element()
-    if el:
-        pattern_list = actions.user.el_prop_val(el,'patterns')
-        if "Text" in pattern_list:
-            cur_range = get_scope("both","Line",15)
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_DYNAMIC_NAV_TARGET")
-            return f"""
-            {txt}
-            """
+def win_dyn_nav_trg(search_dir: str) -> str:
+    use_winax = settings.get("user.winax_text")
+    if use_winax:
+        el = actions.user.safe_focused_element()
+        if el:
+            pattern_list = actions.user.el_prop_val(el,'patterns')
+            if "Text" in pattern_list:
+                cur_range = get_scope(search_dir,"Line")
+                txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
+                t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
+                t = re.sub(r"’","'",t)
+                print(f'dynamic t: {t}')
+                return f"""
+                {t}
+                """
 
 @ctx.dynamic_list("user.win_next_dyn_nav_trg")
 def win_next_dyn_nav_trg(_) -> str:
-    el = actions.user.safe_focused_element()
-    if el:
-        pattern_list = actions.user.el_prop_val(el,'patterns')
-        if "Text" in pattern_list:
-            cur_range = get_scope("DOWN","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
-            t = re.sub(r"’","'",t)
-            return f"""
-            {t}
-            """
+    return win_dyn_nav_trg("DOWN")
 
 @ctx.dynamic_list("user.win_previous_dyn_nav_trg")
 def win_previous_dyn_nav_trg(_) -> str:
-    print("FUNCTION: backwards dynamic navigation target")
-    el = actions.user.safe_focused_element()
-    if el:
-        pattern_list = el.patterns
-        if "Text" in pattern_list:
-            cur_range = get_scope("UP","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_PREVIOUS_DYN_NAV_TRG")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
-            t = re.sub(r"’","'",t)
-            print(f't: {t}')
-            return f"""
-            {t}
-            """
+    return win_dyn_nav_trg("UP")
 
 @ctx.dynamic_list("user.win_inside_dyn_nav_trg")
 def win_inside_dyn_nav_trg(_) -> str:
-    print("FUNCTION: backwards dynamic navigation target")
-    el = actions.user.safe_focused_element()
-    if el:
-        pattern_list = el.patterns
-        if "Text" in pattern_list:
-            cur_range = get_scope("INSIDE","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_INSIDE_DYN_NAV_TRG")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
-            t = re.sub(r"’","'",t)
-            print(f't: {t}')
-            return f"""
-            {t}
-            """
+    return win_dyn_nav_trg("INSIDE")
 
 @ctx.dynamic_list("user.win_any_dyn_nav_trg")
 def win_any_dyn_nav_trg(_) -> str:
-    print("FUNCTION: backwards dynamic navigation target")
-    el = actions.user.safe_focused_element()
-    if el:
-        pattern_list = el.patterns
-        if "Text" in pattern_list:
-            cur_range = get_scope("BOTH","Line")
-            txt = actions.user.safe_access(lambda: cur_range.text, "WIN_ANY_DYN_NAV_TRG")
-            t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
-            t = re.sub(r"’","'",t)
-            print(f't: {t}')
-            return f"""
-            {t}
-            """
-
+    return win_dyn_nav_trg("BOTH")
 
 def process_text_capture(m) -> (str,bool):
     """Takes either a navigation target or spoken output capture
@@ -357,7 +306,7 @@ def win_nav_target(m) -> str:
 @mod.action_class
 class Actions:
     def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
-        """Selects text using windows accessibility pattern if possible"""
+        """Selects text using windows accessibility pattern if possible, and returns the selected text"""
         print(f"WINAX_SELECT_TEXT trg: {trg}")
         regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         use_winax = settings.get("user.winax_text")
@@ -371,7 +320,7 @@ class Actions:
                         if r != None:
                             r.select()
                             scroll_to_selection(r)
-                            return r
+                            return r.text
                     except Exception as error:
                         print(f'error: {error}')
                         actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
@@ -380,7 +329,11 @@ class Actions:
                     use_winax = False
         if not use_winax:
             txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
-            actions.user.slide_selection_to_match(txt)
+            print(f'WINAX_SELECT_TEXT txt: {txt}')
+            if txt:
+                actions.user.slide_selection_to_match(txt)
+                r = actions.edit.selected_text()
+                return r
     def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
@@ -402,6 +355,7 @@ class Actions:
                 actions.sleep(0.15)
                 actions.edit.paste()
                 actions.sleep(0.15)
+        print(f"WINAX_FORMAT_TEXT trg: {trg}")
         process_selection(format_process,trg,scope_dir,ordinal)
     def winax_phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
