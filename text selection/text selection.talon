@@ -151,6 +151,18 @@ extend right$: user.winax_expand_selection(false,true)
 extend left$: user.winax_expand_selection(true,false)
 expand [<number_small>] {user.text_search_unit}$: user.winax_expand_selection(true,true,text_search_unit or "character",number_small or 1)
 
+# INSERTION
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
+	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,"DOWN",win_next_dyn_nav_trg)
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$:
+	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,"UP",win_previous_dyn_nav_trg)
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
+	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,"INSIDE",win_inside_dyn_nav_trg)
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
+	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,"BOTH",win_any_dyn_nav_trg)
+	
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,search_dir,win_nav_target)
 
 # SELECT A RANGE 
 #	select FROM either a dynamic or static search target 
@@ -190,3 +202,4 @@ select from <user.ordinals> {user.search_dir} <user.win_nav_target> to [<user.or
 select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_select_text(win_nav_target,search_dir,1)
 	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals or 1)	
+

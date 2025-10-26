@@ -376,7 +376,7 @@ class Actions:
                 actions.sleep(0.15)
         process_selection(phones_process,trg,scope_dir,ordinal)
     def winax_go_text(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
-        """Navigates to text using windows accessibility pattern if possible"""
+        """Navigates to text using windows accessibility pattern, returns True if successful"""
         trg = re.compile(trg, re.IGNORECASE)
         use_winax = settings.get("user.winax_text")
         if use_winax:
@@ -400,6 +400,7 @@ class Actions:
                                     actions.user.safe_access(lambda: r.move_endpoint_by_range(src_pos,trg_pos,target = r),"WINAX_GO_TEXT (c)")
                                     actions.user.safe_access(lambda: r.select(),"WINAX_GO_TEXT (d)")
                                     scroll_to_selection(r,init_rect)
+                                    return True
                 except:
                     print("unhandled exception in windows accessibility text selection; reverting to old method")
                     actions.user.navigation("GO",scope_dir,"DEFAULT",before_or_after,trg,ordinal)               
@@ -407,11 +408,13 @@ class Actions:
                 use_winax = False
         if not use_winax:
             txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",trg,ordinal)
-            actions.user.slide_selection_to_match(txt)
-            if before_or_after.lower() == "before":
-                actions.key("left")
-            else:
-                actions.key("right")
+            if txt:
+                actions.user.slide_selection_to_match(txt)
+                if before_or_after.lower() == "before":
+                    actions.key("left")
+                else:
+                    actions.key("right")
+                return True
     def winax_extend_selection(trg: str, scope_dir: str, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg = re.compile(trg, re.IGNORECASE)
@@ -435,6 +438,11 @@ class Actions:
                     use_winax = False
         if not use_winax:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+    def winax_insert_text(txt: str,before_or_after: str,ordinals: int, scope_dir: str,trg: str):
+        """inserts text before or after target"""
+        success = actions.user.winax_go_text(trg,scope_dir,before_or_after,ordinals)
+        if success:
+            actions.insert(txt)
 # *** stall-proofed up to here ***
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
