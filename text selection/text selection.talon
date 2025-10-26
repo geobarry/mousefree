@@ -71,8 +71,8 @@ phones [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_ph
 
 # FORMATTING CORRECTION
 	# example spoken forms:
-	#	format title previous asparagus
-	#	format third next word there
+	#	format title previous brown
+	#	format upper snake next phrase fox jumped over the lazy dog
 format <user.formatters> [<user.ordinals>] next {user.win_next_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_next_dyn_nav_trg,"DOWN",ordinals or 1)
 format <user.formatters> [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_previous_dyn_nav_trg,"UP",ordinals or 1)
 format <user.formatters> [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
@@ -109,10 +109,9 @@ replace [<user.ordinals>] inside {user.win_inside_dyn_nav_trg} with <user.constr
 replace [<user.ordinals>] any {user.win_any_dyn_nav_trg} with <user.constructed_text>$:
 	user.winax_replace_text(constructed_text, win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-replace [<user.ordinals>] next <user.win_nav_target> with <user.constructed_text>$:
-	user.winax_replace_text(constructed_text, win_nav_target,"DOWN",ordinals or 1)
-replace [<user.ordinals>] previous <user.win_nav_target> with <user.constructed_text>$:
-	user.winax_replace_text(constructed_text, win_nav_target,"UP",ordinals or 1)
+replace [<user.ordinals>] {user.search_dir} <user.win_nav_target> with <user.constructed_text>$:
+	user.winax_replace_text(constructed_text, win_nav_target,search_dir,ordinals or 1)
+
 
 # TEXT REMOVAL
 delete [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
@@ -124,10 +123,8 @@ delete [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
 delete [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
 	user.winax_replace_text("", win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-delete [<user.ordinals>] next <user.win_nav_target>$:
-	user.winax_replace_text("", win_nav_target,"DOWN",ordinals or 1)
-delete [<user.ordinals>] previous <user.win_nav_target>$:
-	user.winax_replace_text("", win_nav_target,"UP",ordinals or 1)
+delete [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+	user.winax_replace_text("", win_nav_target,search_dir,ordinals or 1)
 
 # EXTEND CURRENT SELECTION
 	# examples spoken forms:
