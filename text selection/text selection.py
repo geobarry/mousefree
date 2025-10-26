@@ -182,9 +182,9 @@ def modify_regex_include_homophones(t: str):
     word_list = set(word_list)
     for w in word_list:
         phone_list = actions.user.homophones_get(w)
-        phone_list = sorted(phone_list,key = lambda x: len(x))
-        phone_list.reverse()
         if phone_list:
+            phone_list = sorted(phone_list,key = lambda x: len(x))
+            phone_list.reverse()
             t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
     # accommodate formatting by allowing non-letter characters between words
     t = t.replace(" ","[^a-z|A-Z]*")
@@ -361,6 +361,7 @@ class Actions:
         print(f"WINAX_SELECT_TEXT trg: {trg}")
         regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         use_winax = settings.get("user.winax_text")
+        print(f'use_winax: {use_winax}')
         if use_winax:
             el = actions.user.safe_focused_element()
             if el:
@@ -371,9 +372,11 @@ class Actions:
                             r.select()
                             scroll_to_selection(r)
                             return r
-                    except:
+                    except Exception as error:
+                        print(f'error: {error}')
                         actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
                 else:
+                    print("No text pattern")
                     use_winax = False
         if not use_winax:
             txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
