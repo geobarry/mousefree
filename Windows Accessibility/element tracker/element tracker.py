@@ -8,7 +8,7 @@ import time
 
 mod = Module()
 
-#mod.tag("Text_pattern","Focused element has windows accessibility text pattern")
+#mod.tag("Text_pattern","Focused element has wfindows accessibility text pattern")
 
 # list for tracking a set of clickable points
 marked_elements = []
@@ -24,7 +24,6 @@ class element_tracker:
         self.labels = []
         self.auto_highlight = False
         self.auto_label = False
-        self.active_tags = set()
         self.traversal_function = None
         print("initializing element tracker...")
         self.focused_element = None
@@ -34,6 +33,7 @@ class element_tracker:
         self.interval = 300
         self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         self.accessibility_check_paused = False
+        
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -140,7 +140,28 @@ class element_tracker:
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
 
+black_list = ["Microsoft Excel"]
+prior_state = (True,False)
+
+def check_app(app):
+    print("test")
+    if el_track:
+        app = winui.active_app()
+        name = app.name
+        print(f'name: {name}')
+        global prior_state
+        if name in black_list:
+            print("app on blacklist, pausing highlighting...")
+            prior_state = [el_track.auto_highlight,el_track.auto_label]
+            el_track.auto_highlight = False
+            el_track.auto_label = False
+        else:
+            print("app not on blacklist, resuming highlighting...")
+            el_track.auto_highlight = prior_state[0]
+            el_track.auto_label = prior_state[1]
+
 #winui.register("element_focus",handle_focus_change)
+winui.register("element_focus",check_app)
 
 el_track = None
 def on_ready():
