@@ -484,7 +484,21 @@ class Actions:
             return el_list[ordinal-1]
         else:
             return None
-
+    def act_on_window_element(action: str, prop_seq_str: str, verbose: bool = False):
+        """Act on a descendant of the current window, identified by property sequence string"""
+        if verbose:
+            print(f"ACT_ON_WINDOW_ELEMENT action: {action}, prop_seq_str: {prop_seq_str}")
+        prop_seq = actions.user.get_property_sequence(prop_seq_str)
+        root = actions.user.window_root()
+        if root:
+            el = actions.user.find_el_by_prop_seq(prop_seq,root)
+            children = actions.user.el_prop_val(root,'children')
+            if verbose:
+                print(f'root: {root}')
+                print(f'len(children): {len(children)}')
+                print(f'prop_seq: {prop_seq}')
+            if el:
+                actions.user.act_on_element(el,action,verbose = verbose)
     def act_on_focused_element(action: str, mouse_delay: int = 0):
         """Performs action on currently focused element"""
         el = actions.user.safe_focused_element()

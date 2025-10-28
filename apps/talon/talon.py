@@ -131,7 +131,6 @@ class Actions:
             return True
         else:
             return False
-
     def go_talon_menu(menu_path: str):
         """Opens up a specific talon setting; path should be labels in taskbar separated by commas"""
         highlighting = actions.user.currently_highlighting()
@@ -174,7 +173,41 @@ class Actions:
             # return to original highlighting/labelling state
             actions.user.auto_highlight(highlighting)
             actions.user.auto_label(labelling)
-                        
+    def invoke_talon_update_button(trg_btn: str):
+        """Navigates to the desired button using keyboard keys, because there are too many elements at the same level of the hierarchy to navigate down from the window root"""
+        print(f'trg_btn: {trg_btn}')
+        tab_seq = ["Skip This Version","Install Update","Remind Me Later"]
+        # For this to work, we need to make sure both the button name and the name of the currently focused element are in the above list"""
+        if trg_btn in tab_seq:
+            el = actions.user.safe_focused_element()
+            if el:
+                cur_btn = actions.user.el_prop_val(el,'name')
+                print(f'cur_btn: {cur_btn}')
+                if cur_btn in tab_seq:
+                    # Get indices of cur_btn,trg_btn
+                    cur_idx = tab_seq.index(cur_btn)
+                    trg_idx = tab_seq.index(trg_btn)
+                    print(f'trg_idx: {trg_idx}')
+                    print(f'cur_idx: {cur_idx}')
+                    # tab or shift tab to target if needed
+                    prop_list = [("name",trg_btn)]
+                    if cur_idx > trg_idx:
+                        actions.user.key_to_matching_element("shift-tab",prop_list)
+                    if trg_idx > cur_idx:
+                        actions.user.key_to_matching_element("tab",prop_list)
+                    # double-check that current element is the one that we want
+                    el = actions.user.safe_focused_element()
+                    if actions.user.element_match(el,prop_list):
+                        # wait a second to give visual confirmation
+                        actions.sleep(0.5)
+                        actions.user.act_on_element(el,'invoke')
+
+
+
+
+
+
+    # I think we can remove this now along with a corresponding talon command
     def exit_talon():
         """Exits talon!"""
         root = ax.get_root_element()
