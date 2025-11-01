@@ -1,10 +1,10 @@
 """
-This module will be the only module to access winui.
+This module will be the only module to access ui.
 Every function in this module will be wrapped in a try-finally block to prevent
 multiple simultaneous retrievals.
 """
 from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen, settings
-from talon.windows import ax as ax, ui as winui
+from talon.windows import ax as ax
 from io import StringIO
 from contextlib import redirect_stdout
 from talon.types import Point2d as Point2d
@@ -36,7 +36,7 @@ class Actions:
     def window_root():
         """Retrieves the root element of the active window"""
         def access_func():
-            return winui.active_window().element
+            return ui.active_window().element
         return actions.user.safe_access(access_func,"WINDOW_ROOT")
     def root_element():
         """Retrieves whatever windows UI thinks is the root element"""
@@ -64,7 +64,7 @@ class Actions:
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
             try:
-                el = winui.focused_element()
+                el = ui.focused_element()
                 if el:
                     return el
             except Exception as error:
@@ -77,7 +77,7 @@ class Actions:
         """Attempts to retrieve the main window of the active app"""
         def access_func():
             try:
-                a = winui.active_app()
+                a = ui.active_app()
                 win_list = a.windows()
                 r = None
                 size_max = 0
@@ -102,7 +102,7 @@ class Actions:
         """Retrieves the main screen from Windows UI"""
         def access_func():
             try:
-                return winui.main_screen()
+                return ui.main_screen()
             except Exception as error:
                 print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
                 return None
@@ -110,7 +110,7 @@ class Actions:
     def winax_active_window_rectangle():
         """The rectangle of the active window"""
         def access_func():
-            w = winui.active_window()
+            w = ui.active_window()
             if w:
                 return w.rect
         return actions.user.safe_access(access_func,"WINAX_ACTIVE_WINDOW_RECTANGLE")

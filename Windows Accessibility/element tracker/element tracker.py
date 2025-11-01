@@ -1,5 +1,5 @@
 from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app
-from talon.windows import ax as ax, ui as winui
+from talon.windows import ax as ax
 from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
 from typing import Callable
@@ -159,7 +159,7 @@ def check_app(app):
             el_track.auto_highlight = prior_state[0]
             el_track.auto_label = prior_state[1]
 
-#winui.register("element_focus",handle_focus_change)
+#ui.register("element_focus",handle_focus_change)
 ui.register("win_focus",check_app)
 # also can register app_activate
 
