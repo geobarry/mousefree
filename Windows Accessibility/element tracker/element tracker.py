@@ -98,6 +98,7 @@ class element_tracker:
         self.canvas = None
     def update_highlight(self):
         """Updates the focused element using windows accessibility"""
+        # print(f"UPDATE_HIGHLIGHT: {self.accessibility_check_paused}")
         if not self.accessibility_check_paused:
             try:
                 rectangle_found = False
@@ -144,24 +145,23 @@ black_list = ["Microsoft Excel"]
 prior_state = (True,False)
 
 def check_app(app):
-    print("test")
+    el = ui.focused_element()
     if el_track:
-        app = winui.active_app()
+        app = ui.active_app()
         name = app.name
-        print(f'name: {name}')
         global prior_state
         if name in black_list:
             print("app on blacklist, pausing highlighting...")
-            prior_state = [el_track.auto_highlight,el_track.auto_label]
             el_track.auto_highlight = False
             el_track.auto_label = False
         else:
-            print("app not on blacklist, resuming highlighting...")
+            print(f"app not on blacklist, resuming highlighting: {prior_state}")
             el_track.auto_highlight = prior_state[0]
             el_track.auto_label = prior_state[1]
 
 #winui.register("element_focus",handle_focus_change)
-winui.register("element_focus",check_app)
+ui.register("win_focus",check_app)
+# also can register app_activate
 
 el_track = None
 def on_ready():

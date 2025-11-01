@@ -15,7 +15,9 @@ mode: command
 ##   "move/stash into <one of your named system paths>"
 
 (file|folder) {user.explorer_action}$: user.explorer_process_item('','',explorer_action)
-
+(file|folder) {user.explorer_context_option}$:
+	user.explorer_context_action(explorer_context_option)
+	
 move into folder {user.dynamic_folder}$: user.explorer_move_to('',0,dynamic_folder,'move')
 move into parent [folder]$: user.explorer_move_to('',1,'','move')
 move into <user.system_path>: user.explorer_move_to(system_path,0,'','move')
@@ -46,8 +48,6 @@ open with {user.app}$: user.explorer_open_with(app)
 {user.file_ext} {user.explorer_action} {user.dynamic_file_with_ext}$: 
 	print("talon file: {dynamic_file_with_ext}")
 	user.explorer_process_item(dynamic_file_with_ext,"file",explorer_action)
-{user.explorer_context_option}$:
-	user.explorer_context_action(explorer_context_option)
 
 # NAVIGATION TO SYSTEM PATHS
 # override default because default doesn't work consistently, leaves drop down hanging
