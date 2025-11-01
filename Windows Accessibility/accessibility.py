@@ -236,6 +236,15 @@ class Actions:
             prop_list = actions.user.get_property_list(prop_str)
             r.append(prop_list)
         return r
+    def prop_seq_from_dotted_str(seq_str: str, prop_name: str = "automation_id"):
+        """For apps that used nested naming structure separated by dots, creates a property sequence from a single dot-separated-string"""
+        # KNOWN APPS: QGIS, OBS Studio
+        item_list = seq_str.split(".")
+        r = []
+        for i in range(len(item_list)):
+            r.append([(prop_name,f"{'.'.join(item_list[:i + 1])}")])
+        print(f'r: {r}')
+        return r
     def ax_action(action: str, prop_seq_str: str, verbose: bool = False):
         """Finds element threw accessibility sequence from current window root, and performs action if found"""
         root = actions.user.window_root()
@@ -484,6 +493,21 @@ class Actions:
             return el_list[ordinal-1]
         else:
             return None
+    def find_el_by_dotted_str(dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, extra_prop_seq: list = None, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
+        """Finds accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
+        prop_seq = actions.user.prop_seq_from_dotted_str(dotted_str,prop_name)
+        # First element is usually root so we have to cut that out of the property sequence
+        prop_seq = prop_seq[idx_of_1st_el:]
+        if extra_prop_seq_str:
+            extra_prop_seq = actions.user.get_property_sequence(extra_prop_seq_str)
+            prop_seq = prop_seq + extra_prop_seq
+        return actions.user.find_el_by_prop_seq(prop_seq,None,0,time_limit,ordinal,verbose)
+    def act_on_el_by_dotted_str(action: str, dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
+        """Acts on accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
+        el = actions.user.find_el_by_dotted_str(dotted_str,extra_prop_seq_str,prop_name,idx_of_1st_el,time_limit,ordinal,verbose)
+        if el:
+            print(f"attempting to perform {action} on {el}")
+            actions.user.act_on_element(el,action)
     def act_on_window_element(action: str, prop_seq_str: str, verbose: bool = False):
         """Act on a descendant of the current window, identified by property sequence string"""
         if verbose:
