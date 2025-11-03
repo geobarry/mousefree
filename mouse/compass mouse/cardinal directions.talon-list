@@ -1,5 +1,9 @@
 list: user.cardinal_direction
 -
+up: 0
+right: 90
+down: 180
+left: 270
 north: 0
 east: 90
 south: 180
@@ -16,7 +20,19 @@ south southwest: 202.5
 west southwest: 247.5
 west northwest: 292.5
 north northwest: 337.5
-up: 0
-right: 90
-down: 180
-left: 270
+north by east: 11.25
+northeast by north: 33.75
+northeast by east: 56.25
+east by north: 78.75
+east by south: 101.25
+southeast by east: 123.75
+southeast by south: 146.25
+south by east: 168.75
+south by west: 191.25
+southwest by south: 213.75
+southwest by west: 236.25
+west by south: 258.75
+west by north: 281.25
+northwest by west: 303.75
+northwest by north: 326.25
+north by west: 348.75
