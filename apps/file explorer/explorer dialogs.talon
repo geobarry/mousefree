@@ -1,5 +1,5 @@
 os: windows
-and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio|Triangulation_Visualization).*/
+and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio|File Picker|Triangulation_Visualization).*/
 and win.title: /(Open|Save|Publish|Insert|Load|Export).*/
 -
 # SUBSET OF COMMON COMMANDS FROM MAIN EXPLORER APPLICATION,
@@ -33,6 +33,7 @@ folder open {user.dynamic_folder}$: user.explorer_process_item(dynamic_folder,"f
 
 # FILE ACTIONS: open, select, cut, copy, delete
 ^file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
+^folder {user.explorer_action} {user.dynamic_folder}$: user.explorer_process_item(dynamic_folder,"folder",explorer_action)
 
 
 

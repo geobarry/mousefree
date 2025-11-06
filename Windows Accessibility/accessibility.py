@@ -659,10 +659,16 @@ class Actions:
                 print(f"Element doesn't match property list... :(")
                 print(f"element properties: {actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])}")
                 return None
-    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=200, escape_key: str=None, delay: float = 0.03):
+    def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=200, escape_key: str=None, delay: float = 0.03, final_action: str = ""):
         """press key until element with exact value for one property is reached"""
+        print(f"KEY_TO_ELEM_BY_VAL key: {key} val: {val}")
+        if escape_key == '': # because talon scripts cannot pass in value of None
+            escape_key = None
         prop_list = [(prop,val)]
-        actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
+        el = actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
+        if el:
+            if final_action != '':
+                actions.user.act_on_element(el,final_action)
     def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=-1,delay: float = 0.03):
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]

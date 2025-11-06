@@ -244,6 +244,7 @@ def dynamic_folder(spoken_form) -> dict[str,str]:
     # NOTE: Sometimes this doesn't work in dialogs even though the return value is correct, 
     #        the talon command ends up being the lowercase version of the key, not the associated dictionary value
     # NOTE: It looks like you are not allowed to call an action from inside a dynamic list in another module
+    print(f"DYNAMIC_FOLDER: {spoken_form}")
     dynamic_output = retrieve_item_list("folder")
     return dynamic_output
 
