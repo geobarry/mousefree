@@ -33,7 +33,7 @@ class element_tracker:
         self.interval = 300
         self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         self.accessibility_check_paused = False
-        
+        self.blacklist = False
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -103,6 +103,8 @@ class element_tracker:
             try:
                 rectangle_found = False
                 if self.auto_highlight or self.auto_label:
+                    if self.blacklist:
+                        print(f"blacklist: {self.blacklist}")
                     el = actions.user.safe_focused_element()
                     if el:
                         rect = None
@@ -145,19 +147,21 @@ black_list = ["Microsoft Excel"]
 prior_state = (True,False)
 
 def check_app(app):
-    el = ui.focused_element()
+#    el = ui.focused_element()
     if el_track:
         app = ui.active_app()
         name = app.name
         global prior_state
         if name in black_list:
-            print("app on blacklist, pausing highlighting...")
+            print(f"app {name} on blacklist, pausing highlighting...")
             el_track.auto_highlight = False
             el_track.auto_label = False
+            el_track.blacklist = True
         else:
-            print(f"app not on blacklist, resuming highlighting: {prior_state}")
+            print(f"app {name} not on blacklist, resuming highlighting: {prior_state}")
             el_track.auto_highlight = prior_state[0]
             el_track.auto_label = prior_state[1]
+            el_track.blacklist = False
 
 #ui.register("element_focus",handle_focus_change)
 ui.register("win_focus",check_app)
