@@ -452,21 +452,6 @@ class Actions:
                                 valid_matches.append(child)
                 parent_list = next_parents
                 extra_levels += 1            
-            # OLD METHOD
-            # valid_matches = perform_search(el_list,extra_levels)
-            # if stopper.over():
-                # if verbose:
-                    # print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
-                # return 
-            # print(f'len(valid_matches): {len(valid_matches)}')
-            # while len(valid_matches) == 0 and extra_levels < extra_search_levels:
-                # extra_levels += 1
-                # valid_matches = perform_search(el_list,extra_levels,False)
-                # if stopper.over():
-                    # if verbose:
-                        # print(f"FUNCTION find_el_by_prop_seq stopping due to stopper overage")
-                    # return 
-
             if len(valid_matches) == 0:
                 if verbose:
                     print(f"Could not find {prop_list}")
