@@ -301,7 +301,7 @@ class Actions:
                     print("No text pattern")
                     use_winax = False
         if not use_winax:
-            txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
+            txt = actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,ordinal)
             print(f'WINAX_SELECT_TEXT txt: {txt}')
             if txt:
                 actions.user.slide_selection_to_match(txt)

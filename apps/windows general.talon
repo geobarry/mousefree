@@ -1,19 +1,33 @@
 os: windows
 -
+# Miscellaneous utilities for dealing with MS Windows OS
+
+# FOCUS ON WINDOW BY TITLE
+
+# by starting word or phrase, e.g. if a MS Word window has the title "community center proposal":
+#    "focus word proposal" <- search by first word
+#    "focus phrase community center" <- searched by first phrase
+
 focus <user.win_nav_target>: 
 	user.app_switch_by_title("{win_nav_target}.*")
+	
+# by any word or phrase, e.g.:
+#    "focus include word proposal"
+
 focus include <user.win_nav_target>:
 	user.app_switch_by_title(".*{win_nav_target}.*")
+
+# CLOSE WINDOW THAT IS NOT IN FOCUS
 window close <user.running_applications>:
 	user.switcher_focus(running_applications)
 	app.window_close()
 
-# FOCUS
-refocus: user.slow_key_press("alt:down tab left alt:up",0.1)
+# SOMETIMES IT IS USEFUL TO FOCUS ON ANOTHER WINDOW THEN BRING FOCUS BACK TO CURRENT WINDOW
+refocus: user.slow_key_press("alt:down tab left alt:up",0.2)
 
-# special command to focus on an explorer windows since windows has so many
+# APPS THAT ARE NOTORIOUS FOR FOCUSING ON HIDDEN WINDOWS
 focus explorer: user.focus_explorer()
 focus outlook: user.focus_outlook()
 
-# taskbar
+# TASK BAR
 safely remove hardware: user.invoke_taskbar_item("Safely Remove Hardware.*")
