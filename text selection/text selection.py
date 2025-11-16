@@ -216,93 +216,65 @@ def win_inside_dyn_nav_trg(_) -> str:
 def win_any_dyn_nav_trg(_) -> str:
     return win_dyn_nav_trg("BOTH")
 
-def process_text_capture(m) -> (str,bool):
-    """Takes either a navigation target or spoken output capture
-        and returns tuple of 
-        (text without homophone processing, bool=homophones_allowed)"""
-    include_homophones = False
-    print(f'm: {m}')
-    print(f'm: {type(m[0])}')
-    print(f'm: {m.__dir__()}')
-    print(dir(m))    
-    print(f"WORD: {hasattr(m,'word')}")
-    if hasattr(m,"any_alphanumeric_key"):
-        t = re.compile(re.escape(m.any_alphanumeric_key), re.IGNORECASE).pattern
-    elif hasattr(m,"delimiter_pair"):
-        t = "\\" + m.delimiter_pair.replace(" ",".*?\\")
-    elif hasattr(m,"navigation_target_name"):
-        t = re.compile(m.navigation_target_name)
-    elif hasattr(m,"abbreviation"):
-        t = m.abbreviation
-    elif hasattr(m,"real_number"):
+
+@mod.capture(rule="word <user.word> | phrase <user.text> | <user.formatters> <user.prose>")
+def direct_text(m) -> str:
+    """Constructs text for inserting, without any regex"""
+    if hasattr(m,"word"):
+        t = m.word
+    elif hasattr(m,"text"):
+        t = m.text
+    elif hasattr(m,"formatters"):
+        t = actions.user.formatted_text(m.prose,m.formatters)
+    return t
+
+@mod.capture(rule="<user.direct_text>")
+def phony_text(m) -> str:
+    """Creates a navigation target including homophone options"""
+    t = m.direct_text
+    # include homophones
+    word_list = re.findall(r"\w+",t)
+    word_list = set(word_list)
+    for w in word_list:
+        phone_list = actions.user.homophones_get(w)
+        if phone_list:
+            t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
+    # accommodate formatting by allowing non-letter characters between words
+    t = t.replace(" ","[^a-z|A-Z]*")
+    return t        
+
+@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
+def coded_text(m) -> str:
+    """Creates text from letters, characters, numbers or other user defined spoken forms. From 'variable' onwards are personal lists and captures that I have made that are not public. So you can remove these or else create your own lists/captures with the same name."""
+    if hasattr(m,"real_number"):
         x = int(m.real_number)
         y = float(m.real_number)
         t = str(x) if x == y else str(y)
-    elif hasattr(m,"word"):
-        t = m.word
-        include_homophones = True
-    elif hasattr(m,"text"):
-        t = m.text
-        include_homophones = True
-    elif hasattr(m,"extended_variable"):
-        t = m.extended_variable
-    elif hasattr(m,"person"):
-        t = m.person
-    elif hasattr(m,"student"):
-        t = m.student
-    elif hasattr(m,"place"):
-        t = m.place
-    elif hasattr(m,"module"):
-        t = m.module
-    elif hasattr(m,"function"):
-        t = m.function
-    elif hasattr(m,"keyword"):
-        t = m.keyword
-    elif hasattr(m,"app"):
-        t = m.app
-    elif hasattr(m,"font"):
-        t = m.font
-    elif hasattr(m,"formatters"):
-        print("formatter found")
-        t = actions.user.formatted_text(m.prose,m.formatters)
-        # later should change this to TRUE to allow for searching by
-        # formatter, but that will probably entail returning the formatter
-        # to be processed by the final function into a regex expression
-        # that distinguishes the same set of words formatted in different ways
-        include_homophones = False
-    return (t,include_homophones)        
-        
-# This capture rule should match win_nav_target exactly for
-# spoken form consistency; the only difference
-# is that this should return text to paste into a document, 
-# rather than text to search for. So no Regular Expressions.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | <user.formatters> <user.prose>")
-def constructed_text(m) -> str:
-    """Output of spoken text Construction for windows text selection"""
-    print("CONSTRUCTED_TEXT")
-    t, include_homophones = process_text_capture(m)
-    return t
-        
-        
-# Note: the windows dynamic navigation target will take precedence
-# over the following capture, according to observed behavior 
-# (not sure if this is guaranteed). So if a windows accessibility text element is in focus and there is both the word comma and a comma punctuation mark, the word will be selected.
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | word <user.word> | phrase <user.text> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
-def win_nav_target(m) -> str:
-    """A target to navigate to. Returns a regular expression."""
-    t, include_homophones = process_text_capture(m)
-    if include_homophones:
-        # include homophones
-        word_list = re.findall(r"\w+",t)
-        word_list = set(word_list)
-        for w in word_list:
-            phone_list = actions.user.homophones_get(w)
-            if phone_list:
-                t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
-        # accommodate formatting by allowing non-letter characters between words
-        t = t.replace(" ","[^a-z|A-Z]*")
+    else:
+        cls_list = ["any_alphanumeric_key","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","module","function","keyword","app","font"]
+        for cls in cls_list:
+            if hasattr(m,cls):
+                t = getattr(m,cls)
+                break
     return t
 
+@mod.capture(rule = "<user.direct_text>|<user.coded_text>")
+def constructed_text(m) -> str:
+    """Text to be inserted"""
+    return str(m)
+
+@mod.capture(rule = "<user.phony_text>|<user.coded_text>")
+def win_nav_target(m) -> str:
+    """text to be searched for, including regex for disambiguation"""
+    if hasattr(m,"phony_text"):
+        return str(m)
+    else:
+        t = str(m)
+        if t in ["()","{}","[]","<>","''",'""']:
+            return f"{t[0]}.*{t[1]}"
+        else:
+            return re.escape(t)
+    
 @mod.action_class
 class Actions:
     def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
