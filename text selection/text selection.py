@@ -243,7 +243,7 @@ def phony_text(m) -> str:
     t = t.replace(" ","[^a-z|A-Z]*")
     return t        
 
-@mod.capture(rule="[(letter|character)] <user.any_alphanumeric_key> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
+@mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
 def coded_text(m) -> str:
     """Creates text from letters, characters, numbers or other user defined spoken forms. From 'variable' onwards are personal lists and captures that I have made that are not public. So you can remove these or else create your own lists/captures with the same name."""
     if hasattr(m,"real_number"):
@@ -251,7 +251,7 @@ def coded_text(m) -> str:
         y = float(m.real_number)
         t = str(x) if x == y else str(y)
     else:
-        cls_list = ["any_alphanumeric_key","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","module","function","keyword","app","font"]
+        cls_list = ["any_alphanumeric_key","letter","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","module","function","keyword","app","font"]
         for cls in cls_list:
             if hasattr(m,cls):
                 t = getattr(m,cls)
@@ -270,8 +270,9 @@ def win_nav_target(m) -> str:
         return str(m)
     else:
         t = str(m)
-        if t in ["()","{}","[]","<>","''",'""']:
-            return f"{t[0]}.*{t[1]}"
+        if t in ["( )","{ }","[ ]","< >","' '",'" "']:
+            t = re.escape(t)
+            return t.replace(f"\ ",".*")
         else:
             return re.escape(t)
     
@@ -415,7 +416,6 @@ class Actions:
         success = actions.user.winax_go_text(trg,scope_dir,before_or_after,ordinals)
         if success:
             actions.insert(txt)
-# *** stall-proofed up to here ***
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = actions.user.safe_focused_element()
@@ -424,21 +424,22 @@ class Actions:
             pattern_list = actions.user.el_prop_val(el,"patterns")
             if pattern_list:
                 if "Text" in pattern_list:
-                    pattern = el.text_pattern
+                    pattern = actions.user.safe_access(lambda: el.text_pattern, "winax_moved_by_unit")
                     if pattern:
-                        selection_list = pattern.selection
+                        selection_list = actions.user.safe_access(lambda: pattern.selection, "winax_move_by_unit")
                         if selection_list:
                             if len(selection_list) > 0:
                                 cur_range = selection_list[0]
                                 if cur_range:
                                     if scope_dir.upper() == "UP":
                                         ordinal = -ordinal
-                                        cur_range.move_endpoint_by_range("End","Start",target = cur_range)
+                                        actions.user.safe_access(lambda: cur_range.move_endpoint_by_range("End","Start",target = cur_range),"winax_move_by_unit")
                                     else:
-                                        cur_range.move_endpoint_by_range("Start","End",target = cur_range)
-                                    cur_range.move(unit,ordinal)
-                                    cur_range.select()
-                                    cur_range.scroll_into_view(True)
+                                        actions.user.safe_access(lambda: cur_range.move_endpoint_by_range("Start","End",target = cur_range),"winax_move_by_unit")
+                                    actions.user.safe_access(lambda: cur_range.move(unit,ordinal),"winax_move_by_unit")
+                                    actions.user.safe_access(lambda: cur_range.select(),"winax_move_by_unit")
+                                    actions.user.safe_access(lambda: cur_range.scroll_into_view(True),"winax_move_by_unit")
+# *** stall-proofed up to here ***
     def winax_extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
         el = actions.user.safe_focused_element()
@@ -557,7 +558,6 @@ class Actions:
         """If true, uses windows accessibility for text selection"""
         print(f"winax_text: {use_ax}")
         ctx.settings["user.winax_text"] = use_ax
-        
     def winax_set_selection_distance(d: int):
         """Allows user to change selection distance with a command"""
         if d > 0:
