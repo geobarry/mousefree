@@ -1,0 +1,40 @@
+TALON FILES
+Consider putting these in to main folder so it will be easier to find all available spoken commands
+
+explorer
+explorer dialogs
+windows general
+
+compass init
+compass
+
+windows mouse actions
+
+slow repeater
+slow repeating
+
+snip helper
+
+settings
+
+talon
+talon update
+
+text selection
+
+accessibility
+accessibility dev
+
+TO-DO-LIST
+delete inaccessible text selection.talon
+delete other temporary files
+consolidate ax_target & win_nav_target captures
+create setting to switch between requiring vs not requiring "word" or "phrase" for above targets
+modify how app blacklist works for auto-highlight: check in update function and highlight app
+delete element tracker object when auto highlight is turned off
+add command to text selection to extend and delete in one spoken command with "delete until previous", "delete until next", "delete through previous", "delete through next"
+create pull request for text navigation with community
+create tag for using accessibility with text selection, associate with individual apps
+improve selection-sliding with inaccessible text selection to work when selection has few characters
+enable adding space before or after when inserting word with text selection
+continued to work on documentation

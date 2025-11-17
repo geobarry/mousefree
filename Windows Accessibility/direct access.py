@@ -41,7 +41,6 @@ class Actions:
     def root_element():
         """Retrieves whatever windows UI thinks is the root element"""
         return actions.user.safe_access(ax.get_root_element,"ROOT_ELEMENT")
-
     def wait_for_access(time_limit: float = 1):
         """if currently retrieving, attempt to buy time; returns True if access is available"""
         interval = 0.05
@@ -72,7 +71,6 @@ class Actions:
                 print(f'error: {error}')
                 return None
         return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT")
-
     def main_window_element():
         """Attempts to retrieve the main window of the active app"""
         def access_func():
@@ -219,7 +217,6 @@ class Actions:
             return 
         finally:
             actions.user.set_winax_retrieving(False)
-
     def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
         """Returns the property value or None if the property value cannot be retrieved"""
         if not el:
@@ -393,7 +390,6 @@ class Actions:
                     return  None
             finally:
                 retrieving = False
-
     def el_pattern(el: ax.Element, pattern_name: str):
         """Retrieves the element pattern object"""
         def access_func():
