@@ -382,7 +382,7 @@ class Actions:
                 return el_list[0]
         return None
     def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, time_limit: float = 5, verbose: bool = False):
-        """Returns the first ancestor that meets prop_list conditions, or None if none is found"""
+        """Returns the first ancestor that meets prop_list conditions, including input element, or None if none is found"""
         actions.user.el_tracker_pause_updating()
         if max_gen == -1:
             max_gen == 25
@@ -391,13 +391,6 @@ class Actions:
         stopper = actions.user.stopper(time_limit)
         while True:
             try:
-                if stopper.over():
-                    print("MATCHING_ANCESTOR time is over")
-                    actions.user.el_tracker_resume_updating()
-                    return 
-                stopper.increment()
-                if el:
-                    el = actions.user.el_prop_val(el,"parent")
                 if el:
                     if verbose:
                         msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
@@ -405,6 +398,12 @@ class Actions:
                     if actions.user.element_match(el,prop_list):
                         actions.user.el_tracker_resume_updating()
                         return el
+                    if stopper.over():
+                        print("MATCHING_ANCESTOR time is over")
+                        actions.user.el_tracker_resume_updating()
+                        return 
+                    el = actions.user.el_prop_val(el,"parent")
+
                 else:
                     actions.user.el_tracker_resume_updating()
                     return None

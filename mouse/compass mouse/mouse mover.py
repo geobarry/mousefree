@@ -25,7 +25,7 @@ class mouse_mover:
                 totT = ms
             else:
                 totT = self.get_move_time(totD)
-            self.num_intervals = max(1,math.ceil(totT / interval))
+            self.num_intervals = max(1,math.floor(totT / interval))
             self.interval_x = dx / self.num_intervals
             self.interval_y = dy / self.num_intervals
             self.job = cron.interval(f'{interval}ms', self.move_next)
