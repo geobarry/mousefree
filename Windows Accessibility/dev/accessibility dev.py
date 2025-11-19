@@ -51,7 +51,7 @@ class Actions:
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
         if not prop_list:
-            prop_list = ["name","class_name",
+            prop_list = ["name","class_name", "control_type",
                             "help_text","automation_id",
                             "printout",
                             "patterns","access_key",

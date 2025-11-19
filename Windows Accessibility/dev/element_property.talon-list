@@ -3,6 +3,7 @@ list: user.element_property
 automation: automation_id
 children
 class: class_name
+control type: control_type
 clickable point:clickable_point
 content element:is_content_element
 control element:is_control_element
