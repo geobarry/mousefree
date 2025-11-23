@@ -38,6 +38,7 @@ def precise_target_and_position(target: re.Pattern,
     t = re.sub(r"'","[’']",t)
     print(f't: {t}')
     target = re.compile(t, re.IGNORECASE)
+    
     # find all instances of the target within the text range text
     if actions.user.wait_for_access():
         actions.user.set_winax_retrieving(True)
@@ -46,6 +47,7 @@ def precise_target_and_position(target: re.Pattern,
             m = re.findall(target,t)
             if m and len(m) >= ordinal:
                 print(f'm: {m}')
+                print(f'len(m): {len(m)}')
                 # determine precise target and loop parameters to iterate through preceding matches
                 if search_dir.upper() == "UP":
                     precise_trg = m[-ordinal]
@@ -59,6 +61,7 @@ def precise_target_and_position(target: re.Pattern,
                 for i in range(start,stop,step):
                     if m[i] == precise_trg:
                         precise_ordinal += 1
+                print(f'precise_trg: {precise_trg}')
                 return (precise_trg,precise_ordinal)
         except Exception as error:
             print(f"TEXT SELECTION PRECISE TARGET AND POSITION error:\n{error}")
@@ -271,8 +274,10 @@ def win_nav_target(m) -> str:
     else:
         t = str(m)
         if t in ["( )","{ }","[ ]","< >","' '",'" "']:
-            t = re.escape(t)
-            return t.replace(f"\ ",".*")
+            q = re.escape(t)
+            t = q.replace(f"\ ","[^(\" + t[-1] + "|\" + t[0] + ")]*")
+            print(f't: {t}')
+            return t
         else:
             return re.escape(t)
     
