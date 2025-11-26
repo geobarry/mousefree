@@ -47,12 +47,13 @@ go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_targ
 	#	select next bang
 	#   select third previous brief exponent
 	#	select paragraph
-select [<user.ordinals>] next {user.win_next_dyn_nav_trg}$: user.winax_select_text(win_next_dyn_nav_trg,"DOWN",ordinals or 1)
-select [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_select_text(win_previous_dyn_nav_trg,"UP",ordinals or 1)
-select [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_select_text(win_inside_dyn_nav_trg,"inside",ordinals or 1)
-select [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1)
+[{user.text_search_unit}] select [<user.ordinals>] next {user.win_next_dyn_nav_trg}$: user.winax_select_text(win_next_dyn_nav_trg,"DOWN",ordinals or 1,text_search_unit or '')
+[{user.text_search_unit}] select [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_select_text(win_previous_dyn_nav_trg,"UP",ordinals or 1,text_search_unit or '')
+[{user.text_search_unit}] select [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_select_text(win_inside_dyn_nav_trg,"inside",ordinals or 1,text_search_unit or '')
+[{user.text_search_unit}] select [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1,text_search_unit or '')
 
-select [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_select_text(win_nav_target,search_dir,ordinals or 1)
+
+[{user.text_search_unit}] select [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_select_text(win_nav_target,search_dir,ordinals or 1,text_search_unit or '')
 
 select {user.text_search_unit}$: user.winax_select_unit(text_search_unit)
 

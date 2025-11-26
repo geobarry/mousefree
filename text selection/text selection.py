@@ -103,7 +103,7 @@ def find_target(trg: re.Pattern,
                         actions.user.safe_access(lambda: text_range.move_endpoint_by_range("End","Start",target = r),"FIND_TARGET (b)")
                     else:
                         actions.user.safe_access(lambda: text_range.move_endpoint_by_range("Start","End",target = r),"FIND_TARGET (c)")
-                    r = actions.user.safe_access(lambda: text_range.find_text(precise_trg,backward = back)            , "FIND_TARGET (d)")
+                    r = actions.user.safe_access(lambda: text_range.find_text(precise_trg,backward = back), "FIND_TARGET (d)")
                 return r
         else:
             print("Target not found :(")
@@ -275,7 +275,7 @@ def win_nav_target(m) -> str:
         t = str(m)
         if t in ["( )","{ }","[ ]","< >","' '",'" "']:
             q = re.escape(t)
-            t = q.replace(f"\ ","[^(\" + t[-1] + "|\" + t[0] + ")]*")
+            t = q.replace(f"\ ","[^(\\" + t[-1] + "|\\" + t[0] + ")]*")
             print(f't: {t}')
             return t
         else:
@@ -283,9 +283,12 @@ def win_nav_target(m) -> str:
     
 @mod.action_class
 class Actions:
-    def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_select_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1, expand_to_unit: str = None):
         """Selects text using windows accessibility pattern if possible, and returns the selected text"""
         print(f"WINAX_SELECT_TEXT trg: {trg}")
+        print(f'expand_to_unit: {expand_to_unit}')
+        if expand_to_unit == '':
+            expand_to_unit = None
         regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
         use_winax = settings.get("user.winax_text")
         print(f'use_winax: {use_winax}')
@@ -297,11 +300,13 @@ class Actions:
                         r = find_target(regex,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                         if r != None:
                             r.select()
+                            if expand_to_unit:
+                                r = actions.user.winax_select_unit(expand_to_unit)
                             scroll_to_selection(r)
                             return r.text
                     except Exception as error:
                         print(f'error: {error}')
-                        actions.user.navigation("SELECT",scope_dir,"DEFAULT","default",regex,1)
+                        use_winax = False
                 else:
                     print("No text pattern")
                     use_winax = False
@@ -310,6 +315,8 @@ class Actions:
             print(f'WINAX_SELECT_TEXT txt: {txt}')
             if txt:
                 actions.user.slide_selection_to_match(txt)
+                if expand_to_unit:
+                    actions.user.winax_select_unit(expand_to_unit)
                 r = actions.edit.selected_text()
                 return r
     def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
@@ -321,6 +328,7 @@ class Actions:
                     actions.key("backspace")
                 else:
                     clip.set_text(new_text)
+                    print(f'n_txt: |{new_text}|')
                     actions.edit.paste()
                     actions.sleep(0.15)
         process_selection(replace_process,trg,scope_dir,ordinal)
@@ -544,6 +552,7 @@ class Actions:
                     cur_range = selection[0]
                     cur_range.expand_to_enclosing_unit(unit)
                     cur_range.select()
+                    return cur_range
             else:
                 # need to handle these individually because community edit commands
                 # use classes that I don't know how to access
