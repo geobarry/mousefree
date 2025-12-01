@@ -7,4 +7,5 @@ up
 down
 tab	
 jump: tab
+pop: tab
 funk six: f6
