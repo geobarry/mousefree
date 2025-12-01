@@ -34,7 +34,7 @@ go {user.before_or_after} [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}
 go {user.before_or_after} [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
 	user.winax_go_text(win_any_dyn_nav_trg,"BOTH",before_or_after,ordinals or 1)
 
-go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_go_text(win_nav_target,search_dir,before_or_after,ordinals or 1)
 {user.search_dir} <number_small> {user.text_search_unit}$: 
 	user.winax_move_by_unit(text_search_unit,search_dir,number_small)
@@ -53,7 +53,7 @@ go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_targ
 [{user.text_search_unit}] select [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1,text_search_unit or '')
 
 
-[{user.text_search_unit}] select [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_select_text(win_nav_target,search_dir,ordinals or 1,text_search_unit or '')
+[{user.text_search_unit}] select [<user.ordinals>] {user.search_dir} <user.win_nav_target>: user.winax_select_text(win_nav_target,search_dir,ordinals or 1,text_search_unit or '')
 
 select {user.text_search_unit}$: user.winax_select_unit(text_search_unit)
 
@@ -79,7 +79,7 @@ format <user.formatters> [<user.ordinals>] previous {user.win_previous_dyn_nav_t
 format <user.formatters> [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
 format <user.formatters> [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_format_text(user.formatters, win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-format <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>$: user.winax_format_text(user.formatters, win_nav_target,search_dir,ordinals or 1)
+format <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>: user.winax_format_text(user.formatters, win_nav_target,search_dir,ordinals or 1)
 
 format <user.formatters> <user.formatters> [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
 	user.winax_format_text(formatters_1, win_next_dyn_nav_trg,"DOWN",ordinals or 1)
@@ -94,7 +94,7 @@ format <user.formatters> <user.formatters> [<user.ordinals>] any {user.win_any_d
 	user.winax_format_text(formatters_1, win_any_dyn_nav_trg,"UP",ordinals or 1)
 	user.winax_format_text(formatters_2, win_any_dyn_nav_trg,"UP",ordinals or 1)
 
-format <user.formatters> <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+format <user.formatters> <user.formatters> [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_format_text(formatters_1, win_nav_target,search_dir,ordinals or 1)
 	user.winax_format_text(formatters_2, win_nav_target,search_dir,ordinals or 1)
 
@@ -110,7 +110,7 @@ replace [<user.ordinals>] inside {user.win_inside_dyn_nav_trg} with <user.constr
 replace [<user.ordinals>] any {user.win_any_dyn_nav_trg} with <user.constructed_text>$:
 	user.winax_replace_text(constructed_text, win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-replace [<user.ordinals>] {user.search_dir} <user.win_nav_target> with <user.constructed_text>$:
+replace [<user.ordinals>] {user.search_dir} <user.win_nav_target> with <user.constructed_text>:
 	user.winax_replace_text(constructed_text, win_nav_target,search_dir,ordinals or 1)
 
 
@@ -124,7 +124,7 @@ delete [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
 delete [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
 	user.winax_replace_text("", win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
-delete [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+delete [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_replace_text("", win_nav_target,search_dir,ordinals or 1)
 
 # EXTEND CURRENT SELECTION
@@ -162,7 +162,7 @@ insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] inside {
 insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
 	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,"BOTH",win_any_dyn_nav_trg)
 	
-insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
+insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,search_dir,win_nav_target)
 
 # SELECT A RANGE 
@@ -197,10 +197,10 @@ select from <user.ordinals> any {user.win_any_dyn_nav_trg} to [<user.ordinals>] 
 	user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals)
 	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
 
-select from <user.ordinals> {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
+select from <user.ordinals> {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>:
 	user.winax_select_text(win_nav_target,search_dir,ordinals)
 	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals_2 or 1)	
-select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>$:
+select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>:
 	user.winax_select_text(win_nav_target,search_dir,1)
 	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals or 1)	
 
