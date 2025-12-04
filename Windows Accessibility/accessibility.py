@@ -583,8 +583,17 @@ class Actions:
         prop_list = [(prop,val)]
         actions.user.new_key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
         
-    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, verbose: bool = False):
+    def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, match_type: str = "element", verbose: bool = False):
         """press given key until the first matching element is reached"""
+        def match_test(el):
+            if match_type == "element":
+                return actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False)
+            elif match_type == 'ancestor':
+                ancestor = actions.user.matching_ancestor(el,prop_list,time_limit = 1)
+                if ancestor:
+                    return True
+                else:
+                    return False
         if verbose:
             print(f"FUNCTION: key_to_matching_element \n  prop_list: {prop_list}  \nlimit: {limit} delay: {delay} avoids_cycles: {avoid_cycles}")
         el = actions.user.safe_focused_element()
@@ -614,7 +623,8 @@ class Actions:
                     if verbose:
                         if mod_func:
                             print(f"ELEMENT: {mod_func('name',el.name)} prop_list: {prop_list}")      
-                    if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
+#                    if actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False):
+                    if match_test(el):
                         matches += 1
                     if (escape_key != None) and (last_el == el):
                         actions.key(escape_key)
@@ -637,7 +647,8 @@ class Actions:
                 else:
                     print(f"Element is None... :(")
                     break
-            if actions.user.element_match(el,prop_list,mod_func = mod_func):
+#            if actions.user.element_match(el,prop_list,mod_func = mod_func):
+            if match_test(el):
                 return el
             else:
                 print(f"Element doesn't match property list... :(")
