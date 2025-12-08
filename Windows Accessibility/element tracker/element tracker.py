@@ -105,23 +105,32 @@ class element_tracker:
                 if self.auto_highlight or self.auto_label:
                     if self.blacklist:
                         print(f"blacklist: {self.blacklist}")
-                    el = actions.user.safe_focused_element()
-                    if el:
-                        rect = None
-                        rect = actions.user.el_prop_val(el,"rect")
-                        if rect:
-                            rectangle_found = True
-                            if rect != self.focused_rect:
-                                self.focused_rect = rect
-                                if self.auto_label:
-                                    self.focused_label = el.name
-                            if not self.auto_label:
-                                if self.focused_label != "":
-                                    self.focused_label = ""
-                        else:
-                            pass
+                    app = ui.active_app()
+                    name = app.name
+
+                    global prior_state
+                    if name in black_list:
+                        w = actions.user.safe_access(lambda: app.active_window, "update_highlight")
+                        if w:
+                            rect = actions.user.safe_access(lambda: w.rect, "update_highlight")
+                    else:
+                        el = actions.user.safe_focused_element()
+                        if el:
+                            rect = None
+                            rect = actions.user.el_prop_val(el,"rect")
+                    if rect:
+                        rectangle_found = True
+                        if rect != self.focused_rect:
+                            self.focused_rect = rect
+                            if self.auto_label:
+                                self.focused_label = el.name
+                        if not self.auto_label:
+                            if self.focused_label != "":
+                                self.focused_label = ""
                     else:
                         pass
+                else:
+                    pass
                 if not rectangle_found:
                     self.focused_rect = None
                     self.focused_label = ""
@@ -164,7 +173,7 @@ def check_app(app):
             el_track.blacklist = False
 
 #ui.register("element_focus",handle_focus_change)
-ui.register("win_focus",check_app)
+#ui.register("win_focus",check_app)
 # also can register app_activate
 
 el_track = None

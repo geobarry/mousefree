@@ -412,6 +412,19 @@ class Actions:
                 print(f'error: {error}')
                 actions.user.el_tracker_resume_updating()
                 return None
+    def wait_for_matching_ancestor(prop_list: list, delay: float = 0.2, time_limit: float = 5, verbose: bool = True):
+        """Waits until the focused element has an ancestor that matches the property list"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            el = actions.user.safe_focused_element()
+            if el:
+                el = actions.user.matching_ancestor(el,prop_list,verbose = verbose)
+                if el:
+                    return el
+            if stopper.over():
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
         """Finds element by working down from root"""
         actions.user.el_tracker_pause_updating()
@@ -684,19 +697,6 @@ class Actions:
                 return None
             stopper.increment(0)
             actions.sleep(delay)
-    def wait_for_matching_ancestor(prop_list: list, delay: float = 0.2, time_limit: float = 5):
-        """Waits until the focused element has an ancestor that matches the property list"""
-        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
-        while True:
-            el = actions.user.safe_focused_element()
-            if el:
-                el = actions.user.matching_ancestor(el,prop_list)
-                if el:
-                    return el
-            if stopper.over():
-                return None
-            stopper.increment(0)
-            actions.sleep(delay)        
     def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
         """Searches for first element with given property value and invokes it."""
         prop_list = [prop,val]

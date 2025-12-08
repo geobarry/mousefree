@@ -246,7 +246,7 @@ def phony_text(m) -> str:
     t = t.replace(" ","[^a-z|A-Z]*")
     return t        
 
-@mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
+@mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | country [name] {user.country} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
 def coded_text(m) -> str:
     """Creates text from letters, characters, numbers or other user defined spoken forms. From 'variable' onwards are personal lists and captures that I have made that are not public. So you can remove these or else create your own lists/captures with the same name."""
     if hasattr(m,"real_number"):
@@ -254,7 +254,7 @@ def coded_text(m) -> str:
         y = float(m.real_number)
         t = str(x) if x == y else str(y)
     else:
-        cls_list = ["any_alphanumeric_key","letter","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","module","function","keyword","app","font"]
+        cls_list = ["any_alphanumeric_key","letter","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","country","module","function","keyword","app","font"]
         for cls in cls_list:
             if hasattr(m,cls):
                 t = getattr(m,cls)
