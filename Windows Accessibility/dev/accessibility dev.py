@@ -80,7 +80,7 @@ class Actions:
             return  {prop:str(actions.user.el_prop_val(el,prop,as_text = True)) for prop in prop_list}
         else:
             # Get property values, removing line breaks
-            return  "\t".join([" ".join(str(actions.user.el_prop_val(el,prop,as_text = True)).splitlines()) for prop in prop_list])
+            return  "\t".join([" ".join(str(actions.user.el_prop_val(el,prop,as_text = True)[:25]).splitlines()) for prop in prop_list])
     def copy_elements_accessible_by_key(key: str, limit: int=20, avoid_repeat: bool = True, delay: int = 0.03, verbose: bool = False):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
