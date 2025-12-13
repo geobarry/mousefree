@@ -1,4 +1,4 @@
-from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app
+from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app, speech_system
 from talon.windows import ax as ax
 from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
@@ -225,6 +225,22 @@ class Actions:
     def highlight_rectangle(rect: rect):
         """Highlights input rectangle without associated element"""
         el_track.add_element(rect,"")
+    def highlight_until_next_command(el: ax.Element, lbl: str = ""):
+        """creates a highlight that will be removed after the next spoken command"""
+        if el:
+            rect = actions.user.el_prop_val(el,'rect')
+            if rect:
+                global num_phrases
+                num_phrases = 0
+                actions.user.highlight_element(el,lbl)
+                def remove_highlight_after(e):
+                    global num_phrases
+                    num_phrases += 1
+                    if num_phrases == 2:
+                        el_track.remove_element(rect)
+                        speech_system.unregister("post:phrase",remove_highlight_after)
+                speech_system.register("post:phrase",remove_highlight_after)
+        
     def remove_highlight(el: ax.Element):
         """Remove element from highlights"""
         if el:
