@@ -144,12 +144,15 @@ class Actions:
                 desktop = actions.user.root_element()
                 if desktop:
                     prop_list = [("name","Context")]
+                    # try this a different way
+                    # root = desktop.find(name = "Context")[0]
                     root = actions.user.matching_child(desktop,prop_list)
                     if root:
                         for i,item in enumerate(item_list):
                             if item:
                                 if item != "":                
                                     prop_list = [("name",item)]
+                                    
                                     el = actions.user.matching_child(root,prop_list)
                                     if el:
                                         # we want to highlight element, but highlight will be hidden behind taskbar

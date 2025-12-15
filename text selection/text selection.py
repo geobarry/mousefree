@@ -328,8 +328,11 @@ class Actions:
                     actions.key("backspace")
                 else:
                     clip.set_text(new_text)
-                    print(f'n_txt: |{new_text}|')
+
+                    print(f'n_txt: |{clip.text()}|')
+                    actions.sleep(0.15)
                     actions.edit.paste()
+#                    actions.insert(new_text)
                     actions.sleep(0.15)
         process_selection(replace_process,trg,scope_dir,ordinal)
     def winax_format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):

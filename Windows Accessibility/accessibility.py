@@ -219,7 +219,7 @@ class Actions:
         """creates a property list from a string of the form n = ..., c = ..., a = ..."""
         print(f'prop_str: {prop_str}')
         r = []
-        prop_name = {"n":"name","c":"class_name","a":"automation_id","p":"printout"}
+        prop_name = {"n":"name","c":"class_name","ct":"control_type","a":"automation_id","p":"printout"}
         props = prop_str.split(",")
         for prop in props:
             if prop != '':
