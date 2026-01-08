@@ -78,6 +78,7 @@ def find_target(trg: re.Pattern,
         Will handle straight versus curly single quotes and homophones.
         Returns a ax.TextRange object or None"""
     # Handle case of no TextRange input
+    print(f'text_range: {text_range}')
     if text_range is None:
         el = actions.user.safe_focused_element()
         if el:
@@ -87,6 +88,7 @@ def find_target(trg: re.Pattern,
                     print("Error in function find_target: focused element does not have text pattern")
                     return None
                 text_range = actions.user.el_prop_val(el,'text_selection')
+    print(f'text_range: {text_range.text}')
     if text_range:
         # Use regex to find exact match text and its position
         precise_trg,precise_ordinal = precise_target_and_position(trg,text_range,search_dir,ordinal)
@@ -295,7 +297,8 @@ class Actions:
         if use_winax:
             el = actions.user.safe_focused_element()
             if el:
-                if "Text" in el.patterns:
+                pattern_list=actions.user.el_prop_val(el,'patterns')
+                if "Text" in pattern_list:
                     try:
                         r = find_target(regex,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
                         if r != None:

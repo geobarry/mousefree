@@ -694,6 +694,7 @@ class Actions:
                 if actions.user.element_match(el,prop_list):
                     return el
             if stopper.over():
+                print(f"WAIT_FOR_ELEMENT: unable to find {prop_list}")
                 return None
             stopper.increment(0)
             actions.sleep(delay)

@@ -30,7 +30,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.interval = 300
+        self.interval = 500
         self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         self.accessibility_check_paused = False
         self.blacklist = False
