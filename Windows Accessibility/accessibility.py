@@ -310,24 +310,30 @@ class Actions:
     def count_matching_children(el: ax.Element,prop_list: list):
         """Returns the number of children matching the property list conditions"""
         n = 0
-        for child in el.children:
-            if actions.user.element_match(child,prop_list):
-                n += 1
+        children=actions.user.el_prop_val(el,'children')
+        if children:
+            for child in children:
+                if actions.user.element_match(child,prop_list):
+                    n += 1
         return n
     def matching_children(el: ax.Element, prop_list: list):
         """Returns a list of children of the input element that matches the property list"""
         r = []
         if el:
-            for child in el.children:
-                if actions.user.element_match(child,prop_list):
-                    r.append(child)
+            children=actions.user.el_prop_val(el,'children')
+            if children:
+                for child in children:
+                    if actions.user.element_match(child,prop_list):
+                        r.append(child)
         return r
     def matching_child(el: ax.Element,prop_list: list):
         """Returns the child of the input element that matches the property list"""
         if el:
-            for child in el.children:
-                if actions.user.element_match(child,prop_list):
-                    return child
+            children=actions.user.el_prop_val(el,'children')
+            if children:
+                for child in children:
+                    if actions.user.element_match(child,prop_list):
+                        return child
         return None
     def element_descendants(el: ax.Element, max_gen: int = -1):
         """obtain a list of all descendants of current element"""
@@ -490,7 +496,7 @@ class Actions:
             return el_list[ordinal-1]
         else:
             return None
-    def find_el_by_dotted_str(dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, extra_prop_seq: list = None, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
+    def find_el_by_dotted_str(dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, extra_prop_seq: list = None, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
         """Finds accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
         prop_seq = actions.user.prop_seq_from_dotted_str(dotted_str,prop_name)
         # First element is usually root so we have to cut that out of the property sequence
