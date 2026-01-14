@@ -1,16 +1,11 @@
 from talon import Module, ui, Context, clip, ctrl, cron, actions, canvas, screen, settings
-from talon.windows import ax as ax, ui as winui
-from talon.types import Point2d as Point2d
-from talon.skia import  Paint
-import inspect
-import math
 import re
+from talon.windows import ax
 
-from copy import deepcopy
 import time
 from typing import Callable, Any, List, Tuple
-n = 0
-start_time = None
+
+#n = 0
 
 mod = Module()
 
@@ -67,12 +62,8 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
             if type(trg_val) != re.Pattern:
                 trg_val = re.compile(f"^{trg_val}$",re.IGNORECASE)
             if verbose:
-                print(f'trg_val: {trg_val}')
-                print(f'type(trg_val): {type(trg_val)}')
-                print("Let's try converting this to a string")
-                print(str(trg_val))
+                print(f'trg_val: {trg_val} type(trg_val): {type(trg_val)} as_string: {str(trg_val)}')
             # check if property value matches regex pattern...
-            
             if type(trg_val) == re.Pattern:
                 if verbose:
                     print(f'trg_val: {trg_val}')
@@ -97,22 +88,18 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
                 prop_val = actions.user.el_prop_val(el, prop, as_text = True)
             except Exception as error:
                 print("MATCH: error retrieving property value")
-                print(f'el: {el}')
-                print(f'prop: {prop}')
+                print(f'el: {el} prop: {prop}')
                 raise Exception(error)
             if mod_func:
                 prop_val = mod_func(prop,prop_val)
             if verbose:
-                print(f'prop_val: {prop_val}')
-                print(f"type: {type(prop_val)}")
-                print(f"value_match: {value_match(prop_val, trg_val)}")
+                print(f'prop_val: {prop_val} type: {type(prop_val)} value_match: {value_match(prop_val, trg_val)}')
             return value_match(prop_val, trg_val)
         # if something is not properly specified, return true so that other conditions can be evaluated
         print("ERROR in function actions.user.element_match (accessibility.py)")
         print(f"No matching property found (looking for property: {prop})")
         print(prop_list)
         return True
-    
 
     if not isinstance(prop_list, list):
         raise TypeError("match expects a list prop_list")
@@ -171,7 +158,7 @@ ctx = Context()
 @ctx.dynamic_list("user.dynamic_element")
 def dynamic_element(spoken_form) -> dict[str,str]:
     print(f'FUNCTION dynamic_element: spoken_form = {spoken_form}')
-    win = winui.active_window()
+    win = ui.active_window()
     if win == None:
         print("no active window...")
         return {}
@@ -205,6 +192,48 @@ def dynamic_element(spoken_form) -> dict[str,str]:
 
 @mod.action_class
 class Actions:
+    # general utility functions
+    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
+        """Returns true if the element matches all of the properties in the property dictionary"""
+        if el:
+            actions.user.el_tracker_pause_updating()
+            r = match(el,prop_list,mod_func,verbose)
+            actions.user.el_tracker_resume_updating()
+            return r
+        else:
+            return False
+    # functions to wait until an element becomes available
+    def wait_for_element(prop_list: list, el_func: Callable = actions.user.safe_focused_element, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
+        """Waits until an element matching the property list becomes focused, and returns that element or None"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            el = el_func()
+            if verbose:
+                name = actions.user.el_prop_val(el,'name')
+                printout = actions.user.el_prop_val(el,'printout')
+                print(f'el: {printout} name: {name} prop_list: {prop_list}')
+            if el:
+                if actions.user.element_match(el,prop_list):
+                    return el
+            if stopper.over():
+                print(f"WAIT_FOR_ELEMENT: unable to find {prop_list}")
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)
+    def wait_for_matching_ancestor(prop_list: list, delay: float = 0.2, time_limit: float = 5, verbose: bool = True):
+        """Waits until the focused element has an ancestor that matches the property list"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            el = actions.user.safe_focused_element()
+            if el:
+                el = actions.user.matching_ancestor(el,prop_list,verbose = verbose)
+                if el:
+                    return el
+            if stopper.over():
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)
+    # functions for converting property lists, strings and sequences
     def get_property_string(el: ax.Element):
         """creates a property string that can be converted into a property list"""
         prop_name = {"n":"name","c":"class_name","a":"automation_id"}
@@ -245,41 +274,7 @@ class Actions:
             r.append([(prop_name,f"{'.'.join(item_list[:i + 1])}")])
         print(f'r: {r}')
         return r
-    def ax_action(action: str, prop_seq_str: str, verbose: bool = False):
-        """Finds element threw accessibility sequence from current window root, and performs action if found"""
-        root = actions.user.window_root()
-        if root:
-            prop_seq = actions.user.get_property_sequence(prop_seq_str)
-            el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = verbose)
-            if el:
-                actions.user.act_on_element(el,action)
-    def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
-        """Returns true if the element matches all of the properties in the property dictionary"""
-        if el:
-            actions.user.el_tracker_pause_updating()
-            r = match(el,prop_list,mod_func,verbose)
-            actions.user.el_tracker_resume_updating()
-            return r
-        else:
-            return False
-    def element_exists(prop_list: list,max_level: int = 7):
-        """Returns true if an element where the given properties exists"""
-        actions.user.el_tracker_pause_updating()
-        root = actions.user.window_root()
-        elements = list(get_every_child(root,max_level = max_level))
-        for el in elements:
-            if actions.user.element_match(el,prop_list):            
-                actions.user.el_tracker_resume_updating()
-                return True
-        actions.user.el_tracker_resume_updating()
-        return False
-    def element_list():
-        """returns_a_list_of_all_elements"""
-        actions.user.el_tracker_pause_updating()
-        root = actions.user.window_root()
-        r = list(get_every_child(root))
-        actions.user.el_tracker_resume_updating()
-        return r
+    # find accessibility elements by ancestors and descendants
     def matching_element(prop_list: list, item_num: int = 0, max_level: int = 12,root: ax.Element = None):
         """returns the zero based nth item matching the property list, or None"""
         if root == None:
@@ -307,15 +302,6 @@ class Actions:
                 print(f'error: {error}')
         actions.user.el_tracker_resume_updating()
         return r  
-    def count_matching_children(el: ax.Element,prop_list: list):
-        """Returns the number of children matching the property list conditions"""
-        n = 0
-        children=actions.user.el_prop_val(el,'children')
-        if children:
-            for child in children:
-                if actions.user.element_match(child,prop_list):
-                    n += 1
-        return n
     def matching_children(el: ax.Element, prop_list: list):
         """Returns a list of children of the input element that matches the property list"""
         r = []
@@ -335,8 +321,6 @@ class Actions:
                     if actions.user.element_match(child,prop_list):
                         return child
         return None
-    def element_descendants(el: ax.Element, max_gen: int = -1):
-        """obtain a list of all descendants of current element"""
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, time_limit: float = 5,verbose: bool = False):
         """Returns the matching descendants of the input element at the given generation, 
         or continues the search up to the given number of extra generations"""
@@ -418,19 +402,6 @@ class Actions:
                 print(f'error: {error}')
                 actions.user.el_tracker_resume_updating()
                 return None
-    def wait_for_matching_ancestor(prop_list: list, delay: float = 0.2, time_limit: float = 5, verbose: bool = True):
-        """Waits until the focused element has an ancestor that matches the property list"""
-        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
-        while True:
-            el = actions.user.safe_focused_element()
-            if el:
-                el = actions.user.matching_ancestor(el,prop_list,verbose = verbose)
-                if el:
-                    return el
-            if stopper.over():
-                return None
-            stopper.increment(0)
-            actions.sleep(delay)
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
         """Finds element by working down from root"""
         actions.user.el_tracker_pause_updating()
@@ -505,27 +476,7 @@ class Actions:
             extra_prop_seq = actions.user.get_property_sequence(extra_prop_seq_str)
             prop_seq = prop_seq + extra_prop_seq
         return actions.user.find_el_by_prop_seq(prop_seq,None,0,time_limit,ordinal,verbose)
-    def act_on_el_by_dotted_str(action: str, dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
-        """Acts on accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
-        el = actions.user.find_el_by_dotted_str(dotted_str,extra_prop_seq_str,prop_name,idx_of_1st_el,time_limit,ordinal,verbose)
-        if el:
-            print(f"attempting to perform {action} on {el}")
-            actions.user.act_on_element(el,action)
-    def act_on_window_element(action: str, prop_seq_str: str, verbose: bool = False):
-        """Act on a descendant of the current window, identified by property sequence string"""
-        if verbose:
-            print(f"ACT_ON_WINDOW_ELEMENT action: {action}, prop_seq_str: {prop_seq_str}")
-        prop_seq = actions.user.get_property_sequence(prop_seq_str)
-        root = actions.user.window_root()
-        if root:
-            el = actions.user.find_el_by_prop_seq(prop_seq,root)
-            children = actions.user.el_prop_val(root,'children')
-            if verbose:
-                print(f'root: {root}')
-                print(f'len(children): {len(children)}')
-                print(f'prop_seq: {prop_seq}')
-            if el:
-                actions.user.act_on_element(el,action,verbose = verbose)
+    # perform actions on accessibility elements
     def act_on_focused_element(action: str, mouse_delay: int = 0):
         """Performs action on currently focused element"""
         el = actions.user.safe_focused_element()
@@ -535,73 +486,29 @@ class Actions:
         pos = ctrl.mouse_pos()
         el = ui.element_at(pos[0],pos[1])
         actions.user.act_on_element(el,action,mouse_delay)
-    def act_on_named_element(name: str, action: str, mouse_delay: int = 0):
-        """Performs action on first element beginning with given name"""
-        prop_list = [("name",name)]
-        elements = actions.user.matching_elements(prop_list)
-        if len(elements) > 0:
-            actions.user.act_on_element(elements[0],action,mouse_delay)
+    def act_on_elem_by_prop_seq_str(action: str, prop_seq_str: str, verbose: bool = False):
+        """Finds element through accessibility sequence from current window root, and performs action if found"""
+        root = actions.user.window_root()
+        if root:
+            prop_seq = actions.user.get_property_sequence(prop_seq_str)
+            el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = verbose)
+            if el:
+                actions.user.act_on_element(el,action)
+    def act_on_el_by_dotted_str(action: str, dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
+        """Acts on accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
+        el = actions.user.find_el_by_dotted_str(dotted_str,extra_prop_seq_str,prop_name,idx_of_1st_el,time_limit,ordinal,verbose)
+        if el:
+            print(f"attempting to perform {action} on {el}")
+            actions.user.act_on_element(el,action)
     def act_on_matching_element(prop_list: list, action: str, item_num: int = 0, max_level: int = 99):
         """Perform action on first UI element that matches the property list"""
         el = actions.user.matching_element(prop_list,item_num = item_num,max_level = max_level)
         if el != None:
             actions.user.act_on_element(el,action)
-    def key_to_element_by_prop_list(key: str, 
-                        prop_list: str, 
-                        escape_key: str=None, 
-                        sec_lim: float = 5,
-                        iter_limit: int = -1,
-                        avoid_cycles: bool = True,
-                        final_func: Callable = None,
-                        use_registered_element: bool = False,
-                        verbose: bool = False):
-        """press give him key until matching element is reached"""
-        def key_continue(prop_list,use_registered_element,first_el, try_number = 0):
-            print("FUNCTION key_continue")
-
-            if use_registered_element:
-                el = actions.user.focused_element()
-            else:
-                el = actions.user.safe_focused_element()
-            print("FUNCTION key_to_element_by_prop_list")                    
-            print(f'user_focus: {el} name: {el.name}')
-            if el:
-                if el.__eq__(first_el):
-                    print(f"FUNCTION key_to_element_by_prop_list - stopping because equal to first element")
-                    actions.user.terminate_traversal()
-                elif actions.user.element_match(el,prop_list):
-                    print("found what we are looking for - terminating traversal")
-                    actions.user.terminate_traversal()
-                else:
-                    actions.key(key)
-            else:
-                print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
-                actions.user.terminate_traversal()
-
-        first_el = actions.user.safe_focused_element() if avoid_cycles else None
-        actions.key(key)
-        actions.user.initialize_traversal(
-                    lambda: key_continue(prop_list,use_registered_element,first_el),
-                    sec_lim, iter_limit,finish_function = final_func)
-    def key_to_element(key: str, 
-                        prop_str: str, 
-                        escape_key: str=None, 
-                        sec_lim: float = 5,
-                        iter_limit: int = -1,
-                        avoid_cycles: bool = True,
-                        mod_func: Callable = None,
-                        final_func: Callable = None,
-                        verbose: bool = False):
-        """press given key until the first matching element is reached"""
-        prop_list = actions.user.get_property_list(prop_str)
-        actions.user.key_to_element_by_prop_list(
-            key,prop_list,key,sec_lim,iter_limit,avoid_cycles,final_func = final_func,verbose = verbose)
-        
-    def new_key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=-1, escape_key: str=None, delay: float = 0.09):
-        """press key until element with exact value for one property is reached"""
-        prop_list = [(prop,val)]
-        actions.user.new_key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
-        
+    # use keyboard to navigate to a specific element
+    
+    # name should be changed to key_to_el_by_prop_list
+    # new function key_to_matching_element should be created to take prop_str directly from talon files
     def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, match_type: str = "element", verbose: bool = False):
         """press given key until the first matching element is reached"""
         def match_test(el):
@@ -673,6 +580,8 @@ class Actions:
                 print(f"Element doesn't match property list... :(")
                 print(f"element properties: {actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])}")
                 return None
+
+    # next two functions should be replaced by new key_to_matching_element
     def key_to_elem_by_val(key: str, val: str, prop: str="name", ordinal: int=1, limit: int=200, escape_key: str=None, delay: float = 0.03, final_action: str = ""):
         """press key until element with exact value for one property is reached"""
         print(f"KEY_TO_ELEM_BY_VAL key: {key} val: {val}")
@@ -687,32 +596,8 @@ class Actions:
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
-    def wait_for_element(prop_list: list, el_func: Callable = actions.user.safe_focused_element, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
-        """Waits until an element matching the property list becomes focused, and returns that element or None"""
-        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
-        while True:
-            el = el_func()
-            if verbose:
-                name = actions.user.el_prop_val(el,'name')
-                printout = actions.user.el_prop_val(el,'printout')
-                print(f'el: {printout} name: {name} prop_list: {prop_list}')
-            if el:
-                if actions.user.element_match(el,prop_list):
-                    return el
-            if stopper.over():
-                print(f"WAIT_FOR_ELEMENT: unable to find {prop_list}")
-                return None
-            stopper.increment(0)
-            actions.sleep(delay)
-    def invoke_by_value(val: str, prop: str = "name", max_level: int = 99):
-        """Searches for first element with given property value and invokes it."""
-        prop_list = [prop,val]
-        el = actions.user.matching_element(prop_list,max_level = max_level)
-        actions.user.act_on_element(el,"invoke")
 
-    
-    
-
+    # experimental
     def scroll_el_to_top(el: ax.Element = None, increment: float = 2, delay: float = 0.00):
         """Scrolls container to bring input element to the top"""
         # for now we are going to assume element is vertically not horizontally scrollable
@@ -747,4 +632,40 @@ class Actions:
 
 
                     
-                
+    # def key_to_element_by_prop_list(key: str, 
+                        # prop_list: str, 
+                        # escape_key: str=None, 
+                        # sec_lim: float = 5,
+                        # iter_limit: int = -1,
+                        # avoid_cycles: bool = True,
+                        # final_func: Callable = None,
+                        # use_registered_element: bool = False,
+                        # verbose: bool = False):
+        # """press given key until matching element is reached, only pressing next key upon accessibility element focus change event; abandoned for now due to unreliability of focus change event which must be implemented by each application"""
+        # def key_continue(prop_list,use_registered_element,first_el, try_number = 0):
+            # print("FUNCTION key_continue")
+
+            # if use_registered_element:
+                # el = actions.user.focused_element()
+            # else:
+                # el = actions.user.safe_focused_element()
+            # print("FUNCTION key_to_element_by_prop_list")                    
+            # print(f'user_focus: {el} name: {el.name}')
+            # if el:
+                # if el.__eq__(first_el):
+                    # print(f"FUNCTION key_to_element_by_prop_list - stopping because equal to first element")
+                    # actions.user.terminate_traversal()
+                # elif actions.user.element_match(el,prop_list):
+                    # print("found what we are looking for - terminating traversal")
+                    # actions.user.terminate_traversal()
+                # else:
+                    # actions.key(key)
+            # else:
+                # print("FUNCTION key_to_element_by_prop_list - stopping due to element is none")
+                # actions.user.terminate_traversal()
+
+        # first_el = actions.user.safe_focused_element() if avoid_cycles else None
+        # actions.key(key)
+        # actions.user.initialize_traversal(
+                    # lambda: key_continue(prop_list,use_registered_element,first_el),
+                    # sec_lim, iter_limit,finish_function = final_func)
