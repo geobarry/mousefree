@@ -124,11 +124,18 @@ class Actions:
             else:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
-    def act_on_element(el: ax.Element, action: str, mouse_delay: float=0):
+    def act_on_element(el: ax.Element, action: str, mouse_delay: float=0,time_limit: float=1):
         """Perform action on element. Get actions from {user.ui_action}"""
         if not el:
             return 
         global retrieving
+        interval = 0.05
+        stopper = actions.user.stopper(time_limit)
+        while retrieving:
+            # print(f"waiting... {stopper.elapsed()}")
+            if stopper.over():
+                return False
+            actions.sleep(interval)
         if retrieving:
             print("FUNCTION el_prop_val: unable to retrieve element because another retrieval is in process")
         else:

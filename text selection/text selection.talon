@@ -204,3 +204,10 @@ select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.w
 	user.winax_select_text(win_nav_target,search_dir,1)
 	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals or 1)	
 
+# convenient deleting from current cursor position
+delete until [<user.ordinals>] next {user.win_next_dyn_nav_trg}:
+	user.winax_extend_selection(win_next_dyn_nav_trg,"DOWN","BEFORE",ordinals or 1)
+	edit.delete()
+delete until [<user.ordinals>] previous {user.win_next_dyn_nav_trg}:
+	user.winax_extend_selection(win_next_dyn_nav_trg,"UP","AFTER",ordinals or 1)
+	edit.delete()

@@ -451,7 +451,7 @@ class Actions:
                         print(f'children: {children}')
                         if children:
                             for child in children:
-                                msg = actions.user.element_information(child,prop_list = ["name","class_name","printout"])
+                                msg = actions.user.element_information(child,prop_list = ["name","class_name","control_type","automation_id","printout"])
                                 print(f'child: {msg}')
                         
                 el_list = []
@@ -530,6 +530,12 @@ class Actions:
         i = 1
         matches = 0
         if el:
+            # first check to see if currently focused element already matches
+            if match_test(el):
+                if verbose:
+                    print("first element matched!")
+                    print(f"element properties: {actions.user.element_information(el,prop_list = [prop[0] for prop in prop_list])}")
+                return el
             stopper = actions.user.stopper(sec_lim,[limit])
             while True:
                # if elapsed_sec > max_sec:
