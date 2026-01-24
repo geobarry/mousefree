@@ -5,7 +5,6 @@ from talon.skia import  Paint
 from typing import Callable
 import time
 
-
 mod = Module()
 
 #mod.tag("Text_pattern","Focused element has wfindows accessibility text pattern")
@@ -31,7 +30,6 @@ class element_tracker:
         self.focused_label = ""
         self.traversal_count = 0
         self.interval = 500
-        self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         self.accessibility_check_paused = False
         self.blacklist = False
     def add_element(self,rect,label = ''):
@@ -96,6 +94,9 @@ class element_tracker:
     def disable(self):
         self.canvas.close()
         self.canvas = None
+    def begin_updates(self):
+        """creates the cron object"""
+        self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
     def update_highlight(self):
         """Updates the focused element using windows accessibility"""
         # print(f"UPDATE_HIGHLIGHT: {self.accessibility_check_paused}")
@@ -190,11 +191,11 @@ class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
         el_track.auto_highlight = on
-        el_track.update_highlight()
+        el_track.begin_updates()
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""
         el_track.auto_label = on
-        el_track.update_highlight()
+        el_track.begin_updates()
     def el_tracker_pause_updating():
         """pauses checking current focused element, but keeps highlighting"""
         if el_track:

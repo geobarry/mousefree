@@ -428,11 +428,14 @@ class Actions:
             valid_matches = []
             extra_levels = 0
             parent_list = el_list
+            search_n=0
+            parent_n=len(parent_list)
             while len(valid_matches) == 0 and extra_levels <= extra_search_levels:
                 next_parents = []
                 for parent in parent_list:
                     children = actions.user.el_prop_val(parent,'children')
                     if children:
+                        search_n += len(children)
                         next_parents += children
                         for child in children:
                             if stopper.over():
@@ -459,7 +462,7 @@ class Actions:
             else:
                 el_list = valid_matches
                 if verbose:
-                    print(f"found {prop_list}")
+                    print(f"found {prop_list} (searched {search_n} elements from {parent_n} parents)")
         if verbose:
             print(f"found {len(el_list)} matches")
         actions.user.el_tracker_resume_updating()
@@ -510,7 +513,7 @@ class Actions:
     # name should be changed to key_to_el_by_prop_list
     # new function key_to_matching_element should be created to take prop_str directly from talon files
     def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, match_type: str = "element", verbose: bool = False):
-        """press given key until the first matching element is reached"""
+        """press given key until the first matching element is reached; does nothing if currently focused element matches criteria"""
         def match_test(el):
             if match_type == "element":
                 return actions.user.element_match(el,prop_list,mod_func = mod_func,verbose = False)
@@ -594,6 +597,7 @@ class Actions:
         if escape_key == '': # because talon scripts cannot pass in value of None
             escape_key = None
         prop_list = [(prop,val)]
+        actions.key(key) # make sure key is pressed at least once
         el = actions.user.key_to_matching_element(key,prop_list,ordinal = ordinal,limit = limit,escape_key = escape_key,delay = delay)
         if el:
             if final_action != '':
@@ -601,6 +605,7 @@ class Actions:
     def key_to_name_and_class(key: str, name: str, class_name: str = ".*",limit: int=-1,delay: float = 0.03):
         """Press key until element with matching name and classes reached"""
         prop_list = [("name",name),("class_name",class_name)]
+        actions.key(key) # make sure key is pressed at least once
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
 
     # experimental

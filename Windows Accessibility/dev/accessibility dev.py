@@ -47,7 +47,7 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
             
 @mod.action_class
 class Actions:
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, verbose: str = False):
+    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, expanded_properties: bool = False):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
         if not prop_list:
@@ -65,13 +65,13 @@ class Actions:
                         "rect.width",
                     "window_handle","pid","access_key","has_keyboard_focus",
                     "children","is_control_element","is_content_element",
-                    "item_type","item_status","described_by",
+                    "item_type","item_status",
                     "provider_description",
                     "value.is_read_only",
                     "legacy.value","legacy.selection",
                     "value","text"
                 ]
-        if verbose:
+        if expanded_properties:
             prop_list += other_prop
         # Construct headers
         if headers:
@@ -227,13 +227,7 @@ class Actions:
         r = f"        root = actions.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
         print(f'r: {r}')
         clip.set_text(r)
-    def copy_element_ancestors(el: ax.Element, verbose: bool = False):
-        """Copies information on element ancestors to clipboard"""
-        el_list = actions.user.element_ancestors(el)
-        hdr = actions.user.element_information(el,verbose = False,headers = True)
-        msg = "\n".join([actions.user.element_information(x,verbose = False) for x in el_list])
-        msg = hdr + "\n" + msg
-        clip.set_text(msg)
+
     def copy_mouse_element_sequence(props: str):
         """Copies python code for property sequence to access element under mouse position to clipboard"""
         pos = ctrl.mouse_pos()        
@@ -244,6 +238,14 @@ class Actions:
         print(f'el: {el}')
         
         actions.user.copy_element_sequence_to_clipboard(el,props)
+
+    def copy_element_ancestors(el: ax.Element, verbose: bool = False,prop_list: list = None):
+        """Copies information on element ancestors to clipboard"""
+        el_list = actions.user.element_ancestors(el)
+        hdr = actions.user.element_information(el,expanded_properties=verbose,headers = True,prop_list=prop_list)
+        msg = "\n".join([actions.user.element_information(x,expanded_properties=verbose,prop_list=prop_list) for x in el_list])
+        msg = hdr + "\n" + msg
+        clip.set_text(msg)
     def copy_mouse_element_ancestors(verbose: bool = False):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        

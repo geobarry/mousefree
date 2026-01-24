@@ -7,7 +7,8 @@ report mouse location: user.report_mouse_location()
 ^copy focused element information$: user.copy_focused_element_to_clipboard()
 ^copy registered element information$: user.copy_registered_element_to_clipboard()
 ^copy focused element descendants$: user.copy_focused_element_descendants()
-^copy focused element ancestors$: user.copy_focused_element_ancestors()
+
+
 ^copy focused element {user.element_property} sequence$: user.copy_focused_element_sequence(element_property)
 ^copy focused element {user.element_property} and {user.element_property} sequence$:
 	user.copy_focused_element_sequence("{element_property},{element_property_2}")
@@ -29,6 +30,7 @@ report mouse location: user.report_mouse_location()
 ^copy mouse element descendants: user.copy_mouse_element_descendants()
 
 # ANCESTOR LISTS
+^copy focused element ancestors$: user.copy_focused_element_ancestors()
 ^copy mouse element ancestors$: user.copy_mouse_element_ancestors()
 ^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(true)
 ^copy verbose mouse element ancestors$: user.copy_mouse_element_ancestors(true)
