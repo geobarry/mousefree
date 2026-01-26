@@ -50,7 +50,7 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
     if verbose:
         print("FUNCTION: match")
         print(f'prop_list: {prop_list}')
-        print(f'conjunction: {conjunction}')
+
     def eval_cond(prop,trg_val):
         if verbose:
             print(f'prop: {prop}')
@@ -302,14 +302,14 @@ class Actions:
                 print(f'error: {error}')
         actions.user.el_tracker_resume_updating()
         return r  
-    def matching_children(el: ax.Element, prop_list: list):
+    def matching_children(el: ax.Element, prop_list: list,verbose: bool = False):
         """Returns a list of children of the input element that matches the property list"""
         r = []
         if el:
             children=actions.user.el_prop_val(el,'children')
             if children:
                 for child in children:
-                    if actions.user.element_match(child,prop_list):
+                    if actions.user.element_match(child,prop_list,verbose=verbose):
                         r.append(child)
         return r
     def matching_child(el: ax.Element,prop_list: list):

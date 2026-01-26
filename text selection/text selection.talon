@@ -113,6 +113,24 @@ replace [<user.ordinals>] any {user.win_any_dyn_nav_trg} with <user.constructed_
 replace [<user.ordinals>] {user.search_dir} <user.win_nav_target> with <user.constructed_text>:
 	user.winax_replace_text(constructed_text, win_nav_target,search_dir,ordinals or 1)
 
+# DELIMITERS
+add {user.delimiter_pair} around [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
+	user.winax_add_delimiters(delimiter_pair,win_next_dyn_nav_trg,"DOWN",ordinals or 1)
+add {user.delimiter_pair} around [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$:
+	user.winax_add_delimiters(delimiter_pair,win_previous_dyn_nav_trg,"UP",ordinals or 1)	
+add {user.delimiter_pair} around [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
+	user.winax_add_delimiters(delimiter_pair,win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
+add {user.delimiter_pair} around [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
+	user.winax_add_delimiters(delimiter_pair,win_any_dyn_nav_trg,"BOTH",ordinals or 1)
+
+remove {user.delimiter_pair} around [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
+	user.winax_remove_delimiters(delimiter_pair,win_next_dyn_nav_trg,"DOWN",ordinals or 1)
+remove {user.delimiter_pair} around [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$:
+	user.winax_remove_delimiters(delimiter_pair,win_previous_dyn_nav_trg,"UP",ordinals or 1)	
+remove {user.delimiter_pair} around [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
+	user.winax_remove_delimiters(delimiter_pair,win_inside_dyn_nav_trg,"INSIDE",ordinals or 1)
+remove {user.delimiter_pair} around [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
+	user.winax_remove_delimiters(delimiter_pair,win_any_dyn_nav_trg,"BOTH",ordinals or 1)
 
 # TEXT REMOVAL
 delete [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
@@ -208,6 +226,12 @@ select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.w
 delete until [<user.ordinals>] next {user.win_next_dyn_nav_trg}:
 	user.winax_extend_selection(win_next_dyn_nav_trg,"DOWN","BEFORE",ordinals or 1)
 	edit.delete()
-delete until [<user.ordinals>] previous {user.win_next_dyn_nav_trg}:
-	user.winax_extend_selection(win_next_dyn_nav_trg,"UP","AFTER",ordinals or 1)
+delete until [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}:
+	user.winax_extend_selection(win_previous_dyn_nav_trg,"UP","AFTER",ordinals or 1)
+	edit.delete()
+delete through [<user.ordinals>] next {user.win_next_dyn_nav_trg}:
+	user.winax_extend_selection(win_next_dyn_nav_trg,"DOWN","AFTER",ordinals or 1)
+	edit.delete()
+delete through [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}:
+	user.winax_extend_selection(win_previous_dyn_nav_trg,"UP","BEFORE",ordinals or 1)
 	edit.delete()

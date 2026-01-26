@@ -349,6 +349,28 @@ class Actions:
                 actions.sleep(0.15)
         print(f"WINAX_FORMAT_TEXT trg: {trg}")
         process_selection(format_process,trg,scope_dir,ordinal)
+    def winax_add_delimiters(delimiters: str,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        """Adds delimiters to the front and back of the target"""
+        def add_delimiters(orig_text):
+            front,back=delimiters[0],delimiters[-1]
+            with clip.revert():
+                clip.set_text(f"{front}{orig_text}{back}")
+                actions.sleep(0.15)
+                actions.edit.paste()
+                actions.sleep(0.15)
+        process_selection(add_delimiters,trg,scope_dir,ordinal)
+    def winax_remove_delimiters(delimiters: str,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        """Removes delimiters surrounding target"""
+        front,back=delimiters[0],delimiters[-1]
+        trg_new=f"\\{front}{trg}\\{back}"
+        
+        def remove_delimiters(orig_text):
+            with clip.revert():
+                clip.set_text(orig_text[1:-1])
+                actions.sleep(0.15)
+                actions.edit.paste()
+                actions.sleep(0.15)
+        process_selection(remove_delimiters,trg_new,scope_dir,ordinal)
     def winax_phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
         def phones_process(orig_text):
