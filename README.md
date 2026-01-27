@@ -58,6 +58,8 @@ Third, it appears that trying to query UIAutomation while another query is still
 
 Fourth, applications known to cause issues have been blacklisted. Currently, this list only includes Microsoft Excel.
 
+This is not a complete list, but an attempt to document the most important issues that I've experienced so that maybe others won't make the same mistakes.
+
 Please note that I do not consider myself an expert programmer let alone an expert UIAutomation programmer. At the time of writing I think that I have explored UIAutomation with talon more than anybody else contributing regularly to the talon Slack, but that is out of necessity not because I have particular expertise. If you have suggestions or see things that I am doing wrong, or better yet want to contribute or collaborate, please let me know!
 
 ### Will this code be maintained & updated?
