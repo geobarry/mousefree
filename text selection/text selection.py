@@ -293,6 +293,8 @@ def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1):
         t = actions.user.winax_select((trg,scope_dir),ordinal)        
         # perform processing function
         if t:
+            # try to add failsafe check here to make sure proper text is selected
+            print(f'trg: |{trg}| sel: |{t}|')
             processing_function(t)
         # return to original selection
         if init_range != None:
@@ -336,9 +338,11 @@ class Actions:
                     actions.user.winax_select_unit(expand_to_unit)
                 r = actions.edit.selected_text()
                 return r
-
-
-    def winax_replace_text(new_text: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+    def winax_select_from_to(from_trg_and_dir: tuple, to_trg: str, from_ordinals: int = 1):
+        """select from one target to another"""
+        actions.user.winax_select(from_trg_and_dir,from_ordinals)
+        actions.user.winax_extend_selection((to_trg,"DOWN"),"AFTER",1)
+    def winax_replace_text(new_text: str, trg_and_dir: tuple, ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
             with clip.revert():
@@ -353,19 +357,19 @@ class Actions:
                     actions.edit.paste()
 #                    actions.insert(new_text)
                     actions.sleep(0.15)
-        process_selection(replace_process,trg,scope_dir,ordinal)
-    def winax_format_text(fmt: str, trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        process_selection(replace_process,trg_and_dir,ordinal)
+    def winax_format_text(fmt: str, trg_and_dir: tuple, ordinal: int = 1):
         """Applies formatter to targeted text"""
         def format_process(orig_text: str):
             t = actions.user.formatted_text(orig_text,fmt)
             with clip.revert():
                 clip.set_text(t)
                 actions.sleep(0.15)
-                actions.edit.paste()
+                # actions.edit.paste()
+                actions.insert(t)
                 actions.sleep(0.15)
-        print(f"WINAX_FORMAT_TEXT trg: {trg}")
-        process_selection(format_process,trg,scope_dir,ordinal)
-    def winax_add_delimiters(delimiters: str,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        process_selection(format_process,trg_and_dir,ordinal)
+    def winax_add_delimiters(delimiters: str,trg_and_dir: tuple, ordinal: int = 1):
         """Adds delimiters to the front and back of the target"""
         def add_delimiters(orig_text):
             front,back=delimiters[0],delimiters[-1]
@@ -374,20 +378,23 @@ class Actions:
                 actions.sleep(0.15)
                 actions.edit.paste()
                 actions.sleep(0.15)
-        process_selection(add_delimiters,trg,scope_dir,ordinal)
-    def winax_remove_delimiters(delimiters: str,trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        process_selection(add_delimiters,trg_and_dir,ordinal)
+    def winax_remove_delimiters(delimiters: str,trg_and_dir: tuple, ordinal: int = 1):
         """Removes delimiters surrounding target"""
+        trg=trg_and_dir[0]
         front,back=delimiters[0],delimiters[-1]
         trg_new=f"\\{front}{trg}\\{back}"
-        
+        trg_and_dir=(trg_new,trg_and_dir[1])
         def remove_delimiters(orig_text):
+            print(f'orig_text: {orig_text}')
             with clip.revert():
                 clip.set_text(orig_text[1:-1])
                 actions.sleep(0.15)
-                actions.edit.paste()
+#                actions.edit.paste()
+                actions.insert(orig_text[1:-1])
                 actions.sleep(0.15)
-        process_selection(remove_delimiters,trg_new,scope_dir,ordinal)
-    def winax_phones_text(trg: str, scope_dir: str = "DOWN", ordinal: int = 1):
+        process_selection(remove_delimiters,trg_and_dir,ordinal)
+    def winax_phones_text(trg_and_dir: tuple, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
         def phones_process(orig_text):
             # perform homophones operation
@@ -398,13 +405,15 @@ class Actions:
             i = lower_options.index(w.lower())
             i = (i + 1) % len(options)
             x = options[i]
+            print(f'x: |{x}|')
             # would be nice to match case with the original selected text here
             with clip.revert():
                 clip.set_text(x)
                 actions.sleep(0.15)
-                actions.edit.paste()
+                actions.insert(x)
+#                actions.edit.paste() # this sometimes inserts unwanted space character
                 actions.sleep(0.15)
-        process_selection(phones_process,trg,scope_dir,ordinal)
+        process_selection(phones_process,trg_and_dir,ordinal)
     def winax_go_text(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern, returns True if successful"""
         def go_process(orig_text):
@@ -438,11 +447,15 @@ class Actions:
                     use_winax = False
         if not use_winax:
             actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
-    def winax_insert_text(txt: str,before_or_after: str,ordinals: int, scope_dir: str,trg: str):
+    def winax_insert_text(txt: str,before_or_after: str,ordinals: int, trg_and_dir: tuple):
         """inserts text before or after target"""
-        success = actions.user.winax_go_text(trg,scope_dir,before_or_after,ordinals)
-        if success:
+        def insert_text(orig_text):
+            if before_or_after == "BEFORE":
+                actions.key("left")
+            else:
+                actions.key("right")
             actions.insert(txt)
+        process_selection(insert_text,trg_and_dir,ordinals)
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = actions.user.safe_focused_element()
