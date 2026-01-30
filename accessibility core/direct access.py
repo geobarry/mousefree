@@ -19,10 +19,10 @@ mod = Module()
 
 @mod.action_class
 class Actions:
-    def safe_access(access_func: Callable,msg: str):
+    def safe_access(access_func: Callable,msg: str,time_limit: float = 1):
         """Returns the value of access_func or None if in the middle of retrieving"""
         global retrieving
-        actions.user.wait_for_access()
+        actions.user.wait_for_access(time_limit)
         if retrieving:
             print(f"{msg}: unable to retrieve element because another retrieval is in process")
         else:
@@ -59,7 +59,7 @@ class Actions:
         """if true, you should not request a focused element because we are probably waiting for windows to respond to a previous request"""
         global retrieving
         return retrieving
-    def safe_focused_element():
+    def safe_focused_element(time_limit: float = 1):
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
             try:
@@ -70,7 +70,7 @@ class Actions:
                 print("FUNCTION safe_focused_element could not retrieve element due to error")
                 print(f'error: {error}')
                 return None
-        return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT")
+        return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT",time_limit)
     def main_window_element():
         """Attempts to retrieve the main window of the active app"""
         def access_func():

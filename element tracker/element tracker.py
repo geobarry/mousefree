@@ -4,6 +4,7 @@ from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
 from typing import Callable
 import time
+import inspect
 
 mod = Module()
 
@@ -11,6 +12,10 @@ mod = Module()
 
 # list for tracking a set of clickable points
 marked_elements = []
+
+black_list = ["Microsoft Excel"]
+prior_state = (True,False)
+
 
 class element_tracker:
     def __init__(self):        
@@ -21,17 +26,20 @@ class element_tracker:
         self.canvas.freeze()
         self.rectangles = []
         self.labels = []
-        self.auto_highlight = False
+        self.auto_highlight = True
         self.auto_label = False
         self.traversal_function = None
         print("initializing element tracker...")
-        self.focused_element = None
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
         self.interval = 500
         self.accessibility_check_paused = False
         self.blacklist = False
+        self.job = None
+        ui.register("win_focus",self.determine_mode)
+        w=ui.active_window()
+        self.determine_mode(w)
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -94,30 +102,54 @@ class element_tracker:
     def disable(self):
         self.canvas.close()
         self.canvas = None
-    def begin_updates(self):
-        """creates the cron object"""
-        self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
-    def update_highlight(self):
+    def determine_mode(self,w):
+        """determines whether to use cron or event handling to update"""
+        app=w.app
+        name = app.name
+        global black_list
+        if name in black_list:
+            print(f"app {name} on blacklist, using event handler...")
+            if self.job:
+                cron.cancel(self.job)
+            print(f"self.job: {self.job}")
+            # this doesn't work to prevent stalls:
+            # ui.register("element_focus",self.handle_element_focus)
+        else:
+            print(f"app {name} is not on black list")
+            # ui.unregister("element_focus",self.update_highlight)
+            if self.job:
+                cron.cancel(self.job)
+            print(f"self.job: {self.job}")
+            self.job = cron.interval(f"{self.interval}ms", self.update_element)
+        for name, obj in inspect.getmembers(cron):
+            if isinstance(obj,cron.Cron):
+                with obj.cond:
+                    job_list=[job for job in obj.jobs if job not in obj.cancelled]
+                    print(f'len(job_list): {len(job_list)}')
+
+    def update_element(self):
+        el=actions.user.safe_focused_element(time_limit=0.2)
+        if el:
+            self.update_highlight(el)
+    def handle_element_focus(self,el):
+        self.update_highlight(el)
+    def update_highlight(self,el):
         """Updates the focused element using windows accessibility"""
         # print(f"UPDATE_HIGHLIGHT: {self.accessibility_check_paused}")
-        if not self.accessibility_check_paused:
+        # if not self.accessibility_check_paused:
+        if True:
             try:
                 rectangle_found = False
                 if self.auto_highlight or self.auto_label:
-                    if self.blacklist:
-                        print(f"blacklist: {self.blacklist}")
-                    app = ui.active_app()
-                    name = app.name
-
-                    global prior_state
-                    if name in black_list:
+#                    app = ui.active_app()
+#                    name = app.name
+                    # if name in black_list:
+                    if False:
                         w = actions.user.safe_access(lambda: app.active_window, "update_highlight")
                         if w:
                             rect = actions.user.safe_access(lambda: w.rect, "update_highlight")
                     else:
-                        el = actions.user.safe_focused_element()
                         if el:
-                            rect = None
                             rect = actions.user.el_prop_val(el,"rect")
                     if rect:
                         rectangle_found = True
@@ -139,22 +171,18 @@ class element_tracker:
             except Exception as error:
                 print(f'FUNCTION update_highlight - error: {error}')
     def handle_focus_change(self,el):
-        if el:           
-            self.focused_element = el
         # handle automatic element traversal
         if self.traversal_function != None:
             print("Running traversal function...")
             self.traversal_function()
         # handle auto highlight
         print("HANDLE_FOCUS_CHANGE")
-        self.update_highlight()
+        self.update_highlight(el)
 
 
 def handle_focus_change(el):
     el_track.handle_focus_change(el)
 
-black_list = ["Microsoft Excel"]
-prior_state = (True,False)
 
 def check_app(app):
 #    el = ui.focused_element()
@@ -174,14 +202,14 @@ def check_app(app):
             el_track.blacklist = False
 
 #ui.register("element_focus",handle_focus_change)
-#ui.register("win_focus",check_app)
+# ui.register("win_focus",check_app)
 # also can register app_activate
 
 el_track = None
 def on_ready():
     global el_track
     el_track = element_tracker()
-    actions.user.auto_highlight(True)
+#    actions.user.auto_highlight(True)
 app.register("ready",on_ready)
 traversal_termination_function = None
 
@@ -191,11 +219,9 @@ class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
         el_track.auto_highlight = on
-        el_track.begin_updates()
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""
         el_track.auto_label = on
-        el_track.begin_updates()
     def el_tracker_pause_updating():
         """pauses checking current focused element, but keeps highlighting"""
         if el_track:

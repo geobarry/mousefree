@@ -5,56 +5,49 @@ and mode: user.zen
 # NOTE: In old Microsoft Word .doc documents, text is garbled when there are bullets present
 # Please update to .docx; there is no way to fix this from our end
 
-# ABOUT NAVIGATION TARGETS
-# "Dynamic" navigation targets (win_next_dyn_nav_trg, win_previous_dyn_nav_trg) 
-#	are determined on the fly from text before or after cursor. 
+# ABOUT NAVIGATION TARGETS (i.e. <user.win_nav_target>)
+# All navigation targets require directional specification,
+#   e.g. "Select next 'hippopotamus'" NOT "Select 'hippopotamus'" 
+#   Directional specifications are "previous", "next" and "inside".
+# 'Dynamic' navigation targets are searched for when there are no explicit prefixes,
+#   e.g. "Select next 'hippopotamus'".
 #	Because talon only has to choose from a limited section of text,
 #	recognition rates are usually very high.
-# "Static" navigation targets (win_nav_target) require talon matching your 
-#	spoken words exactly to the text in the document, so recognition rates can 
-#	be much lower. To distinguish these and favour dynamic navigation targets, 
-#	static targets typically require prefix identifiers, e.g. "word" or "phrase"
-#	Static targets also include alphanumeric characters, optionally prefixed with
-#	"letter" or "character"
+#   Dynamic targets only work in applications that implement Microsoft's UIAutomation text pattern
+# 'Explicit' navigation targets are searched for when there is an explicit prefix,
+#   e.g. "Select next *word* 'hippopotamus'" 
+#   Available prefixes include "word" "phrase" "character" "number" and formatters.
+#   These require talon to match your spoken words exactly to the text in the 
+#   document, so recognition rates will be lower. 
+#   Explicit targets work in all applications.
 
-# NAVIGATION COMMANDS
-	# example spoken forms:
-	#   go before next hippopotamus
-	#	go after second previous letter cap
-	#	up four lines
-	#	down two paragraphs
-  	#	go up to hippopotamus
+# GO BEFORE/AFTER e.g. "go before next 'hippopotamus'"
+go {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
+	user.winax_go_text(win_nav_target,before_or_after,ordinals or 1)
 
-go {user.before_or_after} [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
-	user.winax_go_text(win_next_dyn_nav_trg,"DOWN",before_or_after,ordinals or 1)
-go {user.before_or_after} [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$:
-	user.winax_go_text(win_previous_dyn_nav_trg,"UP",before_or_after,ordinals or 1)
-go {user.before_or_after} [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
-	user.winax_go_text(win_inside_dyn_nav_trg,"INSIDE",before_or_after,ordinals or 1)
-go {user.before_or_after} [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
-	user.winax_go_text(win_any_dyn_nav_trg,"BOTH",before_or_after,ordinals or 1)
+# SELECT e.g. "select next 'hippopotamus'"
+[{user.text_search_unit}] select [<user.ordinals>] <user.win_nav_target>: user.winax_select(win_nav_target,ordinals or 1,text_search_unit or '')
 
-go {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
-	user.winax_go_text(win_nav_target,search_dir,before_or_after,ordinals or 1)
-{user.search_dir} <number_small> {user.text_search_unit}$: 
+# SELECT FROM...TO... e.g. "select from previous 'hippopotamus' to phrase 'charging at me'"
+#	Note that second target must be explicitly prefixed, we cannot have two dynamic targets at once
+select from <user.win_nav_target> to [<user.ordinals>] <user.explicit_target>:
+	user.winax_select(win_nav_target,ordinals or 1,text_search_unit or '')
+	user.winax_extend_selection(explicit_target,"DOWN","AFTER",ordinals or 1)
+
+# EXTEND e.g. "extend after next 'hippopotamus'"
+extend {user.before_or_after} [<user.ordinals>] <user.win_nav_target>$:
+	user.winax_extend_selection(win_nav_target,before_or_after,ordinals or 1)
+
+# FOLLOWING SEARCH UNIT COMMANDS ONLY WORK IN APPLICATIONS THAT IMPLEMENT TEXT PATTERNS
+# EXTEND BY SEARCH UNIT e.g. "extend down one paragraph"
+extend {user.search_dir} [<number_small>] {user.text_search_unit}$:
+	user.winax_extend_by_unit(text_search_unit,search_dir,number_small or 1)
+
+# GO UP/DOWN BY SEARCH UNIT e.g. "go up one paragraph", "down seven pages"
+[go] {user.search_dir} <number_small> {user.text_search_unit}$: 
 	user.winax_move_by_unit(text_search_unit,search_dir,number_small)
-
-
-# SELECTION
-	# example spoken forms:
-	#   select next hippopotamus
-	#	select previous letter cap
-	#	select next bang
-	#   select third previous brief exponent
-	#	select paragraph
-[{user.text_search_unit}] select [<user.ordinals>] next {user.win_next_dyn_nav_trg}$: user.winax_select_text(win_next_dyn_nav_trg,"DOWN",ordinals or 1,text_search_unit or '')
-[{user.text_search_unit}] select [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$: user.winax_select_text(win_previous_dyn_nav_trg,"UP",ordinals or 1,text_search_unit or '')
-[{user.text_search_unit}] select [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$: user.winax_select_text(win_inside_dyn_nav_trg,"inside",ordinals or 1,text_search_unit or '')
-[{user.text_search_unit}] select [<user.ordinals>] any {user.win_any_dyn_nav_trg}$: user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals or 1,text_search_unit or '')
-
-
-[{user.text_search_unit}] select [<user.ordinals>] {user.search_dir} <user.win_nav_target>: user.winax_select_text(win_nav_target,search_dir,ordinals or 1,text_search_unit or '')
-
+	
+# SELECT A PARAGRAPH OR OTHER UNIT
 select {user.text_search_unit}$: user.winax_select_unit(text_search_unit)
 
 
@@ -145,26 +138,7 @@ delete [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
 delete [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_replace_text("", win_nav_target,search_dir,ordinals or 1)
 
-# EXTEND CURRENT SELECTION
-	# examples spoken forms:
-	#   extend after previous hippopotamus
-	#	extend after next period
-	#   extend before third to previous brief exponent
-	#	extend next three lines
-	#	expand one character
-extend {user.before_or_after} [<user.ordinals>] next {user.win_next_dyn_nav_trg}$:
-	user.winax_extend_selection(win_next_dyn_nav_trg,"DOWN",before_or_after,ordinals or 1)
-extend {user.before_or_after} [<user.ordinals>] previous {user.win_previous_dyn_nav_trg}$:
-	user.winax_extend_selection(win_previous_dyn_nav_trg,"UP",before_or_after,ordinals or 1)
-extend {user.before_or_after} [<user.ordinals>] inside {user.win_inside_dyn_nav_trg}$:
-	user.winax_extend_selection(win_inside_dyn_nav_trg,"INSIDE",before_or_after,ordinals or 1)
-extend {user.before_or_after} [<user.ordinals>] any {user.win_any_dyn_nav_trg}$:
-	user.winax_extend_selection(win_any_dyn_nav_trg,"BOTH",before_or_after,ordinals or 1)
 
-extend {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>$:
-	user.winax_extend_selection(win_nav_target,search_dir,before_or_after,ordinals or 1)
-extend {user.search_dir} [<number_small>] {user.text_search_unit}$:
-	user.winax_extend_by_unit(text_search_unit,search_dir,number_small or 1)
 
 extend right$: user.winax_expand_selection(false,true)
 extend left$: user.winax_expand_selection(true,false)
@@ -183,44 +157,7 @@ insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] any {use
 insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] {user.search_dir} <user.win_nav_target>:
 	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,search_dir,win_nav_target)
 
-# SELECT A RANGE 
-#	select FROM either a dynamic or static search target 
-#	but TO static search target only
-	# example spoken forms:
-	#   select from previous "there is a giant..." to PHRASE "charging at me"
-	#	select from next "the movie was very..." to CHARACTER period
 
-select from previous {user.win_previous_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_previous_dyn_nav_trg,"UP",1)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
-select from <user.ordinals> previous {user.win_previous_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_previous_dyn_nav_trg,"UP",ordinals)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
-select from next {user.win_next_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_next_dyn_nav_trg,"DOWN",1)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
-select from <user.ordinals> next {user.win_next_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_next_dyn_nav_trg,"DOWN",ordinals)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
-select from inside {user.win_inside_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_inside_dyn_nav_trg,"INSIDE",1)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
-select from <user.ordinals> inside {user.win_inside_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_inside_dyn_nav_trg,"INSIDE",ordinals)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
-select from any {user.win_any_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_any_dyn_nav_trg,"BOTH",1)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals or 1)	
-select from <user.ordinals> any {user.win_any_dyn_nav_trg} to [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_select_text(win_any_dyn_nav_trg,"BOTH",ordinals)
-	user.winax_extend_selection(win_nav_target,"DOWN","AFTER",ordinals_2 or 1)	
-
-select from <user.ordinals> {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>:
-	user.winax_select_text(win_nav_target,search_dir,ordinals)
-	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals_2 or 1)	
-select from {user.search_dir} <user.win_nav_target> to [<user.ordinals>] <user.win_nav_target>:
-	user.winax_select_text(win_nav_target,search_dir,1)
-	user.winax_extend_selection(win_nav_target_2,"DOWN","AFTER",ordinals or 1)	
 
 # convenient deleting from current cursor position
 delete until [<user.ordinals>] next {user.win_next_dyn_nav_trg}:
