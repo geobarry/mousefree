@@ -176,11 +176,14 @@ def modify_regex_include_homophones(t: str):
 ctx = Context()
 
 def win_dyn_nav_trg(search_dir: str) -> str:
+    print(f"*win_dyn_nav_trg*")
     use_winax = settings.get("user.winax_text")
     if use_winax:
         el = actions.user.safe_focused_element()
+        print(f'el: {el}')
         if el:
             pattern_list = actions.user.el_prop_val(el,'patterns')
+            print(f'pattern_list: {pattern_list}')
             if "Text" in pattern_list:
                 cur_range = get_scope(search_dir,"Line")
                 txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
@@ -269,18 +272,19 @@ def explicit_target(m) -> str:
         else:
             return re.escape(t)
 
-@mod.capture(rule="next <user.explicit_target>|previous <user.explicit_target>|inside <user.explicit_target>|previous {user.win_previous_dyn_nav_trg}|next {user.win_next_dyn_nav_trg}| inside {user.win_inside_dyn_nav_trg}")
+# Need to modify community navigation to support inside and outside targets when accessibility is not available
+@mod.capture(rule="next <user.explicit_target>|previous <user.explicit_target>|inside <user.explicit_target>|outside <user.explicit_target>|previous {user.win_previous_dyn_nav_trg}|next {user.win_next_dyn_nav_trg}| inside {user.win_inside_dyn_nav_trg}|outside {user.win_any_dyn_nav_trg}")
 def win_nav_target(m) -> tuple:
     """combination of dynamic and fixed navigation targets (is under testing)"""
     print(f'm: {m}')
     print(f'len(m): {len(m)}')
-    direction_dict={'previous':'UP','next':'DOWN','inside':'INSIDE'}
+    direction_dict={'previous':'UP','next':'DOWN','inside':'INSIDE','outside':'BOTH'}
     scope_dir=direction_dict[str(m[0])]
     trg=str(m[1])
     return (trg,scope_dir)
 
 
-def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1):
+def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1, return_to_init_range: bool = True):
     """Performs function on selected text and then returns cursor to original position"""
     trg=trg_and_dir[0]
     scope_dir=trg_and_dir[1]
@@ -288,7 +292,8 @@ def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1):
     # get textRange so we can return cursor to original position
     el = actions.user.safe_focused_element()
     if el:
-        init_range = actions.user.el_prop_val(el,'text_selection')
+        if return_to_init_range:
+            init_range = actions.user.el_prop_val(el,'text_selection')
         # perform selection
         t = actions.user.winax_select((trg,scope_dir),ordinal)        
         # perform processing function
@@ -297,7 +302,7 @@ def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1):
             print(f'trg: |{trg}| sel: |{t}|')
             processing_function(t)
         # return to original selection
-        if init_range != None:
+        if return_to_init_range and init_range != None:
             actions.sleep(0.2)
             actions.user.safe_access(lambda: init_range.select(),"PROCESS_SELECTION")
     
@@ -348,14 +353,15 @@ class Actions:
             with clip.revert():
                 actions.sleep(0.2)
                 if new_text == "":
-                    actions.key("backspace")
+                    actions.sleep(0.15)
+                    actions.key("del")
                 else:
                     clip.set_text(new_text)
 
                     print(f'n_txt: |{clip.text()}|')
                     actions.sleep(0.15)
-                    actions.edit.paste()
-#                    actions.insert(new_text)
+#                    actions.edit.paste()
+                    actions.insert(new_text)
                     actions.sleep(0.15)
         process_selection(replace_process,trg_and_dir,ordinal)
     def winax_format_text(fmt: str, trg_and_dir: tuple, ordinal: int = 1):
@@ -417,11 +423,11 @@ class Actions:
     def winax_go_text(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1):
         """Navigates to text using windows accessibility pattern, returns True if successful"""
         def go_process(orig_text):
-            if before_or_after == "BEFORE":
+            if before_or_after.upper() == "BEFORE":
                 actions.key("left")
             else:
                 actions.key("right")
-        process_selection(go_process,trg_and_dir,ordinal)
+        process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
     def winax_extend_selection(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg=trg_and_dir[0]

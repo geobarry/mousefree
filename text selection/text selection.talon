@@ -50,11 +50,11 @@ replace [<user.ordinals>] <user.win_nav_target> with <user.constructed_text>:
 	user.winax_replace_text(constructed_text, win_nav_target,ordinals or 1)
 
 # e.g. "DELETE next 'hippopotamus'"
-delete [<user.ordinals>] next {user.win_nav_target}$:
+delete [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_replace_text("", win_nav_target,ordinals or 1)
 
 # e.g. "ADD/REMOVE quotes around previous 'hippopotamus'"
-add {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
+place {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_add_delimiters(delimiter_pair,win_nav_target,ordinals or 1)
 remove {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_remove_delimiters(delimiter_pair,win_nav_target,ordinals or 1)
