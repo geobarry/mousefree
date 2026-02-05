@@ -111,7 +111,6 @@ class element_tracker:
             print(f"app {name} on blacklist, using event handler...")
             if self.job:
                 cron.cancel(self.job)
-            print(f"self.job: {self.job}")
             # this doesn't work to prevent stalls:
             # ui.register("element_focus",self.handle_element_focus)
         else:
@@ -119,13 +118,11 @@ class element_tracker:
             # ui.unregister("element_focus",self.update_highlight)
             if self.job:
                 cron.cancel(self.job)
-            print(f"self.job: {self.job}")
             self.job = cron.interval(f"{self.interval}ms", self.update_element)
         for name, obj in inspect.getmembers(cron):
             if isinstance(obj,cron.Cron):
                 with obj.cond:
                     job_list=[job for job in obj.jobs if job not in obj.cancelled]
-                    print(f'len(job_list): {len(job_list)}')
 
     def update_element(self):
         el=actions.user.safe_focused_element(time_limit=0.2)

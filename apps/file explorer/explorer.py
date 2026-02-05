@@ -365,13 +365,19 @@ class Actions:
         el = actions.user.wait_for_element(prop_list)
         if el:
             actions.insert(path)
-        actions.sleep(0.1)
-        actions.key("enter")
-        el = actions.user.safe_focused_element()
-        actions.sleep(1)
-        el = actions.user.safe_focused_element()
-        actions.key("esc")
-        actions.user.explorer_select_items_panel()
+            actions.sleep(0.1)
+            actions.key("enter")
+            el = actions.user.safe_focused_element()
+            actions.sleep(1)
+            el = actions.user.safe_focused_element()
+            actions.key("esc")
+            actions.user.explorer_select_items_panel()
+        else:
+            el=actions.user.safe_focused_element()
+            print(f'el: {el}')
+            print(f'el name: {actions.user.el_prop_val(el,"name")}')
+            # copy path to clipboard so user can take it from here
+            clip.set_text(path)
     def explorer_move_to(path: str,ancestor_lvl: int = 0,subfolder: str = '',movement: str = 'stash'):
         """Moves selected item(s) to the destination folder safely"""
         # construct destination folder
