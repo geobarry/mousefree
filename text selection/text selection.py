@@ -222,19 +222,24 @@ def direct_text(m) -> str:
         t = actions.user.formatted_text(m.prose,m.formatters)
     return t
 
-@mod.capture(rule="<user.direct_text>")
-def phony_text(m) -> str:
-    """Creates a navigation target including homophone options"""
-    t = m.direct_text
+def allow_phones(txt: str):
+    """helper function to translate into regex including homophones"""
     # include homophones
-    word_list = re.findall(r"\w+",t)
+    word_list = re.findall(r"\w+",txt)
     word_list = set(word_list)
     for w in word_list:
         phone_list = actions.user.homophones_get(w)
         if phone_list:
-            t = t.replace(w,"(?:" + '|'.join(phone_list) + ")")
+            txt = txt.replace(w,"(?:" + '|'.join(phone_list) + ")")
     # accommodate formatting by allowing non-letter characters between words
-    t = t.replace(" ","[^a-z|A-Z]*")
+    txt = txt.replace(" ","[^a-z|A-Z]*")
+    return txt            
+
+@mod.capture(rule="<user.direct_text>")
+def phony_text(m) -> str:
+    """Creates a navigation target including homophone options"""
+    t = m.direct_text
+    t=allow_phones(t)
     return t        
 
 @mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | country [name] {user.country} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
@@ -259,7 +264,7 @@ def constructed_text(m) -> str:
 
 @mod.capture(rule = "<user.phony_text>|<user.coded_text>")
 def explicit_target(m) -> str:
-    """text to be searched for, including regex for disambiguation"""
+    """text to be searched for, with explicit prefixes. Translated into regex for disambiguation"""
     if hasattr(m,"phony_text"):
         return str(m)
     else:
@@ -271,6 +276,16 @@ def explicit_target(m) -> str:
             return t
         else:
             return re.escape(t)
+
+@mod.capture(rule="<user.explicit_target>|<user.prose>")
+def lazy_target(m) -> str:
+    """Text to be searched for with or without explicit prefixes"""
+    if hasattr(m,"explicit_target"):
+        return str(m)
+    else:
+        t=allow_phones(str(m))
+        return t
+        
 
 # Need to modify community navigation to support inside and outside targets when accessibility is not available
 @mod.capture(rule="next <user.explicit_target>|previous <user.explicit_target>|inside <user.explicit_target>|outside <user.explicit_target>|previous {user.win_previous_dyn_nav_trg}|next {user.win_next_dyn_nav_trg}| inside {user.win_inside_dyn_nav_trg}|outside {user.win_any_dyn_nav_trg}")

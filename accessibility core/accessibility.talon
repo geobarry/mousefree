@@ -16,12 +16,11 @@ and mode: user.zen
 # NAVIGATE TO A TARGET USING KEYS
 # Presses the designated navigation key until an element beginning with the target name is reached.
 # user.nav_key includes things like tab, arrow keys, f6
-# user.ax_target is just any spoken phrase. It will be translated 
-#  into regex for continuation and catching homophones
-^[{user.ui_action}] <user.nav_key> until [<user.ordinals>] <user.ax_target>$:
-	user.key_to_elem_by_val(nav_key,"{ax_target}.*","name",ordinals or 1,200,'',0.03,ui_action or '')
-^[{user.ui_action}] <user.nav_key> includes [<user.ordinals>] <user.ax_target>$:
-	user.key_to_elem_by_val(nav_key,".*{ax_target}.*","name",ordinals or 1,200,'',0.03,ui_action or '')
+# user.lazy_target is any spoken word or phrase, optionally prefixed with 'word' or 'phrase', or else characters letters numbers etc with the appropriate prefix.
+^[{user.ui_action}] <user.nav_key> until [<user.ordinals>] <user.lazy_target>$:
+	user.key_to_elem_by_val(nav_key,"{lazy_target}.*","name",ordinals or 1,200,'',0.03,ui_action or '')
+^[{user.ui_action}] <user.nav_key> includes [<user.ordinals>] <user.lazy_target>$:
+	user.key_to_elem_by_val(nav_key,".*{lazy_target}.*","name",ordinals or 1,200,'',0.03,ui_action or '')
 
 stop [(it|repeating)]:
 	user.stop_repeating()

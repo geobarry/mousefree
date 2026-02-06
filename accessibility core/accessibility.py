@@ -21,24 +21,6 @@ def nav_key(m) -> str:
     r = r.replace("control ","ctrl-").replace("alternate","alt").replace("alt ","alt-").replace("sky","shift").replace("shift ","shift-")
     return r
 
-@mod.capture(rule="<user.any_alphanumeric_key> | phrase <user.text> | <user.text>")
-def ax_target(m) -> str:
-    """A target string to navigate to. Returns a regular expression as a string.
-       Perhaps this should be merged with win_navigation_target in text selection"""
-    
-    if hasattr(m, "any_alphanumeric_key"):
-        return m.any_alphanumeric_key
-    t = m.text
-    # include homophones
-    word_list = re.findall(r"\w+",t)
-    t = ".*".join(word_list)
-    for w in word_list:
-        phone_list = actions.user.homophones_get(w)
-        if phone_list:
-            phone_list = [f"{x}.*" for x in phone_list]
-            t = t.replace(w,"(" + '|'.join(phone_list) + ")")
-    return t
-
 def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbose: bool = False) -> bool:
     """
     Evaluate a property list where prop_list is a possibly nested list windows automation element conditions in one of two forms:
