@@ -1,6 +1,6 @@
 from talon import Module, ui, Context, ctrl, cron, actions, screen
 from talon.types import Point2d as Point2d, Rect
-from talon.windows import ax as ax, ui as winui
+from talon.windows import ax as ax
 import math
 
 mod = Module()
