@@ -1,5 +1,5 @@
 os: windows
-and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio|spyder|File Picker|Triangulation_Visualization).*/
+and app.name: /.*(Word|Excel|PowerPoint|Edge|Outlook|Notepad|Adobe Acrobat|Python|Visual Studio|spyder|File Picker|Triangulation_Visualization|LibreOffice).*/
 and win.title: /(Open|Save|Publish|Insert|Load|Export).*/
 -
 # SUBSET OF COMMON COMMANDS FROM MAIN EXPLORER APPLICATION,
