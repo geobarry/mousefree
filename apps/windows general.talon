@@ -8,14 +8,14 @@ os: windows
 #    "focus word proposal" <- search by first word
 #    "focus phrase community center" <- searched by first phrase
 
-focus <user.win_nav_target>: 
-	user.app_switch_by_title("{win_nav_target}.*")
+focus <user.explicit_target>: 
+	user.app_switch_by_title("{explicit_target}.*")
 	
 # by any word or phrase, e.g.:
 #    "focus include word proposal"
 
-focus include <user.win_nav_target>:
-	user.app_switch_by_title(".*{win_nav_target}.*")
+focus include <user.explicit_target>:
+	user.app_switch_by_title(".*{explicit_target}.*")
 
 # CLOSE WINDOW THAT IS NOT IN FOCUS
 window close <user.running_applications>:

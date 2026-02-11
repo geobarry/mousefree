@@ -1,5 +1,5 @@
 from talon import Module, Context, actions, ui
-from talon.windows import ax as ax,ui as winui
+from talon.windows import ax as ax
 import re
 
 mod = Module()
@@ -8,13 +8,17 @@ mod = Module()
 class Actions:
     def app_switch_by_title(title_regex: str):
         """Switches to an app with the given regular expression in the title"""
+        print(f'title_regex: {title_regex}')
         title_regex = re.compile(title_regex,re.IGNORECASE)
-        win_list = winui.windows()
+        win_list = ui.windows()
         win_list = [w for w in win_list if not w.hidden]
+        [print(f"{w.title} enabled: {w.enabled} hidden: {w.hidden}") for w in win_list if w.title]
         win_list = [w for w in win_list if re.match(title_regex,w.title) != None]
+        print(f'win_list: {win_list}')
         if len(win_list) > 0:
             # for now choose the first window
             w = win_list[0]
+            print(f"changing focus to {w.title}")
             w.focus()
     def focus_explorer():
         """Opens the correct windows explorer window"""
