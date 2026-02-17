@@ -358,10 +358,11 @@ class Actions:
                     actions.user.winax_select_unit(expand_to_unit)
                 r = actions.edit.selected_text()
                 return r
-    def winax_select_from_to(from_trg_and_dir: tuple, to_trg: str, from_ordinals: int = 1):
+    def winax_select_from_to(from_trg_and_dir: tuple, to_trg: str, from_ordinals: int = 1, expand_to_unit: str = None):
         """select from one target to another"""
-        actions.user.winax_select(from_trg_and_dir,from_ordinals)
-        actions.user.winax_extend_selection((to_trg,"DOWN"),"AFTER",1)
+        r=actions.user.winax_select(from_trg_and_dir,from_ordinals,expand_to_unit)
+        if r:
+            actions.user.winax_extend_selection((to_trg,"DOWN"),"AFTER",1,expand_to_unit)
     def winax_replace_text(new_text: str, trg_and_dir: tuple, ordinal: int = 1):
         """Replaces target with the new text"""
         def replace_process(orig_text):
@@ -443,12 +444,14 @@ class Actions:
             else:
                 actions.key("right")
         process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
-    def winax_extend_selection(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1):
+    def winax_extend_selection(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1, expand_to_unit: str = None):
         """Extend currently selected text using windows accessibility pattern if possible"""
         trg=trg_and_dir[0]
         scope_dir=trg_and_dir[1]
         trg = re.compile(trg, re.IGNORECASE)
         use_winax = settings.get("user.winax_text")
+        print(f'use_winax: {use_winax}')
+        print(f'expand_to_unit: {expand_to_unit}')
         if use_winax:
             el = actions.user.safe_focused_element()
             if el:
@@ -462,8 +465,10 @@ class Actions:
                             trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
                             actions.user.safe_access(lambda: cur_range.move_endpoint_by_range(src_pos,trg_pos,target = r),"WINAX_EXTEND_SELECTION")
                             actions.user.safe_access(lambda: cur_range.select(),"WINAX EXTEND SELECTION")
+                            if expand_to_unit:
+                                actions.user.winax_extend_by_unit(expand_to_unit,scope_dir)
                     except:
-                        actions.user.navigation("EXTEND",scope_dir,"DEFAULT",before_or_after,trg,ordinal)
+                        use_winax=False
                 else:
                     use_winax = False
         if not use_winax:

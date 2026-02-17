@@ -30,12 +30,12 @@ go {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
 
 # SELECT FROM...TO... e.g. "select from previous 'hippopotamus' to phrase 'charging at me'"
 #	Note that second target must be explicitly prefixed, we cannot have two dynamic targets at once
-select from [<user.ordinals>] <user.win_nav_target> to [<user.ordinals>] <user.explicit_target>:
-	user.winax_select_from_to(win_nav_target,explicit_target,ordinals or 1)
+[{user.text_search_unit}] select from [<user.ordinals>] <user.win_nav_target> to [<user.ordinals>] <user.explicit_target>:
+	user.winax_select_from_to(win_nav_target,explicit_target,ordinals or 1, text_search_unit or '')
 
 # e.g. "EXTEND after next 'hippopotamus'"
-extend [(to|until)] {user.before_or_after} [<user.ordinals>] <user.win_nav_target>$:
-	user.winax_extend_selection(win_nav_target,before_or_after,ordinals or 1)
+[{user.text_search_unit}] extend [(to|until)] {user.before_or_after} [<user.ordinals>] <user.win_nav_target>$:
+	user.winax_extend_selection(win_nav_target,before_or_after,ordinals or 1,text_search_unit or '')
 
 # e.g. "PHONES previous 'lynx'"
 phones [<user.ordinals>] <user.win_nav_target>$: user.winax_phones_text(win_nav_target,ordinals or 1)
