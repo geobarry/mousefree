@@ -47,7 +47,7 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
             
 @mod.action_class
 class Actions:
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, expanded_properties: bool = False):
+    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
         if not prop_list:
@@ -71,7 +71,7 @@ class Actions:
                     "legacy.value","legacy.selection",
                     "value","text"
                 ]
-        if expanded_properties:
+        if extra_props:
             prop_list += other_prop
         # Construct headers
         if headers:
@@ -89,12 +89,12 @@ class Actions:
                 else:
                     return f"el_NONE"
             return  "\t".join([" ".join(str(prop_str(el,prop)).splitlines()) for prop in prop_list])
-    def copy_elements_accessible_by_key(key: str, limit: int=20, avoid_repeat: bool = True, delay: int = 0.03, verbose: bool = False):
+    def copy_elements_accessible_by_key(key: str, limit: int=20, avoid_repeat: bool = True, delay: int = 0.03, extra_props: bool = False):
         """Gets information on elements accessible by pressing input key"""        
         i = 1
         el = actions.user.safe_focused_element()
         orig_el = el
-        msg = actions.user.element_information(el, verbose = verbose)
+        msg = actions.user.element_information(el, extra_props = extra_props)
         messages = []
         while True:
             print(f"*******\nELEMENT NUMBER: {i}\n*******")
@@ -102,7 +102,7 @@ class Actions:
             actions.key(key)
             actions.sleep(delay)
             el = actions.user.safe_focused_element()
-            msg = actions.user.element_information(el, verbose = verbose)    
+            msg = actions.user.element_information(el, extra_props = extra_props)    
             if i > limit:
                 break
             if avoid_repeat:
@@ -121,14 +121,14 @@ class Actions:
     def copy_focused_element_to_clipboard():
         """Copies information about currently focused element to the clipboard"""
         el = actions.user.safe_focused_element()
-        msg = actions.user.element_information(el, headers = True, verbose = False)
-        msg += "\n" + actions.user.element_information(el, verbose = False)
+        msg = actions.user.element_information(el, headers = True, extra_props = False)
+        msg += "\n" + actions.user.element_information(el, extra_props = False)
         clip.set_text(msg)
     def copy_registered_element_to_clipboard():
         """Copies information about last registered element to the clipboard"""
         el = actions.user.focused_element()
-        msg = actions.user.element_information(el, headers = True, verbose = False)
-        msg += "\n" + actions.user.element_information(el, verbose = False)
+        msg = actions.user.element_information(el, headers = True, extra_props = False)
+        msg += "\n" + actions.user.element_information(el, extra_props = False)
         clip.set_text(msg)
     def element_descendant_tree(el: ax.Element, max_level: int = 7):
         """Returns a list of [level,cur_id,parent_id,el]"""
@@ -224,7 +224,7 @@ class Actions:
                     prop_list.append(f'("{prop}","{val}")')
             prop_seq.append(f'\t[{",".join(prop_list)}]')
         r = "[\n        " + ",\n        ".join(prop_seq[2:]) + "\n        ]"
-        r = f"        root = actions.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)"
+        r = f"        root = actions.user.window_root()\n        prop_seq = {r}\n        el = actions.user.find_el_by_prop_seq(prop_seq,root,extra_props = True)"
         print(f'r: {r}')
         clip.set_text(r)
 
@@ -239,26 +239,26 @@ class Actions:
         
         actions.user.copy_element_sequence_to_clipboard(el,props)
 
-    def copy_element_ancestors(el: ax.Element, verbose: bool = False,prop_list: list = None):
+    def copy_element_ancestors(el: ax.Element, extra_props: bool = False,prop_list: list = None):
         """Copies information on element ancestors to clipboard"""
         el_list = actions.user.element_ancestors(el)
-        hdr = actions.user.element_information(el,expanded_properties=verbose,headers = True,prop_list=prop_list)
-        msg = "\n".join([actions.user.element_information(x,expanded_properties=verbose,prop_list=prop_list) for x in el_list])
+        hdr = actions.user.element_information(el,extra_props=extra_props,headers = True,prop_list=prop_list)
+        msg = "\n".join([actions.user.element_information(x,extra_props=extra_props,prop_list=prop_list) for x in el_list])
         msg = hdr + "\n" + msg
         clip.set_text(msg)
-    def copy_mouse_element_ancestors(verbose: bool = False):
+    def copy_mouse_element_ancestors(extra_props: bool = False):
         """Retrieves list of ancestors of current mouse element"""
         pos = ctrl.mouse_pos()        
         el = winui.element_at(pos[0],pos[1])
         print("FUNCTION: copy_mouse_element_ancestors")
         print(f'el: {el}')
-        actions.user.copy_element_ancestors(el,verbose)
-    def copy_focused_element_ancestors(verbose: bool = False):
+        actions.user.copy_element_ancestors(el,extra_props)
+    def copy_focused_element_ancestors(extra_props: bool = False):
         """Retrieves list of ancestors of currently focused element"""
         el = actions.user.safe_focused_element()
         print("FUNCTION: copy_focused_element_ancestors")
         print(f'el: {el}')
-        actions.user.copy_element_ancestors(el,verbose)
+        actions.user.copy_element_ancestors(el,extra_props)
 
 
     def copy_descendant_sequences(root: ax.Element, 
