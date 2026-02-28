@@ -41,14 +41,23 @@ class Actions:
             # so we have to start from the focused element and move upwards
             r = win_list
             prop_list = [("printout","dialog")]
+            
             if len(r) > 0:
                 trg = r[0]
+                print(f'trg: {trg}')
                 trg.focus()        
+                
                 actions.sleep(1)
+                app = ui.active_app()
+                print(f'app: {app}')
+                w=app.active_window
+                print(f'w: {w}')
+                return
                 el = actions.user.safe_focused_element()
                 try_number = 0
                 if not actions.user.element_match(el,prop_list) and try_number < 5:
                     trg = r[try_number + 1]
+                    print(f'trg: {trg}')
                     trg.focus()
                     el = actions.user.safe_focused_element()
                     try_number += 1

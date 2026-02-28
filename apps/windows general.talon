@@ -27,7 +27,7 @@ refocus: user.slow_key_press("alt:down tab left alt:up",0.2)
 
 # APPS THAT ARE NOTORIOUS FOR FOCUSING ON HIDDEN WINDOWS
 focus explorer: user.focus_explorer()
-focus outlook: user.focus_outlook()
+#focus outlook: user.focus_outlook()
 
 # TASK BAR
 safely remove hardware: user.invoke_taskbar_item("Safely Remove Hardware.*")
