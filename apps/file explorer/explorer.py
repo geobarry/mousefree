@@ -34,40 +34,30 @@ def explorer_window():
 def retrieve_item(name: str, item_type: str = "file"):
     """Returns the file or folder ax.Element from the items view"""
     root = explorer_window()
+    # retrieve items view element
     prop_seq = [
         [("class_name","DUIViewWndClassName")],
 #        [("class_name","DUIListView")], # not present in dialogues
         [("class_name","UIItemsView")]
     ]        
-    el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
-    if el:
-        children = el.children
-        if children:
-            for child in children:
-                if actions.user.element_match(child,[("class_name",("UIItem"))]):
-                    el = child
-                    break
-            if el:
-                actions.user.act_on_element(el,"select")
-                actions.edit.file_start()
-                actions.sleep(0.1)
-                prop_list = [("name",name)]
-                # check if top element is what we are looking for
-                el = actions.user.safe_focused_element()
-                if not actions.user.element_match(el,prop_list):
-                    # try typing out item name directly
-                    actions.insert(name)
-                    el = actions.user.wait_for_element(prop_list,time_limit = 0.2)
-                    if not el:
-                        # try getting to item with key presses
-                        actions.key("up")
-                        actions.sleep(0.5)
-                        actions.user.key_to_matching_element("down",prop_list,delay = 0.02,avoid_cycles = True,limit = 20,sec_lim = 3,verbose = False)
-                el = actions.user.safe_focused_element()
-                if actions.user.element_match(el,prop_list):
-                    return el
-                else:
-                    return None
+    item_list = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
+    print(f"retrieve_item")
+    if item_list:
+        prop_list=[("name",name)] # ("class_name","UIItem")
+        find_by_accessibility = lambda: actions.user.matching_child(item_list,prop_list)
+        # first try to find item by accessibility from current visual display
+        trg=find_by_accessibility()
+        if trg:
+            return trg
+        else:
+            # if item was not found then it is probably off the screen
+            # try typing out item name directly to scroll down so that item is displayed
+            # then use accessibility to find item again
+            actions.insert(name)            
+            trg=find_by_accessibility()
+            if trg:
+                return trg
+            # if item is still not found then perhaps we have so many matches that it's spilling down past the bottom of the page, made need to press PageDown and try again
 def current_folder_from_title():
     path = actions.user.file_manager_current_path()
     path = path.replace(" - File Explorer","")
@@ -256,8 +246,11 @@ class Actions:
             el = actions.user.safe_focused_element()
             name = actions.user.el_prop_val(el,'name')
         else:
+            print(f"explorer_process_item: retrieving element {name}")
             el = retrieve_item(name,item_type)
+        print(f'explorer_process_item, item retrieved: {el}')
         if el:
+            print(f'explorer_process_item name: {name}')
             prop_list = [("name",name),("class_name","UIItem")]
             if actions.user.element_match(el,prop_list):
                 if action == "open":

@@ -28,7 +28,7 @@ class time_stopper:
         cur_time = time.perf_counter()
         elapsed_sec = cur_time - self.start_time
         if elapsed_sec > self.sec_lim:
-            print(f"stopper stopped due to time ({elapsed_sec} sec) over limit ({self.sec_lim} sec)")
+#            print(f"stopper stopped due to time ({elapsed_sec} sec) over limit ({self.sec_lim} sec)")
             return True
         else:
             return False

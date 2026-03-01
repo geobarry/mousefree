@@ -35,7 +35,7 @@ class Actions:
             [("name",""),("class_name","Windows.UI.Input.InputSite.WindowClass")],
             [("name",item_name),("class_name","SystemTray.NormalButton")]
         ]
-        app_btn_list = [("class_name","SystemTray.NormalButton"),("name",r"^(?!Show Hidden Icons).*$")]
+        app_btn_list = [("class_name","SystemTray.NormalButton"),("automation_id","NotifyItemIcon")]
         def super_b_for_taskbar():
             # pressing super-b sometimes hits the windows start button instead of the taskbar button
             # so we have to look for that
@@ -116,6 +116,7 @@ class Actions:
                         prop_list = [("name","Show Hidden Icons"),("class_name","SystemTray.NormalButton")]
                         el = actions.user.wait_for_element(prop_list)
                     if el:
+                        print(f'el: {el}')
                         actions.key("enter")
                         el = actions.user.wait_for_element(app_btn_list)
                         if el:
