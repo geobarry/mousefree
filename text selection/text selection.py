@@ -113,6 +113,7 @@ def find_target(trg: re.Pattern,
             return None
 def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool = False):
     """Returns a text range corresponding to the search scope. Valid scope directions include UP,DOWN,BOTH,INSIDE"""
+    verbose=True
     if verbose:
         print(f"get_scope - win_selection_distance: {settings.get('user.win_selection_distance')}")
     # Error Checking
@@ -122,6 +123,8 @@ def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool =
     el = actions.user.safe_focused_element()
     if el:
         cur_range = actions.user.el_prop_val(el,'text_selection')
+        if cur_range:
+            print(f'initial cur_range: {cur_range.text}')
         if cur_range:
             if scope_dir.upper() == "UP":
                 # go to beginning of current selection
@@ -145,6 +148,7 @@ def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool =
                 pass
             if verbose:
                 print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
+                clip.set_text(cur_range.text)
             return cur_range
 
 
