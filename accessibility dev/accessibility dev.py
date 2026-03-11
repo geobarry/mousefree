@@ -94,22 +94,21 @@ class Actions:
         i = 1
         el = actions.user.safe_focused_element()
         orig_el = el
-        msg = actions.user.element_information(el, extra_props = extra_props)
-        messages = []
+        msg_list = [actions.user.element_information(el,headers = True,extra_props = extra_props)]
+        msg_list.append(actions.user.element_information(el, extra_props = extra_props))
         while True:
             print(f"*******\nELEMENT NUMBER: {i}\n*******")
-            messages.append(msg)
             actions.key(key)
             actions.sleep(delay)
             el = actions.user.safe_focused_element()
-            msg = actions.user.element_information(el, extra_props = extra_props)    
+            msg_list.append(actions.user.element_information(el, extra_props = extra_props))
+            i += 1
             if i > limit:
                 break
             if avoid_repeat:
                 if el.__eq__(orig_el):
                     break
-            i += 1
-        clip.set_text("\n".join(messages))
+        clip.set_text("\n".join(msg_list))
     def copy_mouse_elements_to_clipboard():
         """Copies elements with rectangle containing current mouse position"""
         pos = ctrl.mouse_pos()
