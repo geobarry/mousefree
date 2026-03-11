@@ -516,16 +516,19 @@ class Actions:
         prop_list = [("name",action_name),("class_name","AppBarButton")]
         actions.user.key_to_matching_element("down",prop_list,delay = 0.1)
         el = actions.user.wait_for_element(prop_list)
+        print(f'(A) el: {el}')
         if el:
             # EXPAND ACTION IF THAT IS AN OPTION
             if "ExpandCollapse" in el.patterns:
                 state = actions.user.el_prop_val(el,'expand_collapse_state')
+                print(f'state: {state}')
                 actions.sleep(0.2)
                 actions.user.act_on_element(el,"expand")
                 # wait for menu fly out to select first option
                 prop_list = [("class_name","MenuFlyout")]
                 el = actions.user.wait_for_element(prop_list)
                 if el:
+                    actions.sleep(0.2)
                     actions.key("down up")
             else:
                 # OTHERWISE PRESS THE ENTER KEY (?)
