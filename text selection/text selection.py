@@ -148,7 +148,7 @@ def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool =
                 pass
             if verbose:
                 print(f'FUNCTION get_scope return range text:\n{cur_range.text}')
-                clip.set_text(cur_range.text)
+                # clip.set_text(cur_range.text)
             return cur_range
 
 
@@ -382,7 +382,7 @@ class Actions:
                     actions.sleep(0.15)
                     actions.key("del")
                 else:
-                    clip.set_text(new_text)
+                    # clip.set_text(new_text)
 
                     print(f'n_txt: |{clip.text()}|')
                     actions.sleep(0.15)
@@ -395,7 +395,7 @@ class Actions:
         def format_process(orig_text: str):
             t = actions.user.formatted_text(orig_text,fmt)
             with clip.revert():
-                clip.set_text(t)
+                # clip.set_text(t)
                 actions.sleep(0.15)
                 # actions.edit.paste()
                 actions.insert(t)
@@ -406,9 +406,10 @@ class Actions:
         def add_delimiters(orig_text):
             front,back=delimiters[0],delimiters[-1]
             with clip.revert():
-                clip.set_text(f"{front}{orig_text}{back}")
+                # clip.set_text(f"{front}{orig_text}{back}")
                 actions.sleep(0.15)
-                actions.edit.paste()
+                # actions.edit.paste()
+                actions.insert(f"{front}{orig_text}{back}")
                 actions.sleep(0.15)
         process_selection(add_delimiters,trg_and_dir,ordinal)
     def winax_remove_delimiters(delimiters: str,trg_and_dir: tuple, ordinal: int = 1):
@@ -420,7 +421,7 @@ class Actions:
         def remove_delimiters(orig_text):
             print(f'orig_text: {orig_text}')
             with clip.revert():
-                clip.set_text(orig_text[1:-1])
+                # clip.set_text(orig_text[1:-1])
                 actions.sleep(0.15)
 #                actions.edit.paste()
                 actions.insert(orig_text[1:-1])
@@ -440,7 +441,7 @@ class Actions:
             print(f'x: |{x}|')
             # would be nice to match case with the original selected text here
             with clip.revert():
-                clip.set_text(x)
+                # clip.set_text(x)
                 actions.sleep(0.15)
                 actions.insert(x)
 #                actions.edit.paste() # this sometimes inserts unwanted space character

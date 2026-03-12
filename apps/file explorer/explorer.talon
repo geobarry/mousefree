@@ -35,6 +35,10 @@ stash into <user.system_path> {user.subfolder}: user.explorer_move_to("{system_p
 ##   "folder delete <first couple words of folder name>"
 
 file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
+file {user.dynamic_file} {user.explorer_context_option}$:
+	user.explorer_process_item(dynamic_file,"file","select")
+	user.explorer_context_action(explorer_context_option)
+
 folder {user.explorer_action} {user.dynamic_folder}$:
 	user.explorer_process_item(dynamic_folder,"folder",explorer_action)
 file {user.dynamic_file} move into [folder] {user.dynamic_folder}$:
