@@ -215,6 +215,20 @@ class Actions:
                 return None
             stopper.increment(0)
             actions.sleep(delay)
+    def wait_for_app(app_name: str, delay: float = 0.2, time_limit: float = 5, verbose: bool = False):
+        """Waits until the given app is in focus"""
+        stopper = actions.user.stopper(time_limit,[int(time_limit/delay) + 1])
+        while True:
+            app = ui.active_app()
+            name=app.name
+            if verbose:
+                print(f'FUNCTION wait_for_app: app_name= |{name}|')
+            if re.fullmatch(app_name, name, re.IGNORECASE) is not None:
+                return app
+            if stopper.over():
+                return None
+            stopper.increment(0)
+            actions.sleep(delay)
     # functions for converting property lists, strings and sequences
     def get_property_string(el: ax.Element):
         """creates a property string that can be converted into a property list"""

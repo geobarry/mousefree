@@ -180,8 +180,12 @@ class Actions:
     def invoke_talon_update_button(trg_btn: str):
         """Navigates to the desired button using keyboard keys, because there are too many elements at the same level of the hierarchy to navigate down from the window root"""
         print(f'trg_btn: {trg_btn}')
+        # For this to work, we need to make sure both the trg button name and
+        # the name of the currently focused element are in the following list
         tab_seq = ["Skip This Version","Install Update","Remind Me Later"]
-        # For this to work, we need to make sure both the button name and the name of the currently focused element are in the above list"""
+        if trg_btn not in tab_seq:
+            tab_seq=["Install and Relaunch","Cancel"]
+
         if trg_btn in tab_seq:
             el = actions.user.safe_focused_element()
             if el:

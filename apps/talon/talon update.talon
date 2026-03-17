@@ -8,3 +8,5 @@ and win.title: Talon Update
 Skip This Version: user.invoke_talon_update_button("Skip This Version")
 Remind Me Later: user.invoke_talon_update_button("Remind Me Later")
 Install Update: user.invoke_talon_update_button("Install Update")
+Install and Relaunch: user.invoke_talon_update_button("Install and Relaunch")
+Cancel: user.invoke_talon_update_button("Cancel")

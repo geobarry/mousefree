@@ -357,7 +357,14 @@ class Actions:
         prop_list = [("name","Address.*")]
         el = actions.user.wait_for_element(prop_list)
         if el:
-            actions.insert(path)
+            clip_txt=clip.text()
+            print(f'path: {path}')
+            clip.set_text(path)
+            print(clip.text())
+            actions.sleep(0.2)
+            actions.edit.paste()
+            clip.set_text(clip_txt)
+            # actions.insert(path)
             actions.sleep(0.1)
             actions.key("enter")
             el = actions.user.safe_focused_element()

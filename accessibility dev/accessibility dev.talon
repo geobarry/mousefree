@@ -35,9 +35,11 @@ report mouse location: user.report_mouse_location()
 ^copy verbose focused element ancestors$: user.copy_focused_element_ancestors(true)
 ^copy verbose mouse element ancestors$: user.copy_mouse_element_ancestors(true)
 ^copy all element information$: user.copy_elements_to_clipboard()
+^copy verbose all element information$: user.copy_elements_to_clipboard(true)
 ^copy level <number> element information$: user.copy_elements_to_clipboard(number)
+^copy verbose level <number> element information$: user.copy_elements_to_clipboard(number,true)
 ^copy level <number> element deep information:
-	user.copy_elements_to_clipboard(number,false)
+	user.copy_elements_to_clipboard(number,false,false)
 
 # GENERAL DEBUGGING
 debug current: user.debug_app_window("USER DEBUG")
