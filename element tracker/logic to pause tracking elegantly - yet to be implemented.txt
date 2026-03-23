@@ -1,0 +1,38 @@
+from contextlib import contextmanager
+
+class TrackingController:
+    def __init__(self):
+        self._paused = False
+
+    def pause(self):
+        self._paused = True
+
+    def resume(self):
+        self._paused = False
+
+    def is_paused(self):
+        return self._paused
+
+    @contextmanager
+    def paused(self):
+        self.pause()
+        try:
+            yield
+        finally:
+            self.resume()
+
+tracking = TrackingController()
+
+# cron callback
+def tracking_step():
+    if tracking.is_paused():
+        return
+    # real tracking logic here
+
+# from functions that want to pause tracking
+def some_function():
+    with tracking.paused():
+        # tracking is paused
+        do_stuff()
+        risky_operation()
+        # tracking resumes automatically even if risky_operation throws

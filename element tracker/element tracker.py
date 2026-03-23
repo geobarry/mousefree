@@ -133,8 +133,8 @@ class element_tracker:
     def update_highlight(self,el):
         """Updates the focused element using windows accessibility"""
         # print(f"UPDATE_HIGHLIGHT: {self.accessibility_check_paused}")
-        # if not self.accessibility_check_paused:
-        if True:
+        if not self.accessibility_check_paused:
+        # if True:
             try:
                 rectangle_found = False
                 if self.auto_highlight or self.auto_label:
