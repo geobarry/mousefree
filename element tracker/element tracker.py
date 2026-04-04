@@ -13,7 +13,7 @@ mod = Module()
 # list for tracking a set of clickable points
 marked_elements = []
 
-black_list = ["Microsoft Excel"]
+black_list = [] # ["Microsoft Excel"]
 prior_state = (True,False)
 
 
@@ -33,7 +33,7 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.interval = 500
+        self.interval = 200
         self.accessibility_check_paused = False
         self.blacklist = False
         self.job = None
@@ -132,41 +132,33 @@ class element_tracker:
         self.update_highlight(el)
     def update_highlight(self,el):
         """Updates the focused element using windows accessibility"""
-        # print(f"UPDATE_HIGHLIGHT: {self.accessibility_check_paused}")
-        if not self.accessibility_check_paused:
-        # if True:
-            try:
-                rectangle_found = False
-                if self.auto_highlight or self.auto_label:
-#                    app = ui.active_app()
-#                    name = app.name
-                    # if name in black_list:
-                    if False:
-                        w = actions.user.safe_access(lambda: app.active_window, "update_highlight")
-                        if w:
-                            rect = actions.user.safe_access(lambda: w.rect, "update_highlight")
-                    else:
+        # THIS NEEDS TO BE PUT INTO A ACTION CLASS, SO THAT IT CAN BE WRAPPED IN with uia_lock()
+        with actions.user.uia_lock(name="update_highlight",debug = False):
+            if not self.accessibility_check_paused:
+                try:
+                    rectangle_found = False
+                    if self.auto_highlight or self.auto_label:
                         if el:
                             rect = actions.user.el_prop_val(el,"rect")
-                    if rect:
-                        rectangle_found = True
-                        if rect != self.focused_rect:
-                            self.focused_rect = rect
-                            if self.auto_label:
-                                self.focused_label = el.name
-                        if not self.auto_label:
-                            if self.focused_label != "":
-                                self.focused_label = ""
+                        if rect:
+                            rectangle_found = True
+                            if rect != self.focused_rect:
+                                self.focused_rect = rect
+                                if self.auto_label:
+                                    self.focused_label = actions.user.el_prop_val(el,'name')
+                            if not self.auto_label:
+                                if self.focused_label != "":
+                                    self.focused_label = ""
+                        else:
+                            pass
                     else:
                         pass
-                else:
-                    pass
-                if not rectangle_found:
-                    self.focused_rect = None
-                    self.focused_label = ""
-                self.canvas.freeze()
-            except Exception as error:
-                print(f'FUNCTION update_highlight - error: {error}')
+                    if not rectangle_found:
+                        self.focused_rect = None
+                        self.focused_label = ""
+                    self.canvas.freeze()
+                except Exception as error:
+                    print(f'FUNCTION update_highlight - error: {error}')
     def handle_focus_change(self,el):
         # handle automatic element traversal
         if self.traversal_function != None:

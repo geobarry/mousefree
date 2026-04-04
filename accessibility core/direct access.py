@@ -15,8 +15,6 @@ retrieving = False
 
 mod = Module()
 
- 
-
 @mod.action_class
 class Actions:
     def safe_access(access_func: Callable,msg: str,time_limit: float = 1):
@@ -29,7 +27,8 @@ class Actions:
         else:
             retrieving = True
             try:
-                return access_func()
+                with actions.user.uia_lock(debug = False, name="safe_access", warn_hold_secs = 5):
+                    return access_func()
             except Exception as error:
                 print(f"{msg} encountered an error:\n {error}")
             finally:
