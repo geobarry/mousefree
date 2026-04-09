@@ -27,8 +27,7 @@ class Actions:
         else:
             retrieving = True
             try:
-                with actions.user.uia_lock(debug = False, name="safe_access", warn_hold_secs = 5):
-                    return access_func()
+                return access_func()
             except Exception as error:
                 print(f"{msg} encountered an error:\n {error}")
             finally:
@@ -63,7 +62,8 @@ class Actions:
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
             try:
-                el = ui.focused_element()
+                with actions.user.uia_lock():
+                    el = ui.focused_element()
                 if el:
                     return el
             except Exception as error:
@@ -318,21 +318,26 @@ class Actions:
                 elif prop_name.lower() == "provider_description":
                     return el.provider_description
                 elif prop_name.lower() == "rect":
-                    return el.rect
+                    with actions.user.uia_lock():
+                        return el.rect
                 elif prop_name.lower() == "rect.x":
-                    rect = el.rect
+                    with actions.user.uia_lock():
+                        rect = el.rect
                     if rect:
                         return el.rect.x
                 elif prop_name.lower() == "rect.y":
-                    rect = el.rect
+                    with actions.user.uia_lock():
+                        rect = el.rect
                     if rect:
                         return el.rect.y
                 elif prop_name.lower() == "rect.width":
-                    rect = el.rect
+                    with actions.user.uia_lock():
+                        rect = el.rect
                     if rect:
                         return el.rect.width
                 elif prop_name.lower() == "rect.height":
-                    rect = el.rect
+                    with actions.user.uia_lock():
+                        rect = el.rect
                     if rect:
                         return el.rect.height
 

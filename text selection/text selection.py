@@ -81,14 +81,31 @@ def find_target(trg: re.Pattern,
     # Handle case of no TextRange input
     print(f'text_range: {text_range}')
     if text_range is None:
-        el = actions.user.safe_focused_element()
-        if el:
-            pattern_list = actions.user.el_prop_val(el,'patterns')
-            if pattern_list:
-                if "Text" not in pattern_list:
-                    print("Error in function find_target: focused element does not have text pattern")
-                    return None
-                text_range = actions.user.el_prop_val(el,'text_selection')
+        # actions.sleep(0.05)
+        # el = ui.focused_element()
+        # if el:
+            # pattern_list=el.patterns
+            # pattern_list = actions.user.el_prop_val(el,'patterns')
+            # if pattern_list:
+                # if "Text" not in pattern_list:
+                    # print("Error in function find_target: focused element does not have text pattern")
+                    # return None
+                # pattern = el.text_pattern
+                # if pattern:
+                    # selection_list = pattern.selection
+                    # if selection_list:
+                        # if len(selection_list) > 0:
+                            # text_range = selection_list[0]
+
+            # OLD WAY, DELETE AFTER CONFIDENT IN uia_lock obviating need for safe access framework
+            el = actions.user.safe_focused_element()
+            if el:
+                pattern_list = actions.user.el_prop_val(el,'patterns')
+                if pattern_list:
+                    if "Text" not in pattern_list:
+                        print("Error in function find_target: focused element does not have text pattern")
+                        return None
+                    text_range = actions.user.el_prop_val(el,'text_selection')
     print(f'text_range: {text_range.text}')
     if text_range:
         # Use regex to find exact match text and its position
@@ -183,6 +200,7 @@ def win_dyn_nav_trg(search_dir: str) -> str:
     print(f"*win_dyn_nav_trg*")
     use_winax = settings.get("user.winax_text")
     if use_winax:
+
         el = actions.user.safe_focused_element()
         print(f'el: {el}')
         if el:
