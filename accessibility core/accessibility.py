@@ -58,13 +58,11 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
         if prop in ["AND","OR"]:
             return match(el,trg_val,prop)
         elif prop == "clickable":
-            clickable = True
             try:
                 loc = el.clickable_point
+                return True
             except:
-                clickable = False
-            finally:
-                return trg_val == clickable
+                return False
         else:
             try:
                 prop_val = actions.user.el_prop_val(el, prop, as_text = True)
@@ -178,9 +176,8 @@ class Actions:
     def element_match(el: ax.Element, prop_list: list, conjunction: str="AND", mod_func: Callable = None, verbose: bool = False):
         """Returns true if the element matches all of the properties in the property dictionary"""
         if el:
-            actions.user.el_tracker_pause_updating()
-            r = match(el,prop_list,mod_func,verbose)
-            actions.user.el_tracker_resume_updating()
+            with actions.user.tracking_paused():
+                r = match(el,prop_list,mod_func,verbose)
             return r
         else:
             return False
@@ -282,84 +279,84 @@ class Actions:
             return None
     def matching_elements(prop_list: list, max_level: int = 12, root: ax.Element = None):
         """Returns a list of all UI elements under the root that match the property list"""
-        actions.user.el_tracker_pause_updating()
-        r = []
-        # get list of elements
-        if root == None:
-            root = actions.user.window_root()
-        elements = list(get_every_child(root,max_level = max_level))       
-        # search for match
-        for el in elements:
-            # print(el.class_name)
-            try:
-                if actions.user.element_match(el,prop_list):
-                    r.append(el)
-            except Exception as error:
-                print(f'error: {error}')
-        actions.user.el_tracker_resume_updating()
-        return r  
+        with actions.user.tracking_paused():
+            r = []
+            # get list of elements
+            if root == None:
+                root = actions.user.window_root()
+            elements = list(get_every_child(root,max_level = max_level))       
+            # search for match
+            for el in elements:
+                # print(el.class_name)
+                try:
+                    if actions.user.element_match(el,prop_list):
+                        r.append(el)
+                except Exception as error:
+                    print(f'error: {error}')
+            return r  
     def matching_children(el: ax.Element, prop_list: list,verbose: bool = False):
         """Returns a list of children of the input element that matches the property list"""
         r = []
         if el:
-            children=actions.user.el_prop_val(el,'children')
-            if children:
-                for child in children:
-                    if actions.user.element_match(child,prop_list,verbose=verbose):
-                        r.append(child)
+            with actions.user.tracking_paused():
+                children=actions.user.el_prop_val(el,'children')
+                if children:
+                    for child in children:
+                        if actions.user.element_match(child,prop_list,verbose=verbose):
+                            r.append(child)
         return r
     def matching_child(el: ax.Element,prop_list: list):
         """Returns the child of the input element that matches the property list"""
         if el:
-            children=actions.user.el_prop_val(el,'children')
-            if children:
-                for child in children:
-                    if actions.user.element_match(child,prop_list):
-                        return child
+            with actions.user.tracking_paused():
+                children=actions.user.el_prop_val(el,'children')
+                if children:
+                    for child in children:
+                        if actions.user.element_match(child,prop_list):
+                            return child
         return None
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, time_limit: float = 5,verbose: bool = False):
         """Returns the matching descendants of the input element at the given generation, 
         or continues the search up to the given number of extra generations"""
-        actions.user.el_tracker_pause_updating()
-        if verbose:
-            print("FUNCTION matching_descendants...")
-            print(f'root: {el} prop_list: {prop_list}')
-        cur_level = 0
-        el_id = -1
-        parent_id = -1
-        r = []
-        Q = []
-        Q.append((cur_level,parent_id,el))    
-        stopper = actions.user.stopper(time_limit)
-        while len(Q) > 0:        
-            cur_level,parent_id,el = Q.pop(0)
-            if cur_level <= generation + extra_gen:
-                el_id += 1
-                try:
-                    if el:
-                        children = el.children
-                        if verbose:
-                            print(f'children: {children}')
-                        if children:
-                            for child in children:
-                                if stopper.over():
-                                    if verbose:
-                                        print(f"FUNCTION: matching_descendants - stopping due to stopper overage")
-                                    return 
-                                stopper.increment()
-                                if verbose:
-                                    msg = "|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list])
-                                    print(f'cur_level: {cur_level} generation: {generation} {msg}')
-                                Q.append((cur_level+1,el_id,child))        
-                                if cur_level+1 >= generation:
-                                    if actions.user.element_match(child,prop_list,verbose = False):
+        with actions.user.tracking_paused():
+            if verbose:
+                print("FUNCTION matching_descendants...")
+                print(f'root: {el} prop_list: {prop_list}')
+            cur_level = 0
+            el_id = -1
+            parent_id = -1
+            r = []
+            Q = []
+            Q.append((cur_level,parent_id,el))    
+            stopper = actions.user.stopper(time_limit)
+            while len(Q) > 0:        
+                cur_level,parent_id,el = Q.pop(0)
+                if cur_level <= generation + extra_gen:
+                    el_id += 1
+                    try:
+                        if el:
+                            children = el.children
+                            if verbose:
+                                print(f'children: {children}')
+                            if children:
+                                for child in children:
+                                    if stopper.over():
                                         if verbose:
-                                            print("element matches...")
-                                        r.append(child)
-                except Exception as error:
-                    print(f'error: {error}')
-        actions.user.el_tracker_resume_updating()
-        return r
+                                            print(f"FUNCTION: matching_descendants - stopping due to stopper overage")
+                                        return 
+                                    stopper.increment()
+                                    if verbose:
+                                        msg = "|".join([f"{x[0]}:{actions.user.el_prop_val(child,x[0])}" for x in prop_list])
+                                        print(f'cur_level: {cur_level} generation: {generation} {msg}')
+                                    Q.append((cur_level+1,el_id,child))        
+                                    if cur_level+1 >= generation:
+                                        if actions.user.element_match(child,prop_list,verbose = False):
+                                            if verbose:
+                                                print("element matches...")
+                                            r.append(child)
+                    except Exception as error:
+                        print(f'error: {error}')
+            return r
     def matching_descendant(el: ax.Element, prop_list: list, gen: int, extra_gen: int = 0, verbose: bool = False):
         """Returns the descendant of the input element that matches the property list"""
         el_list = actions.user.matching_descendants(el,prop_list,gen,extra_gen,verbose = verbose)
@@ -369,103 +366,98 @@ class Actions:
         return None
     def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, time_limit: float = 5, verbose: bool = False):
         """Returns the first ancestor that meets prop_list conditions, including input element, or None if none is found"""
-        actions.user.el_tracker_pause_updating()
-        if max_gen == -1:
-            max_gen == 25
-        el_list = [el]
-        i = 0
-        stopper = actions.user.stopper(time_limit)
-        while True:
-            try:
-                if el:
-                    if verbose:
-                        msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
-                        print(f'msg: {msg}')
-                    if actions.user.element_match(el,prop_list):
-                        actions.user.el_tracker_resume_updating()
-                        return el
-                    if stopper.over():
-                        print("MATCHING_ANCESTOR time is over")
-                        actions.user.el_tracker_resume_updating()
-                        return 
-                    el = actions.user.el_prop_val(el,"parent")
+        with actions.user.tracking_paused():
+            if max_gen == -1:
+                max_gen == 25
+            el_list = [el]
+            i = 0
+            stopper = actions.user.stopper(time_limit)
+            while True:
+                try:
+                    if el:
+                        if verbose:
+                            msg = ' | '.join(f"{prop[0]}: {actions.user.el_prop_val(el,prop[0])}" for prop in prop_list)
+                            print(f'msg: {msg}')
+                        if actions.user.element_match(el,prop_list):
+                            return el
+                        if stopper.over():
+                            print("MATCHING_ANCESTOR time is over")
+                            return 
+                        el = actions.user.el_prop_val(el,"parent")
 
-                else:
-                    actions.user.el_tracker_resume_updating()
+                    else:
+                        return None
+                except Exception as error:
+                    print("FUNCTION matching_ancestor: ancestor not found :(")
+                    print(f'error: {error}')
                     return None
-            except Exception as error:
-                print("FUNCTION matching_ancestor: ancestor not found :(")
-                print(f'error: {error}')
-                actions.user.el_tracker_resume_updating()
-                return None
     def find_el_by_prop_seq(prop_seq: list, root: ax.Element = None, extra_search_levels: int = 2, time_limit: float = 5, ordinal: int = 1, verbose: bool = False):
         """Finds element by working down from root"""
-        actions.user.el_tracker_pause_updating()
-        if verbose:
-            print("FUNCTION: actions.user.find_el_by_prop_seq()")
-        if root == None:
-            root = actions.user.window_root()
-        el_list = [root]
-        def perform_search(el_list,level,verbose = False):
-            valid_matches = []        
-            # print(f'el_list: {el_list}')
-            # print(f'prop_list: {prop_list}')
-            for el in el_list:
-                x = actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
-                if x:
-                    valid_matches += x
-            return valid_matches
-        stopper = actions.user.stopper(time_limit)
-        if verbose:
-            print(f'FUNCTION find_el_by_prop_seq() root: {root}')
-        stopper = actions.user.stopper()
-        for prop_list in prop_seq:
-            # NEW METHOD TO SEARCH EXTRA LEVELS MORE EFFICIENTLY
-            valid_matches = []
-            extra_levels = 0
-            parent_list = el_list
-            search_n=0
-            parent_n=len(parent_list)
-            while len(valid_matches) == 0 and extra_levels <= extra_search_levels:
-                next_parents = []
-                for parent in parent_list:
-                    children = actions.user.el_prop_val(parent,'children')
-                    if children:
-                        search_n += len(children)
-                        next_parents += children
-                        for child in children:
-                            if stopper.over():
-                                return
-                            if actions.user.element_match(child,prop_list):
-                                valid_matches.append(child)
-                parent_list = next_parents
-                extra_levels += 1            
-            if len(valid_matches) == 0:
-                if verbose:
-                    print(f"Could not find {prop_list}")
-                    
-                    for el in el_list:
-                        print(f'el: {el}')
-                        children = actions.user.el_prop_val(el,"children")
-                        print(f'children: {children}')
+        with actions.user.tracking_paused():
+            if verbose:
+                print("FUNCTION: actions.user.find_el_by_prop_seq()")
+            if root == None:
+                root = actions.user.window_root()
+            el_list = [root]
+            def perform_search(el_list,level,verbose = False):
+                valid_matches = []        
+                # print(f'el_list: {el_list}')
+                # print(f'prop_list: {prop_list}')
+                for el in el_list:
+                    x = actions.user.matching_descendants(el,prop_list,level,verbose = verbose)
+                    if x:
+                        valid_matches += x
+                return valid_matches
+            stopper = actions.user.stopper(time_limit)
+            if verbose:
+                print(f'FUNCTION find_el_by_prop_seq() root: {root}')
+            stopper = actions.user.stopper()
+            for prop_list in prop_seq:
+                # NEW METHOD TO SEARCH EXTRA LEVELS MORE EFFICIENTLY
+                valid_matches = []
+                extra_levels = 0
+                parent_list = el_list
+                search_n=0
+                parent_n=len(parent_list)
+                while len(valid_matches) == 0 and extra_levels <= extra_search_levels:
+                    next_parents = []
+                    for parent in parent_list:
+                        children = actions.user.el_prop_val(parent,'children')
                         if children:
+                            search_n += len(children)
+                            next_parents += children
                             for child in children:
-                                msg = actions.user.element_information(child,prop_list = ["name","class_name","control_type","automation_id","printout"])
-                                print(f'child: {msg}')
+                                if stopper.over():
+                                    return
+                                if actions.user.element_match(child,prop_list):
+                                    valid_matches.append(child)
+                    parent_list = next_parents
+                    extra_levels += 1            
+                if len(valid_matches) == 0:
+                    if verbose:
+                        print(f"Could not find {prop_list}")
                         
-                el_list = []
-                break        
+                        for el in el_list:
+                            print(f'el: {el}')
+                            children = actions.user.el_prop_val(el,"children")
+                            print(f'children: {children}')
+                            if children:
+                                for child in children:
+                                    msg = actions.user.element_information(child,prop_list = ["name","class_name","control_type","automation_id","printout"])
+                                    print(f'child: {msg}')
+                            
+                    el_list = []
+                    break        
+                else:
+                    el_list = valid_matches
+                    if verbose:
+                        print(f"found {prop_list} (searched {search_n} elements from {parent_n} parents)")
+            if verbose:
+                print(f"found {len(el_list)} matches")
+            if len(el_list) >= ordinal:
+                return el_list[ordinal-1]
             else:
-                el_list = valid_matches
-                if verbose:
-                    print(f"found {prop_list} (searched {search_n} elements from {parent_n} parents)")
-        if verbose:
-            print(f"found {len(el_list)} matches")
-        actions.user.el_tracker_resume_updating()
-        if len(el_list) >= ordinal:
-            return el_list[ordinal-1]
-        else:
-            return None
+                return None
     def find_el_by_dotted_str(dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, extra_prop_seq: list = None, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
         """Finds accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
         prop_seq = actions.user.prop_seq_from_dotted_str(dotted_str,prop_name)
@@ -493,7 +485,7 @@ class Actions:
             el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = verbose)
             if el:
                 actions.user.act_on_element(el,action)
-    def act_on_el_by_dotted_str(action: str, dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: str = 1, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
+    def act_on_el_by_dotted_str(action: str, dotted_str: str, extra_prop_seq_str: str = None, prop_name: str = "automation_id", idx_of_1st_el: int = 1, time_limit: float = 5, ordinal: int = 1, verbose: bool = True):
         """Acts on accessibility element by navigating from window root to element. For apps that use dotted string convention, e.g. QGIS, OBS Studio"""
         el = actions.user.find_el_by_dotted_str(dotted_str,extra_prop_seq_str,prop_name,idx_of_1st_el,time_limit,ordinal,verbose)
         if el:

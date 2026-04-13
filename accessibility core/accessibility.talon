@@ -24,7 +24,6 @@ and mode: user.zen
 
 stop [(it|repeating)]:
 	user.stop_repeating()
-	user.terminate_traversal()
 
 # SCROLLING
 scroll (element|item) to top: user.scroll_el_to_top()

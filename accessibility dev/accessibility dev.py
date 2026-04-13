@@ -47,7 +47,7 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
             
 @mod.action_class
 class Actions:
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False):
+    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False, txt_len: int = 120):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
         if not prop_list:
@@ -84,7 +84,7 @@ class Actions:
                 if el:
                     msg = str(actions.user.el_prop_val(el,prop,as_text = True))
                     if prop != "patterns":
-                        msg = msg[:50]
+                        msg = msg[:txt_len]
                     return msg
                 else:
                     return f"el_NONE"

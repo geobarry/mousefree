@@ -134,49 +134,47 @@ class Actions:
             return False
     def go_talon_menu(menu_path: str):
         """Opens up a specific talon setting; path should be labels in taskbar separated by commas"""
-        highlighting = actions.user.currently_highlighting()
-        labelling = actions.user.currently_labelling()
-        actions.user.auto_highlight(False)
-        actions.user.auto_label(False)
-        try:
-            root = winui.root_element()
-            if actions.user.invoke_taskbar_item("Talon"):
-                item_list = menu_path.split(",")
-                desktop = actions.user.root_element()
-                if desktop:
-                    prop_list = [("name","Context")]
-                    # try this a different way
-                    # root = desktop.find(name = "Context")[0]
-                    root = actions.user.matching_child(desktop,prop_list)
-                    if root:
-                        for i,item in enumerate(item_list):
-                            if item:
-                                if item != "":                
-                                    prop_list = [("name",item)]
-                                    
-                                    el = actions.user.matching_child(root,prop_list)
-                                    if el:
-                                        # we want to highlight element, but highlight will be hidden behind taskbar
-                                        actions.user.reset_element_tracker()
-                                        actions.user.act_on_element(el,'highlight')
-                                        if i == len(item_list) - 1:
+        with actions.user.tracking_paused():
+            try:
+                if actions.user.invoke_taskbar_item("Talon"):
+                    item_list = menu_path.split(",")
+                    desktop = actions.user.root_element()
+                    if desktop:
+                        prop_list = [("name","Context")]
+                        # try this a different way
+                        # root = desktop.find(name = "Context")[0]
+                        actions.sleep(1)
+                        root = actions.user.matching_child(desktop,prop_list)
+                        print(f'desktop: {desktop}')
+                        print(f'root: {root}')
+                        print(f'menu_path: {menu_path}')
+                        return
+                        if root:
+                            for i,item in enumerate(item_list):
+                                if item:
+                                    if item != "":                
+                                        prop_list = [("name",item)]
+                                        
+                                        el = actions.user.matching_child(root,prop_list)
+                                        if el:
+                                            # we want to highlight element, but highlight will be hidden behind taskbar
+                                            actions.user.reset_element_tracker()
+                                            actions.user.act_on_element(el,'highlight')
+                                            if i == len(item_list) - 1:
+                                                actions.sleep(0.5)
+                                            else:
+                                                actions.sleep(0.25)
+                                            actions.user.clear_highlights()
+                                            actions.user.act_on_element(el,"invoke")
                                             actions.sleep(0.5)
+                                            actions.key("down")
+                                            desktop = actions.user.root_element()
+                                            root = actions.user.matching_child(desktop,prop_list)
                                         else:
-                                            actions.sleep(0.25)
-                                        actions.user.clear_highlights()
-                                        actions.user.act_on_element(el,"invoke")
-                                        actions.sleep(0.1)
-                                        actions.key("down")
-                                        desktop = actions.user.root_element()
-                                        root = actions.user.matching_child(desktop,prop_list)
-                                    else:
-                                        return 
-        except Exception as error:
-            print(f"error in go_talon_menu: {error}")
-        finally:
-            # return to original highlighting/labelling state
-            actions.user.auto_highlight(highlighting)
-            actions.user.auto_label(labelling)
+                                            return 
+            except Exception as error:
+                print(f"error in go_talon_menu: {error}")
+
     def invoke_talon_update_button(trg_btn: str):
         """Navigates to the desired button using keyboard keys, because there are too many elements at the same level of the hierarchy to navigate down from the window root"""
         print(f'trg_btn: {trg_btn}')

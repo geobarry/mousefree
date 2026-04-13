@@ -3,8 +3,11 @@ from talon.windows import ax as ax
 from talon.types import Point2d as Point2d, rect as rect
 from talon.skia import  Paint
 from typing import Callable
+from contextlib import contextmanager
+
 import time
 import inspect
+
 
 mod = Module()
 
@@ -17,8 +20,12 @@ black_list = [] # ["Microsoft Excel"]
 prior_state = (True,False)
 
 
+# TRACKING
+_pause_count = 0
+
 class element_tracker:
     def __init__(self):        
+        print("initializing element tracker...")
         self.canvas = None
         rect = actions.user.get_screen_bounds()
         self.canvas = canvas.Canvas.from_rect(rect)
@@ -28,18 +35,13 @@ class element_tracker:
         self.labels = []
         self.auto_highlight = True
         self.auto_label = False
-        self.traversal_function = None
-        print("initializing element tracker...")
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
         self.interval = 300
         self.accessibility_check_paused = False
-        self.blacklist = False
         self.job = None
-        ui.register("win_focus",self.determine_mode)
-        w=ui.active_window()
-        self.determine_mode(w)
+        self.init_cron()
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
         self.labels.append(label)
@@ -52,15 +54,12 @@ class element_tracker:
             self.canvas.freeze() # this forces canvas redraw
         except:
             pass
-        print(f"There are now {len(self.rectangles)} elements in highlight list")
     def clear_elements(self):
         self.rectangles = []
         self.labels = []
         self.canvas.freeze() # this forces canvas redraw
     def draw_canvas(self, canvas):
-        # return 
         try:
-            # print("DRAW_CANVAS")
             paint = canvas.paint
             paint.color = 'f3f'
             paint.style = paint.Style.STROKE
@@ -75,8 +74,7 @@ class element_tracker:
                             lbl = lbl[:50]
                         # determine label placement
                         # assume text dimensions
-                        lbl_wd = 600
-                        lbl_ht = 30
+                        lbl_wd,lbl_ht = 600,30
                         top_margin = rect.y
                         btm_margin = canvas.height - rect.y - rect.height
                         if top_margin > btm_margin:
@@ -85,123 +83,67 @@ class element_tracker:
                             y = min(rect.y + rect.height + 60, canvas.height - lbl_ht)
                         x = min(rect.x,canvas.width - lbl_wd)
                         actions.user.text_aliased(lbl,x,y,46,canvas)        
-            if len(self.rectangles) > 0:
-                # print(f"rectangles: {len(self.rectangles)}")
-                for idx in range(len(self.rectangles)):
-                    rect = self.rectangles[idx]
-                    # print(f'drawing rect: {rect}')
-                    canvas_rect = canvas.rect
-                    # print(f'canvas_rect: {canvas_rect}')
-                    # print(f'highlighted     rect: {rect}')
-                    lbl = self.labels[idx]
-                    highlight_element(rect,lbl,paint)
             if self.auto_highlight or self.auto_label:
                 highlight_element(self.focused_rect,self.focused_label,paint)
+            if len(self.rectangles) > 0:
+                for idx in range(len(self.rectangles)):
+                    rect = self.rectangles[idx]
+                    canvas_rect = canvas.rect
+                    lbl = self.labels[idx]
+                    highlight_element(rect,lbl,paint)
         except Exception as error:
             print(f'DRAW_CANVAS error: {error}')
     def disable(self):
         self.canvas.close()
         self.canvas = None
-    def determine_mode(self,w):
+        if self.job:
+            cron.cancel(self.job)
+    def init_cron(self):
         """determines whether to use cron or event handling to update"""
-        app=w.app
-        name = app.name
-        global black_list
-        if name in black_list:
-            print(f"app {name} on blacklist, using event handler...")
-            if self.job:
-                cron.cancel(self.job)
-            # this doesn't work to prevent stalls:
-            # ui.register("element_focus",self.handle_element_focus)
-        else:
-            print(f"app {name} is not on black list")
-            # ui.unregister("element_focus",self.update_highlight)
-            if self.job:
-                cron.cancel(self.job)
-            self.job = cron.interval(f"{self.interval}ms", self.update_element)
+        if self.job:
+            cron.cancel(self.job)
+        self.job = cron.interval(f"{self.interval}ms", self.update_highlight)
         for name, obj in inspect.getmembers(cron):
             if isinstance(obj,cron.Cron):
                 with obj.cond:
                     job_list=[job for job in obj.jobs if job not in obj.cancelled]
 
-    def update_element(self):
-        el=actions.user.safe_focused_element(time_limit=0.2)
-        if el:
-            self.update_highlight(el)
-    def handle_element_focus(self,el):
-        self.update_highlight(el)
-    def update_highlight(self,el):
+    def update_highlight(self):
         """Updates the focused element using windows accessibility"""
         if not self.accessibility_check_paused:
             try:
-                rectangle_found = False
-                if self.auto_highlight or self.auto_label:
-                    if el:
+                el=actions.user.safe_focused_element(time_limit=0.2)
+                if el:
+                    rectangle_found = False
+                    if self.auto_highlight or self.auto_label:
                         rect = actions.user.el_prop_val(el,"rect")
-                    if rect:
-                        rectangle_found = True
-                        if rect != self.focused_rect:
-                            self.focused_rect = rect
-                            if self.auto_label:
-                                self.focused_label = actions.user.el_prop_val(el,'name')
-                        if not self.auto_label:
-                            if self.focused_label != "":
-                                self.focused_label = ""
+                        if rect:
+                            rectangle_found = True
+                            if rect != self.focused_rect:
+                                self.focused_rect = rect
+                                if self.auto_label:
+                                    self.focused_label = actions.user.el_prop_val(el,'name')
+                            if not self.auto_label:
+                                if self.focused_label != "":
+                                    self.focused_label = ""
+                        else:
+                            pass
                     else:
                         pass
-                else:
-                    pass
-                if not rectangle_found:
-                    self.focused_rect = None
-                    self.focused_label = ""
-                self.canvas.freeze()
+                    if not rectangle_found:
+                        self.focused_rect = None
+                        self.focused_label = ""
+                    self.canvas.freeze()
             except Exception as error:
                 print(f'FUNCTION update_highlight - error: {error}')
-    def handle_focus_change(self,el):
-        # handle automatic element traversal
-        if self.traversal_function != None:
-            print("Running traversal function...")
-            self.traversal_function()
-        # handle auto highlight
-        print("HANDLE_FOCUS_CHANGE")
-        self.update_highlight(el)
-
-
-def handle_focus_change(el):
-    el_track.handle_focus_change(el)
-
-
-def check_app(app):
-#    el = ui.focused_element()
-    if el_track:
-        app = ui.active_app()
-        name = app.name
-        global prior_state
-        if name in black_list:
-            print(f"app {name} on blacklist, pausing highlighting...")
-            el_track.auto_highlight = False
-            el_track.auto_label = False
-            el_track.blacklist = True
-        else:
-            print(f"app {name} not on blacklist, resuming highlighting: {prior_state}")
-            el_track.auto_highlight = prior_state[0]
-            el_track.auto_label = prior_state[1]
-            el_track.blacklist = False
-
-#ui.register("element_focus",handle_focus_change)
-# ui.register("win_focus",check_app)
-# also can register app_activate
 
 el_track = None
 def on_ready():
     global el_track
     el_track = element_tracker()
-#    actions.user.auto_highlight(True)
 app.register("ready",on_ready)
-traversal_termination_function = None
 
 @mod.action_class
-
 class Actions:
     def auto_highlight(on: bool = True):
         """automatically highlight focused element"""
@@ -209,20 +151,29 @@ class Actions:
     def auto_label(on: bool = True):
         """automatically highlight and label focused element"""
         el_track.auto_label = on
-    def el_tracker_pause_updating():
-        """pauses checking current focused element, but keeps highlighting"""
-        if el_track:
-            el_track.accessibility_check_paused = True
-    def el_tracker_resume_updating():
-        """resumes checking current focused element, but keeps highlighting"""
-        if el_track:
-            el_track.accessibility_check_paused = False
+
+
     def currently_highlighting():
         """Returns boolean representing current highlighting state"""
         return el_track.auto_highlight
     def currently_labelling():
         """Returns bulling representing current labeling state"""
         return el_track.auto_label
+
+    def is_tracking_paused():
+        """Returns true if element tracker is paused"""
+        return _pause_count > 0
+
+    @contextmanager
+    def tracking_paused():
+        """Allows element tracker pausing with a with block"""
+        global _pause_count
+        _pause_count += 1
+        try:
+            yield
+        finally:
+            _pause_count -= 1
+
     def highlight_element(el: ax.Element, lbl: str = ""):
         """Highlight specified element, with optional label"""
         if el:
@@ -278,52 +229,6 @@ class Actions:
         global el_track
         del el_track
         el_track = element_tracker()
-
-    def initialize_traversal(traversal_function: Callable, 
-        sec_lim: float = 5,
-        max_iter: int = 500, 
-        delay: float = 0.015,
-        finish_function: Callable = None):
-        """initialize a traversal of windows accessibility elements; 
-        traversal_function should guarantee that actions.user.terminate_traversal 
-        will eventually be called or else use max_iter"""     
-        stopper = actions.user.stopper(sec_lim)        
-        global traversal_termination_function
-        traversal_termination_function = finish_function
-        def do_traversal(stopper):
-            print("FUNCTION do_traversal")
-            actions.sleep(delay)
-            if stopper.over():
-                del stopper
-                actions.user.terminate_traversal()
-                print("traversal stopped due to over time")
-            elif max_iter > -1 and el_track.traversal_count > max_iter:
-                del stopper
-                actions.user.terminate_traversal()
-                print("traversal stopped due to over count")
-            else:
-                el_track.traversal_count += 1
-                print("...continuing traversal...")
-                traversal_function()
-
-        el_track.traversal_count = 0
-        actions.mode.enable("user.slow_repeating")
-        actions.mode.disable("command")
-        el_track.traversal_function = lambda: do_traversal(stopper)
-        el_track.traversal_function()
-    def terminate_traversal():
-        """terminate the continued traversal using a key"""
-        actions.mode.enable("command")
-        actions.mode.disable("user.slow_repeating")
-            # return
-        el_track.traversal_count = 0
-        el_track.traversal_function = None
-        
-
-        global traversal_termination_function
-        if traversal_termination_function:
-            traversal_termination_function()
-            traversal_termination_function = None
     def mark_focused_element():
         """records the clickable point of the currently focused item"""
         print("FUNCTION: mark_focused_element")

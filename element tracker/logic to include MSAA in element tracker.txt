@@ -1,0 +1,86 @@
+import comtypes
+import comtypes.client
+from ctypes import POINTER, byref, c_long, c_void_p, windll
+from comtypes.gen.Accessibility import IAccessible
+
+# Load oleacc.dll
+oleacc = windll.oleacc
+
+# Win32 API for getting the foreground window
+from ctypes import windll
+GetForegroundWindow = windll.user32.GetForegroundWindow
+
+def get_msaa_focused_element():
+    """
+    Returns (name, rect) for the MSAA-focused element.
+    rect = (left, top, right, bottom)
+    Returns None if MSAA cannot determine focus.
+    """
+
+    hwnd = GetForegroundWindow()
+    if not hwnd:
+        return None
+
+    # Prepare COM pointers
+    acc_ptr = POINTER(IAccessible)()
+    child = c_void_p()
+
+    # Call MSAA: AccessibleObjectFromWindow
+    IID_IAccessible = IAccessible._iid_
+    res = oleacc.AccessibleObjectFromWindow(
+        hwnd,
+        0,  # OBJID_WINDOW
+        byref(IID_IAccessible),
+        byref(acc_ptr)
+    )
+
+    if res != 0 or not acc_ptr:
+        return None
+
+    acc = acc_ptr
+
+    # Get the focused child (could be a child ID or an IAccessible)
+    try:
+        focused = acc.accFocus
+    except:
+        return None
+
+    # Case 1: focused is a child ID (integer)
+    if isinstance(focused, int):
+        child_id = focused
+        name = acc.accName(child_id) or ""
+        rect = _get_msaa_location(acc, child_id)
+        return name, rect
+
+    # Case 2: focused is another IAccessible object
+    if isinstance(focused, comtypes.client.lazybind.Dispatch):
+        acc2 = focused._comobj
+        name = acc2.accName(0) or ""
+        rect = _get_msaa_location(acc2, 0)
+        return name, rect
+
+    return None
+
+
+def _get_msaa_location(acc, child_id):
+    """
+    Returns (left, top, right, bottom) for an MSAA element.
+    """
+    left = c_long()
+    top = c_long()
+    width = c_long()
+    height = c_long()
+
+    try:
+        acc.accLocation(byref(left), byref(top), byref(width), byref(height), child_id)
+        return (left.value, top.value, left.value + width.value, top.value + height.value)
+    except:
+        return None
+		
+elem = get_uia_focused_element()
+if not elem:
+    elem = get_msaa_focused_element()
+
+if elem:
+    name, rect = elem
+    highlight(rect)
