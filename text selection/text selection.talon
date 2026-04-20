@@ -22,8 +22,8 @@ and mode: user.zen
 #   Constructed targets work in all applications.
 
 # e.g. "GO BEFORE next 'hippopotamus'"
-go {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
-	user.winax_go_text(win_nav_target,before_or_after,ordinals or 1)
+[{user.text_search_unit}] go {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
+	user.winax_go_text(win_nav_target,before_or_after,ordinals or 1,text_search_unit or '')
 
 # e.g. "SELECT previous 'hippopotamus'"
 [{user.text_search_unit}] select [<user.ordinals>] <user.win_nav_target>: user.winax_select(win_nav_target,ordinals or 1,text_search_unit or '')

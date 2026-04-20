@@ -52,7 +52,7 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
                     print(f'prop_val: {prop_val}')
                     print(f"regex match: {re.match(trg_val,prop_val)}")
                 if prop_val != None:
-                    return re.match(trg_val,prop_val) != None
+                    return re.match(trg_val,str(prop_val)) != None
                 else:
                     return None
         if prop in ["AND","OR"]:

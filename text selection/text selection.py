@@ -504,14 +504,22 @@ class Actions:
 #                actions.edit.paste() # this sometimes inserts unwanted space character
                 actions.sleep(0.15)
         process_selection(phones_process,trg_and_dir,ordinal)
-    def winax_go_text(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1):
+    def winax_go_text(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1, expand_to_unit: str = None):
         """Navigates to text using windows accessibility pattern, returns True if successful"""
         def go_process(orig_text):
             if before_or_after.upper() == "BEFORE":
                 actions.key("left")
             else:
                 actions.key("right")
-        process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
+        r=process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
+        print(f'r: {r}')
+        if expand_to_unit:
+            r = actions.user.winax_select_unit(expand_to_unit)
+            if r:
+                if before_or_after.upper() == "BEFORE":
+                    actions.key("left")
+                else:
+                    actions.key("right")
     def winax_insert_text(txt: str,before_or_after: str,ordinals: int, trg_and_dir: tuple):
         """inserts text before or after target"""
         def insert_text(orig_text):
@@ -659,6 +667,7 @@ class Actions:
                 elif unit == "Paragraph":
                     actions.edit.extend_paragraph_start()
                     actions.edit.extend_paragraph_end()
+                return actions.edit.selected_text()
 # settings
     def winax_text(use_ax: bool = True):
         """If true, uses windows accessibility for text selection"""
