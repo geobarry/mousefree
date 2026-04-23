@@ -219,11 +219,6 @@ class Actions:
         """Removes all ui elements from the highlight list"""
         el_track.clear_elements()
 
-    def focused_element():
-        """manages windows focused element retrieval;
-           places request only if there is no other request in process;
-           returns currently focused element"""
-        return el_track.focused_element
     def reset_element_tracker():
         """deletes the element tracker and creates a new one. """
         global el_track

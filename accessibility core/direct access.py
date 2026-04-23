@@ -10,6 +10,7 @@ from contextlib import redirect_stdout
 from talon.types import Point2d as Point2d
 from typing import Callable
 import io
+import time
 
 retrieving = False
 
@@ -27,7 +28,20 @@ class Actions:
         else:
             retrieving = True
             try:
-                return access_func()
+                with actions.user.tracking_paused():
+                    with actions.user.uia_lock():
+                        start_time=time.perf_counter()
+                        app = ui.active_app()
+                        app_name=app.name if app else "unknown"
+                        
+                        try:
+                            return access_func()
+                        finally:
+                            finish_time=time.perf_counter()
+                            duration=finish_time - start_time
+                            if duration > 0.05:
+                                print(f"[UIA-START] {msg} app={app_name} duration={duration:.3f}s")
+                                
             except Exception as error:
                 print(f"{msg} encountered an error:\n {error}")
             finally:
@@ -62,8 +76,7 @@ class Actions:
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
             try:
-                with actions.user.uia_lock():
-                    el = ui.focused_element()
+                el = ui.focused_element()
                 if el:
                     return el
             except Exception as error:
