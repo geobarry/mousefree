@@ -39,7 +39,7 @@ class Actions:
                         finally:
                             finish_time=time.perf_counter()
                             duration=finish_time - start_time
-                            if duration > 0.05:
+                            if duration > 1:
                                 print(f"[UIA-START] {msg} app={app_name} duration={duration:.3f}s")
                                 
             except Exception as error:
@@ -77,8 +77,7 @@ class Actions:
         def access_func():
             try:
                 el = ui.focused_element()
-                if el:
-                    return el
+                return el
             except Exception as error:
                 print("FUNCTION safe_focused_element could not retrieve element due to error")
                 print(f'error: {error}')
