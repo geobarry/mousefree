@@ -23,8 +23,8 @@ class Actions:
         global retrieving
         actions.user.wait_for_access(time_limit)
         if retrieving:
-            pass
-            # print(f"{msg}: unable to retrieve element because another retrieval is in process")
+            # pass
+            print(f"{msg}: unable to retrieve element because another retrieval is in process")
         else:
             retrieving = True
             try:

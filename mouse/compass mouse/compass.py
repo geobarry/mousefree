@@ -7,7 +7,7 @@ import math, time, random
 mode_label = {0:'none',1:'tiny',2:'light',3:'medium',4:'heavy'}
 compass_display_modes = {'heavy':4,'medium':3,'light':2,'tiny':1,'none':0}
 resting_display_mode = 0
-update_interval = 30
+update_interval = 8
 fade_time = 10000 # five seconds
 
 def f_distance(from_pos,to_pos):
