@@ -106,9 +106,7 @@ class compass:
         # distance is minimum of vertical and horizontal distances
         return min(vrt_dist,hz_dist)
     def draw_canvas(self, canvas):
-
         paint = canvas.paint
-#        paint.antialias = True
         paint.color = 'fff'
         paint.font.size = 36
         rect = canvas.rect
