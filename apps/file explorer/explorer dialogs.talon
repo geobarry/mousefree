@@ -34,6 +34,8 @@ folder open {user.dynamic_folder}$: user.explorer_process_item(dynamic_folder,"f
 # FILE ACTIONS: open, select, cut, copy, delete
 ^file {user.explorer_action} {user.dynamic_file}$: user.explorer_process_item(dynamic_file,"file",explorer_action)
 ^folder {user.explorer_action} {user.dynamic_folder}$: user.explorer_process_item(dynamic_folder,"folder",explorer_action)
-
+{user.file_ext} {user.explorer_action} {user.dynamic_file_with_ext}$: 
+	print("talon file: {dynamic_file_with_ext}")
+	user.explorer_process_item(dynamic_file_with_ext,"file",explorer_action)
 
 
