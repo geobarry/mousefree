@@ -6,7 +6,7 @@ report mouse location: user.report_mouse_location()
 # RESULTS ARE COPIED TO CLIPBOARD FOR PASTING INTO SPREADSHEET
 ^copy focused element information$: user.copy_focused_element_to_clipboard()
 ^copy registered element information$: user.copy_registered_element_to_clipboard()
-^copy focused element descendants$: user.copy_focused_element_descendants()
+
 
 
 ^copy focused element {user.element_property} sequence$: user.copy_focused_element_sequence(element_property)
@@ -15,6 +15,19 @@ report mouse location: user.report_mouse_location()
 ^copy mouse element information$: user.copy_mouse_elements_to_clipboard()
 ^copy {user.nav_key} element information$: user.copy_elements_accessible_by_key(nav_key)
 ^copy {user.nav_key} <number> elements$: user.copy_elements_accessible_by_key(nav_key,number,false)
+
+# DESCENDANTS
+^copy focused element [level <number>] descendants$: user.copy_element_descendants("focused",0,number or 5)
+^copy focused element parent [level <number>] descendants$: user.copy_element_descendants("focused",1,number or 5)
+^copy focused element grandparent [level <number>] descendants$: user.copy_element_descendants("focused",2,number or 5)
+^copy focused element great grandparent [level <number>] descendants$: user.copy_element_descendants("focused",3,number or 5)
+^copy focused element siblings$: user.copy_element_descendants("focused",1,1)
+
+^copy mouse element [level <number>] descendants: user.copy_element_descendants("mouse",0,number or 5)
+^copy mouse element parent [level <number>] descendants$: user.copy_element_descendants("mouse",1,number or 5)
+^copy mouse element grandparent [level <number>] descendants$: user.copy_element_descendants("mouse",2,number or 5)
+^copy mouse element great grandparent [level <number>] descendants$: user.copy_element_descendants("mouse",3,number or 5)
+^copy mouse element siblings$: user.copy_element_descendants("mouse",1,1)
 
 # ANCESTOR SEQUENCES
 ^copy focused element {user.element_property} {user.element_property} and {user.element_property} sequence$:
@@ -27,7 +40,6 @@ report mouse location: user.report_mouse_location()
 
 # DESCENDANT SEQUENCES
 ^copy focused element descendent sequences: user.copy_focused_element_descendant_sequences()
-^copy mouse element descendants: user.copy_mouse_element_descendants()
 
 # ANCESTOR LISTS
 ^copy focused element ancestors$: user.copy_focused_element_ancestors()

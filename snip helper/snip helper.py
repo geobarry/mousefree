@@ -11,11 +11,20 @@ mod = Module()
 
 snip_delay = 3
 
+def expand_rect(rect: Rect, px: int):
+    """Returns the original rectangle expanded by the given number of pixels"""
+    rect.x = rect.x-px
+    rect.y = rect.y-px
+    rect.width = rect.width + px * 2
+    rect.height = rect.height + px * 2
+    return rect
 @mod.action_class
 class Actions:
-    def snip_rect(rect: Rect):
+    def snip_rect(rect: Rect, expand_by: int = 0):
         """performs a screen capture of given rectangle and copies to clipboard"""
         actions.sleep(2.5)
+        if expand_by != 0:
+            rect=expand_rect(rect,expand_by)
         ctrl.mouse_move(rect.x,rect.y)
         actions.key("super-shift-s")
         actions.sleep(snip_delay)
@@ -27,9 +36,9 @@ class Actions:
     def snip_window():
         """copies current window capture to clipboard"""
         actions.user.snip_rect(winui.active_window().rect)
-    def snip_element():
-        """copies the currently focused element capture to clipboard"""
-        actions.user.snip_rect(ax.get_focused_element().rect)
+    def snip_element(bf: int = 0):
+        """copies the currently focused element capture to clipboard, with optional buffer"""
+        actions.user.snip_rect(ax.get_focused_element().rect,bf)
     def save_rect(pt1: tuple = None, pt2: tuple = None, pos: int = -1):
         """records a rectangle for snipping"""
         # get first point

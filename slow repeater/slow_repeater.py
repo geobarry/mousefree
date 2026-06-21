@@ -117,12 +117,9 @@ class Actions:
         """Terminate Immediately"""
         repeater_object.ms = reaction_time + 1
         actions.user.stop_repeating()
-    def repeat_faster(ordinal: int = 1):
+    def repeat_change_speed(ordinal: int = 1.5):
         """Reduce repeat interval"""
-        repeater_object.ms = max(repeater_object.ms-speed_change*ordinal,minimum_repeat_interval)
-    def repeat_slower(ordinal: int = 1):
-        """Increase repeat interval"""
-        repeater_object.ms = max(repeater_object.ms+speed_change*ordinal,minimum_repeat_interval)
+        repeater_object.ms = max(repeater_object.ms/ordinal,minimum_repeat_interval)
     def jiggle(key: str): 
         """Presses a key followed by its opposite."""
         if key in opposites.keys():

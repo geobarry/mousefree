@@ -47,6 +47,25 @@ def depth_first_tree(el: ax.Element, max_level: int = 7):
             
 @mod.action_class
 class Actions:
+    def standard_element(el_or_keyword: ax.Element|str, parent_lvl: int = 0):
+        """Provides a standard way of referring to a commonly accessed element;use keywords 'focused' or 'mouse'"""
+        if not isinstance(el_or_keyword,str):
+            el=el_or_keyword
+        elif el_or_keyword.lower() == "focused":
+            el=actions.user.safe_focused_element()
+        elif el_or_keyword.lower() == "mouse":
+            pos = ctrl.mouse_pos()
+            el = ui.element_at(pos[0],pos[1])
+        if el:
+            level=0
+            while parent_lvl > level:
+                level += 1
+                parent=actions.user.el_prop_val(el,'parent')
+                if parent:
+                    el=parent
+                else:
+                    return
+            return el
     def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False, txt_len: int = 120):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
@@ -57,20 +76,20 @@ class Actions:
                             "patterns","access_key",
                             "text","value",
                             "is_keyboard_focusable","is_enabled",
-                            "rect.height","legacy.name","legacy.description"
+                            "legacy.name","legacy.description"
                         ]
         other_prop = [
                         "clickable_point",
                         "rect.x","rect.y",
-                        "rect.width",
-                    "window_handle","pid","access_key","has_keyboard_focus",
-                    "children","is_control_element","is_content_element",
-                    "item_type","item_status",
-                    "provider_description",
-                    "value.is_read_only",
-                    "legacy.value","legacy.selection",
-                    "value","text"
-                ]
+                        "rect.width","rect.height",
+                        "window_handle","pid","access_key","has_keyboard_focus",
+                        "children","is_control_element","is_content_element",
+                        "item_type","item_status",
+                        "provider_description",
+                        "value.is_read_only",
+                        "legacy.value","legacy.selection",
+                        "value","text"
+                    ]
         if extra_props:
             prop_list += other_prop
         # Construct headers
@@ -174,15 +193,14 @@ class Actions:
         clip.set_text(msg + "\n" + "\n".join(messages))
         print(f"{len(el_info)} elements in tree...")
         print(f'verbose: {verbose}')
-    def copy_focused_element_descendants(levels: int = 12):
+    def copy_element_descendants(el_or_keyword: ax.Element|str, parent_lvl: int = 0, levels: int = 12):
         """Copies information about currently focused element and children to the clipboard"""
-        el = actions.user.safe_focused_element()
-        actions.user.copy_elements_to_clipboard(levels,root = el)
-    def copy_mouse_element_descendants(levels: int = 12):
-        """Copies information about current mouse element and children to the clipboard"""
-        pos = ctrl.mouse_pos()
-        # get element designated by windows accessibility
-        el = ui.element_at(pos[0],pos[1])
+        el = actions.user.standard_element(el_or_keyword,parent_lvl)
+        print("COPY ELEMENT DESCENDANTS")
+        print(f'el_or_keyword: {el_or_keyword}')
+        print(f'parent_lvl: {parent_lvl}')
+        print(f'el: {el}')
+        print(f'descendent levels: {levels}')
         actions.user.copy_elements_to_clipboard(levels,root = el)
     def element_ancestors(el: ax.Element, max_gen: int = -1):
         """Returns a list of element ancestors including current element"""
@@ -308,6 +326,7 @@ class Actions:
         print(f'el: {el}')
         if el:
             actions.user.copy_descendant_sequences(el,props,include_patterns)
+
     def debug_app_window(hdr: str):
         """prints out various information about the active window, app, etc."""
         print(f'hdr: {hdr}')

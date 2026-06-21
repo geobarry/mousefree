@@ -5,7 +5,7 @@
 	user.start_key_repeat("{key}",number*100)
 
 #short cut for common intervals
-<user.key> {user.slow_repeater_speed_word} [repeat]$:
+{user.slow_repeater_speed_word} repeat$:
 	user.start_key_repeat("{key}",slow_repeater_speed_word)
 
 {user.slow_repeater_speed_word} repeat$:
