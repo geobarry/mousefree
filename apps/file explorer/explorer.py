@@ -41,7 +41,7 @@ def retrieve_item(name: str, item_type: str = "file"):
         [("class_name","UIItemsView")]
     ]        
     item_list = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
-    print(f"retrieve_item")
+    print(f'item_list: {item_list}')
     if item_list:
         prop_list=[("name",name)] # ("class_name","UIItem")
         find_by_accessibility = lambda: actions.user.matching_child(item_list,prop_list)
@@ -103,11 +103,15 @@ def current_folder_from_menu():
             ]
             el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
             if el:
+                actions.user.act_on_element(el,'select')
+                actions.sleep(0.3)
                 actions.user.act_on_element(el,'invoke')
                 actions.sleep(0.2)
-                path = clip.text().strip('"')
+                path = clip.text()
+                print(f'path: {path}')
                 # path is to item, so get parent folder
                 if path:
+                    path=path.strip('"')
                     path = os.path.dirname(path)
                 # clean up UI
                 actions.key("esc")

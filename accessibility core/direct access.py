@@ -18,42 +18,52 @@ mod = Module()
 
 @mod.action_class
 class Actions:
-    def safe_access(access_func: Callable,msg: str,time_limit: float = 1):
+    def safe_access(access_func: Callable, msg: str, time_limit: float = 2, use_threading: bool = True, debug_name: str=""):
         """Returns the value of access_func or None if in the middle of retrieving"""
         global retrieving
         actions.user.wait_for_access(time_limit)
+
         if retrieving:
-            # pass
             print(f"{msg}: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
-            try:
-                with actions.user.tracking_paused():
-                    with actions.user.uia_lock():
-                        start_time=time.perf_counter()
-                        app = ui.active_app()
-                        app_name=app.name if app else "unknown"
-                        
-                        try:
-                            return access_func()
-                        finally:
-                            finish_time=time.perf_counter()
-                            duration=finish_time - start_time
-                            if duration > 1:
-                                print(f"[UIA-START] {msg} app={app_name} duration={duration:.3f}s")
-                                
-            except Exception as error:
-                print(f"{msg} encountered an error:\n {error}")
-            finally:
-                retrieving = False        
+            return None
+
+        retrieving = True
+        try:
+            with actions.user.tracking_paused():
+                wrapper = actions.user.uia_lock(
+                    debug=True,
+                    use_threading=use_threading,
+                    uia_timeout=time_limit,
+                    warn_hold_secs=0.3,
+                )
+
+                start_time = time.perf_counter()
+                app = ui.active_app()
+                app_name = app.name if app else "unknown"
+
+                try:
+                    return wrapper.call(access_func)
+                finally:
+                    duration = time.perf_counter() - start_time
+                    if duration > 1:
+                        print(f"[UIA-START] {msg} app={app_name} duration={duration:.3f}s")
+
+        except Exception as error:
+            print(f"{msg} encountered an error:\n {error}")
+
+        finally:
+            retrieving = False
+
     def window_root():
         """Retrieves the root element of the active window"""
         def access_func():
             return ui.active_window().element
         return actions.user.safe_access(access_func,"WINDOW_ROOT")
+
     def root_element():
         """Retrieves whatever windows UI thinks is the root element"""
         return actions.user.safe_access(ax.get_root_element,"ROOT_ELEMENT")
+
     def wait_for_access(time_limit: float = 1):
         """if currently retrieving, attempt to buy time; returns True if access is available"""
         interval = 0.05
@@ -64,14 +74,17 @@ class Actions:
                 return False
             actions.sleep(interval)
         return True
+
     def set_winax_retrieving(state: bool = True):
         """Used this to prevent windows accessibility freezes"""
         global retrieving
         retrieving = state
+
     def winax_retrieving():
         """if true, you should not request a focused element because we are probably waiting for windows to respond to a previous request"""
         global retrieving
         return retrieving
+
     def safe_focused_element(time_limit: float = 1):
         """Safely obtains the currently focused element. Returns None if retrieval fails."""
         def access_func():
@@ -83,6 +96,7 @@ class Actions:
                 print(f'error: {error}')
                 return None
         return actions.user.safe_access(access_func, "SAFE_FOCUSED_ELEMENT",time_limit)
+
     def main_window_element():
         """Attempts to retrieve the main window of the active app"""
         def access_func():
@@ -108,6 +122,7 @@ class Actions:
                 return None
 
         return actions.user.safe_access(access_func, "MAIN_WINDOW_ELEMENT")
+
     def winax_main_screen():
         """Retrieves the main screen from Windows UI"""
         def access_func():
@@ -117,6 +132,7 @@ class Actions:
                 print(f"FUNCTION winax_main_screen encountered an error:\n {error}")
                 return None
         return actions.user.safe_access(access_func, "WINAX_MAIN_SCREEN")
+
     def winax_active_window_rectangle():
         """The rectangle of the active window"""
         def access_func():
@@ -124,6 +140,7 @@ class Actions:
             if w:
                 return w.rect
         return actions.user.safe_access(access_func,"WINAX_ACTIVE_WINDOW_RECTANGLE")
+
     def element_location(el: ax.Element):
         """Returns a point that can be clicked on, or else None"""
         pt = actions.user.el_prop_val(el,"clickable_point")
@@ -136,6 +153,7 @@ class Actions:
             else:
                 print("accessibility: element_location: NO LOCATION FOUND :(")
                 return None
+
     def act_on_element(el: ax.Element, action: str, mouse_delay: float=0,time_limit: float=1):
         """Perform action on element. Get actions from {user.ui_action}"""
         if not el:
@@ -212,6 +230,7 @@ class Actions:
                 print(f"Error in function act_on_element:\n{error}")
             finally:
                 retrieving = False
+
     def set_el_prop_val(el: ax.Element, prop_name: str, val: str):
         """Attempts to set the given property value of the given element"""
         if not el:
@@ -236,25 +255,43 @@ class Actions:
             return 
         finally:
             actions.user.set_winax_retrieving(False)
-    def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False):
+
+    def el_prop_val(el: ax.Element, prop_name: str, as_text: bool = False, time_limit: float = 2, use_threading: bool = True, debug_name: str = ""):
         """Returns the property value or None if the property value cannot be retrieved"""
+        debug_name=f"el_prop_val: {debug_name}"
         if not el:
-            return 
+            return None
+
         actions.user.wait_for_access()
         global retrieving
-#        print(f"FUNCTION: el_prop_val() - retrieving: {actions.user.winax_retrieving()}")
+
         if retrieving:
             print("FUNCTION el_prop_val: unable to retrieve element because another retrieval is in process")
-        else:
-            retrieving = True
-            try:
-                # handle virtualized elements
+            return None
+
+        retrieving = True
+        try:
+            # Create a per-call lock wrapper with threading enabled
+            wrapper = actions.user.uia_lock(
+                name=debug_name,
+                debug=False,            # turn on if needed
+                use_threading=use_threading,
+                uia_timeout=time_limit,
+                warn_hold_secs=0.3,
+            )
+
+            # Handle virtualized elements FIRST (this is UIA too!)
+            def realize_virtualized():
                 pattern_list = el.patterns
-                if pattern_list:
-                    if "VirtualizedItem" in pattern_list:
-                        pattern = el.virtualizeditem_pattern
-                        if pattern:
-                            pattern.realize()
+                if pattern_list and "VirtualizedItem" in pattern_list:
+                    pattern = el.virtualizeditem_pattern
+                    if pattern:
+                        pattern.realize()
+
+            wrapper.call(realize_virtualized)
+
+            # Now retrieve the property using threaded UIA
+            def get_prop():
                 if prop_name.lower() == "name":
                     return el.name
                 elif prop_name.lower() == "pid":
@@ -330,26 +367,21 @@ class Actions:
                 elif prop_name.lower() == "provider_description":
                     return el.provider_description
                 elif prop_name.lower() == "rect":
-                    with actions.user.uia_lock():
-                        return el.rect
+                    return el.rect
                 elif prop_name.lower() == "rect.x":
-                    with actions.user.uia_lock():
-                        rect = el.rect
+                    rect = el.rect
                     if rect:
                         return el.rect.x
                 elif prop_name.lower() == "rect.y":
-                    with actions.user.uia_lock():
-                        rect = el.rect
+                    rect = el.rect
                     if rect:
                         return el.rect.y
                 elif prop_name.lower() == "rect.width":
-                    with actions.user.uia_lock():
-                        rect = el.rect
+                    rect = el.rect
                     if rect:
                         return el.rect.width
                 elif prop_name.lower() == "rect.height":
-                    with actions.user.uia_lock():
-                        rect = el.rect
+                    rect = el.rect
                     if rect:
                         return el.rect.height
 
@@ -368,6 +400,9 @@ class Actions:
                 elif prop_name.lower() == "legacy.description":
                     if "LegacyIAccessible" in el.patterns:
                         return el.legacyiaccessible_pattern.description
+                elif prop_name.lower() == "aria_properties":
+                    return el.aria_properties
+
                 elif prop_name.lower() == "text":
                     if "Text" in el.patterns:
                         text_range = el.text_pattern.document_range
@@ -405,15 +440,17 @@ class Actions:
                                         return selection.text
                                     else:
                                         return selection
-                        
-            except Exception as error:
-                print(f'EL_PROP_VAL prop_name: {prop_name} | error: {error}')
-                if as_text:
-                    return ''
-                else:
-                    return  None
-            finally:
-                retrieving = False
+            return wrapper.call(get_prop)
+
+        except Exception as error:
+            print(f'EL_PROP_VAL prop_name: {prop_name} | error: {error}')
+            if as_text:
+                return ''
+            else:
+                return  None
+        finally:
+            retrieving = False
+
     def el_pattern(el: ax.Element, pattern_name: str):
         """Retrieves the element pattern object"""
         def access_func():

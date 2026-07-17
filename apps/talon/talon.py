@@ -141,32 +141,21 @@ class Actions:
                     desktop = actions.user.root_element()
                     if desktop:
                         prop_list = [("name","Context")]
-                        # try this a different way
-                        # root = desktop.find(name = "Context")[0]
-                        actions.sleep(1)
+                        # actions.sleep(1)
+                        print("looking for root...")
                         root = actions.user.matching_child(desktop,prop_list)
-                        print(f'desktop: {desktop}')
-                        print(f'root: {root}')
-                        print(f'menu_path: {menu_path}')
-                        return
                         if root:
                             for i,item in enumerate(item_list):
                                 if item:
                                     if item != "":                
                                         prop_list = [("name",item)]
-                                        
+                                        print(f"Looking for item {item}...")
                                         el = actions.user.matching_child(root,prop_list)
+                                        print(f"Found item.")
                                         if el:
                                             # we want to highlight element, but highlight will be hidden behind taskbar
-                                            actions.user.reset_element_tracker()
-                                            actions.user.act_on_element(el,'highlight')
-                                            if i == len(item_list) - 1:
-                                                actions.sleep(0.5)
-                                            else:
-                                                actions.sleep(0.25)
-                                            actions.user.clear_highlights()
                                             actions.user.act_on_element(el,"invoke")
-                                            actions.sleep(0.5)
+                                            # actions.sleep(0.5)
                                             actions.key("down")
                                             desktop = actions.user.root_element()
                                             root = actions.user.matching_child(desktop,prop_list)

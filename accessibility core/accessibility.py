@@ -55,6 +55,30 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
                     return re.match(trg_val,str(prop_val)) != None
                 else:
                     return None
+        def number_match(prop_val,trg_val):
+            # trg_val should consist of operator ( < , > ,==, !=, <>) followed by a space followed by the target value
+            comp_list=trg_val.split(" ")
+            if len(comp_list) == 2:
+                op=comp_list[0]
+                if op in ["<", ">", "<=", ">=", "==", "!=", "<>"]:
+                    prop_val_num=float(comp_list[1])
+                    trg_val_num=float(trg_val)
+                    match op:
+                        case "<":
+                            return prop_val_num < trg_val_num
+                        case ">":
+                            return prop_val_num > trg_val_num
+                        case "<=":
+                            return prop_val_num <= trg_val_num
+                        case ">=":
+                            return prop_val_num >= trg_val_num
+                        case "==":
+                            return prop_val_num == trg_val_num
+                        case "!=":
+                            return prop_val_num != trg_val_num
+                        case "<>":
+                            return prop_val_num != trg_val_num
+            prop_val = float(prop_val)
         if prop in ["AND","OR"]:
             return match(el,trg_val,prop)
         elif prop == "clickable":
@@ -74,7 +98,10 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
                 prop_val = mod_func(prop,prop_val)
             if verbose:
                 print(f'prop_val: {prop_val} type: {type(prop_val)} value_match: {value_match(prop_val, trg_val)}')
-            return value_match(prop_val, trg_val)
+            if prop in ["rect.x", "rect.y", "rect.height", "rect.width"]:
+                return number_match
+            else:
+                return value_match(prop_val, trg_val)
         # if something is not properly specified, return true so that other conditions can be evaluated
         print("ERROR in function actions.user.element_match (accessibility.py)")
         print(f"No matching property found (looking for property: {prop})")
@@ -103,8 +130,11 @@ def match(el: ax.Element, prop_list: List[Any], mod_func: Callable = None, verbo
         sub = prop_list[1]
         if not isinstance(sub, list):
             raise TypeError("Operator second argument must be a list prop_list")
-        values = [eval_item(item) for item in sub]
-        return any(values) if op.upper() == "OR" else all(values)
+        if op.upper() == "OR":
+            return any(eval_item(item) for item in sub)
+        else:
+            return all(eval_item(item) for item in sub)
+
 
     # plain list form: evaluate each element and require all True
     return all(eval_item(item) for item in prop_list)
@@ -294,7 +324,7 @@ class Actions:
                 except Exception as error:
                     print(f'error: {error}')
             return r  
-    def matching_children(el: ax.Element, prop_list: list,verbose: bool = False):
+    def matching_children(el: ax.Element, prop_list: list, mod_func: Callable = None, verbose: bool = False):
         """Returns a list of children of the input element that matches the property list"""
         r = []
         if el:
@@ -302,17 +332,17 @@ class Actions:
                 children=actions.user.el_prop_val(el,'children')
                 if children:
                     for child in children:
-                        if actions.user.element_match(child,prop_list,verbose=verbose):
+                        if actions.user.element_match(child,prop_list, mod_func=mod_func, verbose=verbose):
                             r.append(child)
         return r
-    def matching_child(el: ax.Element,prop_list: list):
+    def matching_child(el: ax.Element,prop_list: list, mod_func: Callable = None, ):
         """Returns the child of the input element that matches the property list"""
         if el:
             with actions.user.tracking_paused():
                 children=actions.user.el_prop_val(el,'children')
                 if children:
                     for child in children:
-                        if actions.user.element_match(child,prop_list):
+                        if actions.user.element_match(child,prop_list, mod_func=mod_func):
                             return child
         return None
     def matching_descendants(el: ax.Element, prop_list: list, generation: int,extra_gen: int = 0, time_limit: float = 5,verbose: bool = False):
@@ -596,7 +626,7 @@ class Actions:
         actions.key(key) # make sure key is pressed at least once
         actions.user.key_to_matching_element(key,prop_list,limit = limit,delay = delay)
 
-    # experimental
+    # experime-ntal
     def scroll_el_to_top(el: ax.Element = None, increment: float = 2, delay: float = 0.00):
         """Scrolls container to bring input element to the top"""
         # for now we are going to assume element is vertically not horizontally scrollable

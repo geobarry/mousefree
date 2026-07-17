@@ -1,3 +1,4 @@
+10
 from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app, speech_system
 from talon.windows import ax as ax
 from talon.types import Point2d as Point2d, rect as rect
@@ -39,7 +40,9 @@ class element_tracker:
         self.focused_label = ""
         self.traversal_count = 0
         self.interval = 300
-        self.accessibility_check_paused = False
+        self.skip_trg = 1
+        self.skip_n = 1
+        self.app_prev = None
         self.job = None
         self.init_cron()
     def add_element(self,rect,label = ''):
@@ -110,11 +113,21 @@ class element_tracker:
 
     def update_highlight(self):
         """Updates the focused element using windows accessibility"""
-        if not self.accessibility_check_paused:
+        if _pause_count > 0:
+            return
+            # print(f"tracking paused (_pause_count={_pause_count}), skipping highlight update...")
+        else:
             try:
-                el=actions.user.safe_focused_element(time_limit=0.2)
+                # handle safety valve to slowed down for unresponsive apps
+                app_cur=str(ui.active_app())
+                if self.skip_trg > self.skip_n:
+                    self.skip_n += 1
+                    return
+                time_limit=((self.interval/1000) * (0.9*self.skip_n))
+
+                el=actions.user.safe_focused_element(time_limit=time_limit)
+                rectangle_found = False
                 if el:
-                    rectangle_found = False
                     if self.auto_highlight or self.auto_label:
                         rect = actions.user.el_prop_val(el,"rect")
                         if rect:
@@ -130,10 +143,19 @@ class element_tracker:
                             pass
                     else:
                         pass
-                    if not rectangle_found:
+                    if rectangle_found:
+                        # turn off safety valve
+                        self.skip_trg = 1
+                        self.skip_n = 1
+                        app_prev=app_cur
+                    else:
                         self.focused_rect = None
                         self.focused_label = ""
                     self.canvas.freeze()
+                # turn up safety valve
+                if not el or not rectangle_found:
+                    self.skip_trg *= 2
+                    self.skip_n += 1
             except Exception as error:
                 print(f'FUNCTION update_highlight - error: {error}')
 

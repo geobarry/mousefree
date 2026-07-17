@@ -1,11 +1,12 @@
 os: windows
 -
-menu talon$: user.invoke_taskbar_item("Talon")
+talon menu$: user.invoke_taskbar_item("Talon")
 talon options$: user.go_talon_menu("")
 talon about$: user.go_talon_menu("About Talon")
 talon camera$: user.go_talon_menu("Camera")
 talon microphone$: user.go_talon_menu("Microphone")
-talon microphone blue yeti$: user.go_talon_menu("Microphone,Microphone \(Yeti.*")
+# to create a short cut for a specific microphone, 2nd item in sequence should match what you see in talon menu, e.g.:
+# talon microphone blue yeti$: user.go_talon_menu("Microphone,Microphone \(Yeti.*")
 talon speech recognition$: user.go_talon_menu("Speech Recognition")
 talon [speech] conformer d$: user.go_talon_menu("Speech Recognition,.*Conformer D .*2025-01-06.*")
 talon [speech] conformer d two$: user.go_talon_menu("Speech Recognition,.*Conformer D2 .*2025-01-06.*")

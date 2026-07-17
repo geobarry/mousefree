@@ -128,7 +128,7 @@ def find_target(trg: re.Pattern,
         else:
             print("Target not found :(")
             return None
-def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool = False):
+def get_scope(el, scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool = False):
     """Returns a text range corresponding to the search scope. Valid scope directions include UP,DOWN,BOTH,INSIDE"""
     verbose=True
     if verbose:
@@ -137,7 +137,7 @@ def get_scope(scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool =
     if scope_unit not in ax_units:
         print("Error in function get_scope: scope_unit not valid")
         return 
-    el = actions.user.safe_focused_element()
+#    el = actions.user.safe_focused_element()
     if el:
         cur_range = actions.user.el_prop_val(el,'text_selection')
         if cur_range:
@@ -205,7 +205,7 @@ def win_dyn_nav_trg(search_dir: str) -> str:
             if el:
                 pattern_list = actions.user.el_prop_val(el,'patterns')
                 if "Text" in pattern_list:
-                    cur_range = get_scope(search_dir,"Line")
+                    cur_range = get_scope(el,search_dir,"Line")
                     txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
                     t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
                     t = re.sub(r"’","'",t)
@@ -364,7 +364,7 @@ class Actions:
                     pattern_list=actions.user.el_prop_val(el,'patterns')
                     if "Text" in pattern_list:
                         try:
-                            r = find_target(regex,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                            r = find_target(regex,get_scope(el,scope_dir),search_dir = scope_dir,ordinal = ordinal)
                             if r != None:
                                 r.select()
                                 if expand_to_unit:
@@ -404,7 +404,7 @@ class Actions:
                             cur_range=el.text_pattern.selection[0]
                             # cur_range = actions.user.safe_access(lambda: el.text_pattern.selection[0],"WINAX_EXTEND_SELECTION")
 
-                            r = find_target(trg,get_scope(scope_dir),search_dir = scope_dir,ordinal = ordinal)
+                            r = find_target(trg,get_scope(el,scope_dir),search_dir = scope_dir,ordinal = ordinal)
                             if r != None:
                                 src_pos = "Start" if scope_dir.upper() == "UP" else "End"
                                 trg_pos = "Start" if before_or_after.upper() == "BEFORE" else "End"
@@ -552,7 +552,7 @@ class Actions:
                                     actions.user.safe_access(lambda: cur_range.move(unit,ordinal),"winax_move_by_unit")
                                     actions.user.safe_access(lambda: cur_range.select(),"winax_move_by_unit")
                                     actions.user.safe_access(lambda: cur_range.scroll_into_view(True),"winax_move_by_unit")
-# *** stall-proofed up to here ***
+
     def winax_extend_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Extends the selection to the end/beginning of next unit"""
         el = actions.user.safe_focused_element()

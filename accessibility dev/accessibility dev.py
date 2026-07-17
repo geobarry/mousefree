@@ -66,7 +66,7 @@ class Actions:
                 else:
                     return
             return el
-    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False, txt_len: int = 120):
+    def element_information(el: ax.Element, headers: str = False, as_dict: bool = False, prop_list: list = None, extra_props: bool = False, txt_len: int = 150):
         """Returns information separated by tabs that can be pasted into a spreadsheet"""
         msg = ""
         if not prop_list:
@@ -75,8 +75,8 @@ class Actions:
                             "printout",
                             "patterns","access_key",
                             "text","value",
-                            "is_keyboard_focusable","is_enabled",
-                            "legacy.name","legacy.description"
+                            "is_keyboard_focusable","is_enabled","is_offscreen","rect.x",
+                            "legacy.name","legacy.description","aria_properties"
                         ]
         other_prop = [
                         "clickable_point",
