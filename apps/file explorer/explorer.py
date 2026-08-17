@@ -157,9 +157,10 @@ def current_folder(path_type: str = "directory"):
         print("****IN A DIALOG")
         return current_folder_from_dialog()
     else:
-#        print("****MAIN EXPLORER WINDOW")
+        print("****MAIN EXPLORER WINDOW")
         folder = current_folder_from_title()
         if folder:
+            print("...got folder from window title")
             return folder
         else:
             # User has not selected option to place path in window title
@@ -382,6 +383,7 @@ class Actions:
             print(f'el name: {actions.user.el_prop_val(el,"name")}')
             # copy path to clipboard so user can take it from here
             clip.set_text(path)
+
     def explorer_move_to(path: str,ancestor_lvl: int = 0,subfolder: str = '',movement: str = 'stash'):
         """Moves selected item(s) to the destination folder safely"""
         # construct destination folder
@@ -528,6 +530,7 @@ class Actions:
         actions.user.key_to_matching_element("down",prop_list,delay = 0.1)
         el = actions.user.wait_for_element(prop_list)
         print(f'(A) el: {el}')
+
         if el:
             # EXPAND ACTION IF THAT IS AN OPTION
             if "ExpandCollapse" in el.patterns:

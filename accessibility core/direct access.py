@@ -57,7 +57,9 @@ class Actions:
     def window_root():
         """Retrieves the root element of the active window"""
         def access_func():
-            return ui.active_window().element
+            with actions.user.tracking_paused():
+                el = ui.active_window().element
+                return el
         return actions.user.safe_access(access_func,"WINDOW_ROOT")
 
     def root_element():
@@ -277,7 +279,7 @@ class Actions:
                 debug=False,            # turn on if needed
                 use_threading=use_threading,
                 uia_timeout=time_limit,
-                warn_hold_secs=0.3,
+                warn_hold_secs=time_limit,
             )
 
             # Handle virtualized elements FIRST (this is UIA too!)

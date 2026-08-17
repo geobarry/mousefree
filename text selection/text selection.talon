@@ -37,6 +37,11 @@ and mode: user.zen
 [{user.text_search_unit}] extend [(to|until)] {user.before_or_after} [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_extend_selection(win_nav_target,before_or_after,ordinals or 1,text_search_unit or '')
 
+# e.g. "CLEAR after next 'hippopotamus'"
+[{user.text_search_unit}] clear [(to|until)] {user.before_or_after} [<user.ordinals>] <user.win_nav_target>$:
+	user.winax_extend_selection(win_nav_target,before_or_after,ordinals or 1,text_search_unit or '')
+	key("del")
+
 # e.g. "PHONES previous 'lynx'"
 phones [<user.ordinals>] <user.win_nav_target>$: user.winax_phones_text(win_nav_target,ordinals or 1)
 
@@ -63,6 +68,8 @@ remove {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
 insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
 	user.winax_insert_text(constructed_text,before_or_after,ordinals or 1,win_nav_target)
 
+# e.g. "MERGE previous China town"
+merge <user.win_nav_target>: user.winax_merge_words(win_nav_target)
 
 # FOLLOWING SEARCH UNIT COMMANDS ONLY WORK IN APPLICATIONS THAT IMPLEMENT TEXT PATTERNS
 # SELECT CURRENT PARAGRAPH OR OTHER UNIT

@@ -130,7 +130,6 @@ def find_target(trg: re.Pattern,
             return None
 def get_scope(el, scope_dir: str = "DOWN", scope_unit: str = "Line", verbose: bool = False):
     """Returns a text range corresponding to the search scope. Valid scope directions include UP,DOWN,BOTH,INSIDE"""
-    verbose=True
     if verbose:
         print(f"get_scope - win_selection_distance: {settings.get('user.win_selection_distance')}")
     # Error Checking
@@ -197,7 +196,6 @@ def modify_regex_include_homophones(t: str):
 ctx = Context()
 
 def win_dyn_nav_trg(search_dir: str) -> str:
-    print(f"*win_dyn_nav_trg*")
     use_winax = settings.get("user.winax_text")
     if use_winax:
         with actions.user.tracking_paused():
@@ -209,7 +207,6 @@ def win_dyn_nav_trg(search_dir: str) -> str:
                     txt = actions.user.safe_access(lambda: cur_range.text, "WIN_NEXT_DYN_NAV_TRG")
                     t = re.sub(r"[^A-Za-z'’]+", ' ', txt)
                     t = re.sub(r"’","'",t)
-                    print(f'dynamic t: {t}')
                     return f"""
                     {t}
                     """
@@ -220,6 +217,7 @@ def win_next_dyn_nav_trg(_) -> str:
 
 @ctx.dynamic_list("user.win_previous_dyn_nav_trg")
 def win_previous_dyn_nav_trg(_) -> str:
+    print("Inside window's previous dynamic navigation target")
     return win_dyn_nav_trg("UP")
 
 @ctx.dynamic_list("user.win_inside_dyn_nav_trg")
@@ -317,13 +315,10 @@ def lazy_target(m) -> str:
 @mod.capture(rule="next <user.explicit_target>|previous <user.explicit_target>|inside <user.explicit_target>|outside <user.explicit_target>|previous {user.win_previous_dyn_nav_trg}|next {user.win_next_dyn_nav_trg}| inside {user.win_inside_dyn_nav_trg}|outside {user.win_any_dyn_nav_trg}")
 def win_nav_target(m) -> tuple:
     """combination of dynamic and fixed navigation targets (is under testing)"""
-    print(f'm: {m}')
-    print(f'len(m): {len(m)}')
     direction_dict={'previous':'UP','next':'DOWN','inside':'INSIDE','outside':'BOTH'}
     scope_dir=direction_dict[str(m[0])]
     trg=str(m[1])
     return (trg,scope_dir)
-
 
 def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1, return_to_init_range: bool = True):
     """Performs function on selected text and then returns cursor to original position"""
@@ -437,13 +432,18 @@ class Actions:
                 actions.sleep(0.2)
                 if new_text == "":
                     actions.sleep(0.15)
-                    actions.key("del")
-                else:
-                    # clip.set_text(new_text)
-
-                    print(f'n_txt: |{clip.text()}|')
+                    # This may or may not delete the selected text, according to community documentation
+                    before, after = actions.user.dictation_peek(True, True)
                     actions.sleep(0.15)
-#                    actions.edit.paste()
+                    b=actions.edit.selected_text()
+                    # Handle case that dictation peek did not delete selection
+                    if len(b) != 0:
+                        actions.key("del")
+                    # Handle case that there is a preceding and following space
+                    if before[-1] == " " and after[0] == " ":
+                        actions.key("del")
+                else:
+                    actions.sleep(0.15)
                     actions.insert(new_text)
                     actions.sleep(0.15)
         process_selection(replace_process,trg_and_dir,ordinal)
@@ -527,8 +527,19 @@ class Actions:
                 actions.key("left")
             else:
                 actions.key("right")
-            actions.insert(txt)
+            if settings.get("user.context_sensitive_dictation"):
+                actions.user.dictation_insert(txt)
+            else:
+                actions.insert(txt)
         process_selection(insert_text,trg_and_dir,ordinals)
+    def winax_merge_words(trg_and_dir: str):
+        """removes space between given words, removing capitalization in all but the first word"""
+        def merge_text(orig_text):
+            item_list=orig_text.split(" ")
+            item_list= [item_list[0]] + [x.lower() for x in item_list[1:]]
+            txt_new="".join(item_list)
+            actions.insert(txt_new)
+        process_selection(merge_text, trg_and_dir)
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = actions.user.safe_focused_element()
