@@ -123,14 +123,14 @@ def current_folder_from_dialog():
     root = actions.user.window_root()
     prop_seq = [
 #        	[("name","Save As"),("class_name","#32770")],
-        [("class_name","ReBarWindow32")],
-        [("class_name","Address Band Root")],
-        [("name","Loading"),("class_name","msctls_progress32")],
+        [("control_type","Pane"),("class_name","ReBarWindow32")],
+        [("control_type","Pane"),("class_name","Address Band Root")],
+        [("control_type","ProgressBar")], # [("name","Loading"),("class_name","msctls_progress32")],
         [("class_name","Breadcrumb Parent")],
         [("name","Address.*")],
 #        	[("name","Address"),("class_name","Edit")]
     ]
-    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+    el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = True)
     if el:
         path = actions.user.el_prop_val(el,"name")
         if path:
@@ -201,6 +201,7 @@ def retrieve_item_list(item_type: str = "file", ext: str = ""):
     # value cannot be trusted without pressing keyboard shortcut
     global current_folder_items
     folder = current_folder("directory")
+    print(f'folder: {folder}')
     if folder:
         # catch situation where folder cannot be found
         if folder == "" or folder is None:
@@ -212,6 +213,7 @@ def retrieve_item_list(item_type: str = "file", ext: str = ""):
             n = len(ext)
             current_folder_items = [item for item in current_folder_items if item[-n:] == ext]
         spoken_form_dict = actions.user.create_spoken_forms_from_list(current_folder_items)
+        
         return spoken_form_dict
 
 ext_dict = {

@@ -394,6 +394,20 @@ class Actions:
             if len(el_list) > 0:
                 return el_list[0]
         return None
+    def ancestor_list(el: ax.Element, time_limit: float = 5, verbose: bool = False):
+        """Returns a list of ancestors of the current element including the element itself"""
+        if verbose:
+            print("function: ANCESTOR_LIST")
+        el_list=[]
+        with actions.user.tracking_paused():
+            stopper=actions.user.stopper(time_limit)
+            while el and not stopper.over():
+                el_list.append(el)
+                if verbose:
+                    print(f'el: {el}')
+                el=actions.user.el_prop_val(el,'parent')
+        return el_list
+        
     def matching_ancestor(el: ax.Element, prop_list: list, max_gen: int = 25, time_limit: float = 5, verbose: bool = False):
         """Returns the first ancestor that meets prop_list conditions, including input element, or None if none is found"""
         with actions.user.tracking_paused():
@@ -474,6 +488,8 @@ class Actions:
                             if children:
                                 for child in children:
                                     msg = actions.user.element_information(child,prop_list = ["name","class_name","control_type","automation_id","printout"])
+                                    msg_list=msg.split("\t")
+                                    msg=f"n: |{msg_list[0]}| c: |{msg_list[1]}| ct: |{msg_list[2]}| a: |{msg_list[3]}"
                                     print(f'child: {msg}')
                             
                     el_list = []

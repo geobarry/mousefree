@@ -14,15 +14,22 @@ class GenericMappingsActions:
           obj_dict: spoken_form → [objects]
         """
         # STANDARD USAGE - INSIDE DYNAMIC LIST FUNCTION:
-        #   obtain list of (name, obj) tuples
-        #   create global obj_dict
-        #   spoken_form_dict,obj_dict = actions.user.create_spoken_form_mappings(name_dict)
-        #   return spoken_form_dict
+            # with actions.user.tracking_paused():
+                # global el_dict
+                # el_list = get_elements()
+                # if el_list:
+                    # name_list = [(el.name, el) for el in el_list]
+                    # spoken_form_dict,layer_dict = actions.user.create_spoken_form_mappings(name_list)
+                    # return spoken_form_dict
         # Then use obj_dict in action with dynamic list input argument
         # Spoken forms will be created for each name
         # The output spoken_form_dict contains spoken forms; keys and values are identical
         # The output obj_dict keys will be spoken forms and values will be lists of associated objects
         # In the output, the same object may be associated with multiple spoken forms
+        
+        
+
+        
         
         # 1. spoken_form → [names]
         spoken_form_name_dict = {}

@@ -13,6 +13,8 @@ and mode: user.zen
 ^{user.ui_action} focused [element]$: user.act_on_focused_element(ui_action) 
 ^{user.ui_action} mouse [element]$: user.act_on_mouse_element(ui_action) 
 
+clear (highlights|labels): user.clear_highlights()
+
 # NAVIGATE TO A TARGET USING KEYS
 # Presses the designated navigation key until an element beginning with the target name is reached.
 # user.nav_key includes things like tab, arrow keys, f6

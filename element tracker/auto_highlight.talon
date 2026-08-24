@@ -8,7 +8,10 @@ auto highlight [on]: user.auto_highlight(true)
 auto highlight off: user.auto_highlight(false)
 auto label [on]: user.auto_label(true)
 auto label off: user.auto_label(false)
-clear (highlights|labels): user.clear_highlights()
+
+# MANUAL HIGHLIGHTING
+
+
 refresh highlight:
 	user.auto_highlight(true)
 	user.auto_highlight(true)
