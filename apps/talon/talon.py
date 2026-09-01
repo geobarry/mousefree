@@ -119,24 +119,35 @@ class Actions:
                         print(f'el: {el}')
                         actions.key("enter")
                         el = actions.user.wait_for_element(app_btn_list)
+                        print(f'el: {el}')
                         if el:
                             root = actions.user.window_root()
-                            talon_btn = actions.user.find_el_by_prop_seq(talon_seq,root)
+                            print(f'root: {root}')
+                            print(f'talon_seq: {talon_seq}')
+                            talon_btn = actions.user.find_el_by_prop_seq(talon_seq,root, verbose=True)
                     
 
         print(f'talon_btn: {talon_btn}')
         if talon_btn:
+            actions.user.act_on_element(talon_btn,'select')
             actions.user.act_on_element(talon_btn,'hover')
-            actions.user.act_on_element(talon_btn,'invoke')
-            actions.key('down')
-            return True
+
+            actions.user.act_on_element(talon_btn,'click')
+            # actions.user.act_on_element(talon_btn,'invoke')
+            return talon_btn
+
         else:
             return False
     def go_talon_menu(menu_path: str):
         """Opens up a specific talon setting; path should be labels in taskbar separated by commas"""
+        print("TALON MENU")
         with actions.user.tracking_paused():
             try:
-                if actions.user.invoke_taskbar_item("Talon"):
+                el= actions.user.invoke_taskbar_item("Talon")
+                print(f'el talon taskbar button: {el}')
+                if el:
+                    actions.sleep(1)
+                    actions.key('down')
                     item_list = menu_path.split(",")
                     desktop = actions.user.root_element()
                     if desktop:
@@ -196,6 +207,7 @@ class Actions:
                         # wait a second to give visual confirmation
                         actions.sleep(0.5)
                         actions.user.act_on_element(el,'invoke')
+
 
 
 
