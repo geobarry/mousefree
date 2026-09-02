@@ -2,6 +2,7 @@ import os
 from talon.windows import ax as ax, ui as winui
 from talon import Context, Module, actions, app, ui
 from talon.types import Rect as Rect
+import time
 
 mod = Module()
 
@@ -10,13 +11,41 @@ ctx.matches = """
 os: windows
 """
 
+def wait_for_popup_window(app_name, cls_name = "#32768", time_limit=2, interval=0.1):
+    start = time.time()
+    while time.time() - start < time_limit:
+        for w in ui.windows():
+            if w.cls == cls_name:
+                app=w.app
+                name=app.name
+                if name == app_name:
+                    return w
+        actions.sleep(interval)
+    return None
+
+def wait_for_matching_child(root, prop_list, time_limit=2, interval=0.1, verbose=False):
+    """Tries polling until the matching child is found, returns none otherwise"""
+    start = time.time()
+    while time.time() - start < time_limit:
+        if root:
+            el = actions.user.matching_child(root, prop_list)
+            if el:
+                return el
+        if verbose:
+            print(f"wait_for_matching_child: not found yet, retrying... ({prop_list})")
+        actions.sleep(interval)
+    if verbose:
+        print(f"wait_for_matching_child: timed out looking for {prop_list}")
+    return None
 
 @mod.action_class
 class Actions:
-    def invoke_taskbar_item(item_name: str):
-        """Invokes given taskbar item"""
+
+
+    def invoke_system_tray_item(item_name: str):
+        """Invokes given system_tray item"""
         # Talon #958 seems to have a regression where the talon tray menu has no accessible elements
-        # ISSUE: The act of accessing the Talon taskbar icon
+        # ISSUE: The act of accessing the Talon system tray icon
         #          seems to make the icon disappear
         
         # possible states:
@@ -36,8 +65,8 @@ class Actions:
             [("name",item_name),("class_name","SystemTray.NormalButton")]
         ]
         app_btn_list = [("class_name","SystemTray.NormalButton"),("automation_id","NotifyItemIcon")]
-        def super_b_for_taskbar():
-            # pressing super-b sometimes hits the windows start button instead of the taskbar button
+        def super_b_for_system_tray():
+            # pressing super-b sometimes hits the windows start button instead of the system_tray button
             # so we have to look for that
             tray_props = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
             start_btn_props = [("automation_id","StartButton")]
@@ -85,7 +114,7 @@ class Actions:
                     # actions.key("super-b")
                     # prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
                     # el = actions.user.wait_for_element(prop_list)
-                    el = super_b_for_taskbar()
+                    el = super_b_for_system_tray()
                     print(f'el: {el}')
                     # now we are in situation 4
                 # 4 TRAY BUTTON SELECTED TRAY OPEN
@@ -107,7 +136,7 @@ class Actions:
                 # actions.key("super-b")
                 # prop_list = [("name","Show Hidden Icons.*"),("class_name","SystemTray.NormalButton")]
                 # el = actions.user.wait_for_element(prop_list)
-                el = super_b_for_taskbar()
+                el = super_b_for_system_tray()
                 print(f'el: {el}')
                 if el:
                     prop_list = [("name","Show Hidden Icons Hide"),("class_name","SystemTray.NormalButton")]
@@ -138,38 +167,40 @@ class Actions:
 
         else:
             return False
+
     def go_talon_menu(menu_path: str):
-        """Opens up a specific talon setting; path should be labels in taskbar separated by commas"""
+        """Opens up a specific talon setting; path should be labels in system tray separated by commas"""
         print("TALON MENU")
         with actions.user.tracking_paused():
             try:
-                el= actions.user.invoke_taskbar_item("Talon")
-                print(f'el talon taskbar button: {el}')
+                el= actions.user.invoke_system_tray_item("Talon")
+                print(f'el talon system tray button: {el}')
                 if el:
-                    actions.sleep(1)
-                    actions.key('down')
-                    item_list = menu_path.split(",")
-                    desktop = actions.user.root_element()
-                    if desktop:
-                        prop_list = [("name","Context")]
-                        # actions.sleep(1)
-                        print("looking for root...")
-                        root = actions.user.matching_child(desktop,prop_list)
+                    # actions.sleep(1)
+                    w=wait_for_popup_window("Talon")
+                    print(f'w: {w}')
+                    if w:
+                        root=w.element
+                        print(f'root: {root}')
+
+                        actions.key('down')
+                        item_list = menu_path.split(",")
+
                         if root:
                             for i,item in enumerate(item_list):
                                 if item:
                                     if item != "":                
                                         prop_list = [("name",item)]
                                         print(f"Looking for item {item}...")
-                                        el = actions.user.matching_child(root,prop_list)
+                                        el = wait_for_matching_child(root,prop_list)
                                         print(f"Found item.")
                                         if el:
-                                            # we want to highlight element, but highlight will be hidden behind taskbar
+                                            # we want to highlight element, but highlight will be hidden behind system tray context menu
                                             actions.user.act_on_element(el,"invoke")
                                             # actions.sleep(0.5)
                                             actions.key("down")
                                             desktop = actions.user.root_element()
-                                            root = actions.user.matching_child(desktop,prop_list)
+                                            root = wait_for_matching_child(desktop,prop_list)
                                         else:
                                             return 
             except Exception as error:
@@ -208,37 +239,3 @@ class Actions:
                         actions.sleep(0.5)
                         actions.user.act_on_element(el,'invoke')
 
-
-
-
-
-
-
-    # I think we can remove this now along with a corresponding talon command
-    def exit_talon():
-        """Exits talon!"""
-        root = ax.get_root_element()
-        print("FUNCTION EXIT TALON")
-        print(f'root: {root.name}')
-        # Open the system tray
-        actions.key("super-b enter")
-        # make sure the system tray is open
-        actions.sleep(0.2)
-        if ui.focused_element().name == "Show Hidden Icons":
-            actions.key("enter")
-        actions.key("up:12")
-        i = 0
-        tray_item = ui.focused_element().name
-        while i < 30 and tray_item != "Talon":
-            i += 1
-            # try going right
-            actions.key("right")
-            if ui.focused_element().name == tray_item:
-                # go down and all the way to the left
-                actions.key("down left:25")
-            tray_item = ui.focused_element().name
-        # provide visual sign that this is happening
-        actions.user.act_on_element(ui.focused_element(),"highlight")
-        actions.user.act_on_element(ui.focused_element(),"click")
-        actions.sleep(1.5)
-        actions.key("up enter")

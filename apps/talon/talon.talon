@@ -1,6 +1,6 @@
 os: windows
 -
-talon menu$: user.invoke_taskbar_item("Talon")
+talon menu$: user.invoke_system_tray_item("Talon")
 talon options$: user.go_talon_menu("")
 talon about$: user.go_talon_menu("About Talon")
 talon camera$: user.go_talon_menu("Camera")
