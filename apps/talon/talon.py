@@ -11,17 +11,7 @@ ctx.matches = """
 os: windows
 """
 
-def wait_for_popup_window(app_name, cls_name = "#32768", time_limit=2, interval=0.1):
-    start = time.time()
-    while time.time() - start < time_limit:
-        for w in ui.windows():
-            if w.cls == cls_name:
-                app=w.app
-                name=app.name
-                if name == app_name:
-                    return w
-        actions.sleep(interval)
-    return None
+
 
 def wait_for_matching_child(root, prop_list, time_limit=2, interval=0.1, verbose=False):
     """Tries polling until the matching child is found, returns none otherwise"""
@@ -177,7 +167,7 @@ class Actions:
                 print(f'el talon system tray button: {el}')
                 if el:
                     # actions.sleep(1)
-                    w=wait_for_popup_window("Talon")
+                    w=actions.user.wait_for_popup_window("Talon")
                     print(f'w: {w}')
                     if w:
                         root=w.element

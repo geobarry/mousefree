@@ -222,8 +222,11 @@ class Actions:
                 printout = actions.user.el_prop_val(el,'printout')
                 print(f'el: {printout} name: {name} prop_list: {prop_list}')
             if el:
-                if actions.user.element_match(el,prop_list):
-                    return el
+                try:
+                    if actions.user.element_match(el,prop_list):
+                        return el
+                except Exception as error:
+                    pass
             if stopper.over():
                 print(f"WAIT_FOR_ELEMENT: unable to find {prop_list}")
                 return None
@@ -235,7 +238,10 @@ class Actions:
         while True:
             el = actions.user.safe_focused_element()
             if el:
-                el = actions.user.matching_ancestor(el,prop_list,verbose = verbose)
+                try:
+                    el = actions.user.matching_ancestor(el,prop_list,verbose = verbose)
+                except Exception as error:
+                    el=None
                 if el:
                     return el
             if stopper.over():
@@ -256,6 +262,20 @@ class Actions:
                 return None
             stopper.increment(0)
             actions.sleep(delay)
+    def wait_for_popup_window(app_name: str, cls_name: str = "#32768", time_limit: float=2, interval: float=0.1):
+        """Waits for a popup window to appear and returns the window object"""
+        start = time.time()
+        while time.time() - start < time_limit:
+            for w in ui.windows():
+                if w.cls == cls_name:
+                    app=w.app
+                    name=app.name
+                    print(f'popup window app name: {name}')
+                    if name == app_name:
+                        return w
+            actions.sleep(interval)
+        return None
+
     # functions for converting property lists, strings and sequences
     def get_property_string(el: ax.Element):
         """creates a property string that can be converted into a property list"""

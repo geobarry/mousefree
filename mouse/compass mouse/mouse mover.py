@@ -5,7 +5,7 @@ import math
 mod = Module()
 
 ctx = Context()
-interval = 8
+interval = 3
 time_mult = 1
 class mouse_mover:
     """Moves mouse using cron intervals until destination is reached"""

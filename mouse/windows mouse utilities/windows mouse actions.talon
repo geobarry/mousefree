@@ -32,7 +32,7 @@ close window with mouse:
 	mouse_click()
 	
 # MISCELLANEOUS UTILITIES
-^pan <user.bearing> [<number>]$:
+^window pan <user.bearing> [<number>]$:
 	print("{bearing}")
 	user.drag_window_center(bearing,number or 500)
 (mouse|compass) jiggle: user.compass_jiggle()
