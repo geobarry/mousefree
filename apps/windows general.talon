@@ -29,11 +29,11 @@ refocus: user.slow_key_press("alt:down tab left alt:up",0.2)
 focus explorer: user.focus_explorer()
 #focus outlook: user.focus_outlook()
 
-# TASK BAR
-windows taskbar$: user.invoke_taskbar_item("")
-windows taskbar close: 
+# SYSTEM TRAY
+system tray$: user.invoke_system_tray_item("")
+close system tray: 
 	# take the lazy route for now, could be handled in python to avoid closing then opening then closing again
 	user.invoke_taskbar_item("")
 	key("esc:5")
 	user.switcher_focus_last()
-safely remove hardware: user.invoke_taskbar_item("Safely Remove Hardware.*")
+safely remove hardware: user.invoke_system_tray_item("Safely Remove Hardware.*")

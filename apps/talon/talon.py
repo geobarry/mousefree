@@ -30,8 +30,6 @@ def wait_for_matching_child(root, prop_list, time_limit=2, interval=0.1, verbose
 
 @mod.action_class
 class Actions:
-
-
     def invoke_system_tray_item(item_name: str):
         """Invokes given system_tray item"""
         # Talon #958 seems to have a regression where the talon tray menu has no accessible elements
