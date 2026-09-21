@@ -1,4 +1,3 @@
-10
 from talon import Module, Context, clip, ctrl, cron, actions, canvas, screen, settings, ui, app, speech_system
 from talon.windows import ax as ax
 from talon.types import Point2d as Point2d, rect as rect
@@ -114,8 +113,8 @@ class element_tracker:
     def update_highlight(self):
         """Updates the focused element using windows accessibility"""
         if _pause_count > 0:
-            return
-            # print(f"tracking paused (_pause_count={_pause_count}), skipping highlight update...")
+            print(f"tracking paused (_pause_count={_pause_count}), skipping highlight update...")
+            return 
         else:
             try:
                 # handle safety valve to slowed down for unresponsive apps

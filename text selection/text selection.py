@@ -2,6 +2,7 @@ from talon.windows import ax as ax
 from talon import app, Context,Module,actions,ctrl,ui,settings,clip
 import re
 import itertools
+from typing import Callable
 
 ax_units = ["Character","Format","Word","Line","Paragraph","Page","Document"]
 
@@ -318,29 +319,10 @@ def win_nav_target(m) -> tuple:
     direction_dict={'previous':'UP','next':'DOWN','inside':'INSIDE','outside':'BOTH'}
     scope_dir=direction_dict[str(m[0])]
     trg=str(m[1])
+    print(f'win_nav_target trg: |{trg}|')
     return (trg,scope_dir)
 
-def process_selection(processing_function,trg_and_dir: tuple, ordinal: int = 1, return_to_init_range: bool = True):
-    """Performs function on selected text and then returns cursor to original position"""
-    trg=trg_and_dir[0]
-    scope_dir=trg_and_dir[1]
-    print(f"PROCESS_SELECTION trg: {trg} scope_dir: {scope_dir}")
-    # get textRange so we can return cursor to original position
-    el = actions.user.safe_focused_element()
-    if el:
-        if return_to_init_range:
-            init_range = actions.user.el_prop_val(el,'text_selection')
-        # perform selection
-        t = actions.user.winax_select((trg,scope_dir),ordinal)        
-        # perform processing function
-        if t:
-            # try to add failsafe check here to make sure proper text is selected
-            print(f'trg: |{trg}| sel: |{t}|')
-            processing_function(t)
-        # return to original selection
-        if return_to_init_range and init_range != None:
-            actions.sleep(0.2)
-            actions.user.safe_access(lambda: init_range.select(),"PROCESS_SELECTION")
+
     
 @mod.action_class
 class Actions:
@@ -354,7 +336,7 @@ class Actions:
             regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
             use_winax = settings.get("user.winax_text")
             if use_winax:
-                el = actions.user.safe_focused_element()
+                el = actions.user.safe_focused_element(time_limit=3)
                 if el:
                     pattern_list=actions.user.el_prop_val(el,'patterns')
                     if "Text" in pattern_list:
@@ -380,6 +362,28 @@ class Actions:
                         actions.user.winax_select_unit(expand_to_unit)
                     r = actions.edit.selected_text()
                     return r
+    def process_selection(processing_function: Callable,trg_and_dir: tuple, ordinal: int = 1, return_to_init_range: bool = True):
+        """Performs function on selected text and then returns cursor to original position"""
+        trg=trg_and_dir[0]
+        scope_dir=trg_and_dir[1]
+        print(f"actions.user.process_selection trg: {trg} scope_dir: {scope_dir}")
+        # get textRange so we can return cursor to original position
+        el = actions.user.safe_focused_element()
+        if el:
+            if return_to_init_range:
+                init_range = actions.user.el_prop_val(el,'text_selection')
+            # perform selection
+            t = actions.user.winax_select((trg,scope_dir),ordinal)        
+            # perform processing function
+            if t:
+                # try to add failsafe check here to make sure proper text is selected
+                print(f'trg: |{trg}| sel: |{t}|')
+                processing_function(t)
+            # return to original selection
+            return # this is a bad idea, let's give it up for now and make it a parameter later
+            if return_to_init_range and init_range != None:
+                actions.sleep(0.2)
+                actions.user.safe_access(lambda: init_range.select(),"actions.user.process_selection")
     def winax_extend_selection(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1, expand_to_unit: str = None):
         """Extend currently selected text using windows accessibility pattern if possible"""
         with actions.user.tracking_paused():
@@ -446,7 +450,7 @@ class Actions:
                     actions.sleep(0.15)
                     actions.insert(new_text)
                     actions.sleep(0.15)
-        process_selection(replace_process,trg_and_dir,ordinal)
+        actions.user.process_selection(replace_process,trg_and_dir,ordinal)
     def winax_format_text(fmt: str, trg_and_dir: tuple, ordinal: int = 1):
         """Applies formatter to targeted text"""
         def format_process(orig_text: str):
@@ -457,7 +461,7 @@ class Actions:
                 # actions.edit.paste()
                 actions.insert(t)
                 actions.sleep(0.15)
-        process_selection(format_process,trg_and_dir,ordinal)
+        actions.user.process_selection(format_process,trg_and_dir,ordinal)
     def winax_add_delimiters(delimiters: str,trg_and_dir: tuple, ordinal: int = 1):
         """Adds delimiters to the front and back of the target"""
         def add_delimiters(orig_text):
@@ -468,22 +472,29 @@ class Actions:
                 # actions.edit.paste()
                 actions.insert(f"{front}{orig_text}{back}")
                 actions.sleep(0.15)
-        process_selection(add_delimiters,trg_and_dir,ordinal)
+        actions.user.process_selection(add_delimiters,trg_and_dir,ordinal)
     def winax_remove_delimiters(delimiters: str,trg_and_dir: tuple, ordinal: int = 1):
         """Removes delimiters surrounding target"""
         trg=trg_and_dir[0]
-        front,back=delimiters[0],delimiters[-1]
-        trg_new=f"\\{front}{trg}\\{back}"
+        print(f'trg: |{trg}|')
+        if delimiters == "":
+            trg_new=f".{trg}."
+        else:
+            front,back=delimiters[0],delimiters[-1]
+            trg_new=f"\\{front}{trg}\\{back}"
         trg_and_dir=(trg_new,trg_and_dir[1])
         def remove_delimiters(orig_text):
-            print(f'orig_text: {orig_text}')
+            print(f'orig_text: |{orig_text}|')
+            # talon dynamic capture annoyingly keeps trailing apostrophe, so we have to remove it
+            orig_text = re.sub(r"([’']).$", r"\1", orig_text)
+            print(f'orig_text: |{orig_text}|')
             with clip.revert():
                 # clip.set_text(orig_text[1:-1])
                 actions.sleep(0.15)
 #                actions.edit.paste()
                 actions.insert(orig_text[1:-1])
                 actions.sleep(0.15)
-        process_selection(remove_delimiters,trg_and_dir,ordinal)
+        actions.user.process_selection(remove_delimiters,trg_and_dir,ordinal)
     def winax_phones_text(trg_and_dir: tuple, scope_dir: str = "DOWN", ordinal: int = 1):
         """Performs homophone conversion on targeted text"""
         def phones_process(orig_text):
@@ -503,7 +514,7 @@ class Actions:
                 actions.insert(x)
 #                actions.edit.paste() # this sometimes inserts unwanted space character
                 actions.sleep(0.15)
-        process_selection(phones_process,trg_and_dir,ordinal)
+        actions.user.process_selection(phones_process,trg_and_dir,ordinal)
     def winax_go_text(trg_and_dir: tuple, before_or_after: str, ordinal: int = 1, expand_to_unit: str = None):
         """Navigates to text using windows accessibility pattern, returns True if successful"""
         def go_process(orig_text):
@@ -511,7 +522,7 @@ class Actions:
                 actions.key("left")
             else:
                 actions.key("right")
-        r=process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
+        r=actions.user.process_selection(go_process,trg_and_dir,ordinal,return_to_init_range = False)
         print(f'r: {r}')
         if expand_to_unit:
             r = actions.user.winax_select_unit(expand_to_unit)
@@ -531,7 +542,7 @@ class Actions:
                 actions.user.dictation_insert(txt)
             else:
                 actions.insert(txt)
-        process_selection(insert_text,trg_and_dir,ordinals)
+        actions.user.process_selection(insert_text,trg_and_dir,ordinals)
     def winax_merge_words(trg_and_dir: str):
         """removes space between given words, removing capitalization in all but the first word"""
         def merge_text(orig_text):
@@ -539,7 +550,7 @@ class Actions:
             item_list= [item_list[0]] + [x.lower() for x in item_list[1:]]
             txt_new="".join(item_list)
             actions.insert(txt_new)
-        process_selection(merge_text, trg_and_dir)
+        actions.user.process_selection(merge_text, trg_and_dir)
     def winax_move_by_unit(unit: str, scope_dir: str, ordinal: int = 1):
         """Moves the cursor by the selected number of units"""
         el = actions.user.safe_focused_element()

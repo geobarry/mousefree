@@ -117,10 +117,7 @@ class UIALockWrapper:
         )
 
         if self.warn_hold_secs is not None and held_time > self.warn_hold_secs:
-            self._log(
-                f"WARNING: lock held for {held_time:.3f}s "
-                f"(threshold {self.warn_hold_secs:.3f}s)"
-            )
+            self._log(f"WARNING: lock held for {held_time:.3f}s")
 
 #        self._log(f"released after {held_time:.3f}s by {self._owner}")
 

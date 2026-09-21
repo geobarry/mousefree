@@ -63,6 +63,8 @@ place {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_add_delimiters(delimiter_pair,win_nav_target,ordinals or 1)
 remove {user.delimiter_pair} around [<user.ordinals>] <user.win_nav_target>$:
 	user.winax_remove_delimiters(delimiter_pair,win_nav_target,ordinals or 1)
+remove characters around [<user.ordinals>] <user.win_nav_target>$:
+	user.winax_remove_delimiters("",win_nav_target,ordinals or 1)
 
 # e.g. "INSERT word 'hungry' before next 'hippopotamus'"
 insert <user.constructed_text> {user.before_or_after} [<user.ordinals>] <user.win_nav_target>:
