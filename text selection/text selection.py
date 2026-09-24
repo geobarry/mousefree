@@ -4,6 +4,17 @@ import re
 import itertools
 from typing import Callable
 
+from enum import Enum
+
+class Edge(Enum):
+    BOUNDARY = r'\b'
+    ATTACHED = r'\B'
+    ANY = ''
+
+class Inside(Enum):
+    LITERAL = 'literal'
+    PATTERN = 'pattern'
+
 ax_units = ["Character","Format","Word","Line","Paragraph","Page","Document"]
 
 mod = Module()
@@ -21,6 +32,37 @@ mod.list("win_inside_dyn_nav_trg")
 mod.list("win_any_dyn_nav_trg")
 mod.list("combined_target",desc="for testing")
 mod.list("text_special_pattern","patterns to search for with text selection")
+mod.list("article","indefinite or definite article")
+
+class RawRegex(str):
+    """A string that is already a complete regex fragment (e.g. an alternation
+    like 'a|an'), rather than literal text to search for. Downstream code should
+    skip escaping and homophone substitution when it sees this type."""
+# class SearchTarget(str):
+    # """A search-target string carrying metadata about the three regions of a match:
+    # left edge, content (inside), right edge. Each describes what condition the
+    # candidate text must satisfy in that region.
+
+    # left, right:
+        # 'boundary' -> \\b   must be a true word edge
+        # 'attached' -> \\B   must NOT be a word edge (touches more word characters)
+        # 'any'      -> no constraint on that edge
+
+    # inside:
+        # 'literal'  -> content is plain text: escape it, allow homophone expansion
+        # 'pattern'  -> content is already a valid regex fragment: use as-is
+    # """
+    # def __new__(cls, value, inside='literal', left='any', right='any'):
+        # obj = str.__new__(cls, value)
+        # obj.inside = inside
+        # obj.left = left
+        # obj.right = right
+        # return obj
+
+# _EDGE = {'boundary': r'\b', 'attached': r'\B', 'any': ''}
+
+# def apply_anchors(pattern: str, left='any', right='any') -> str:
+    # return f"{_EDGE[left]}(?:{pattern}){_EDGE[right]}"   pass
 
 def precise_target_and_position(target: re.Pattern, 
                 text_range: ax.TextRange,
@@ -34,10 +76,14 @@ def precise_target_and_position(target: re.Pattern,
     
     # handle homophones, single quotes 
     # incoming target should have regular straight quotes
+    print(f'trg: {target}')
     if not text_range:
         return 
-    t = modify_regex_include_homophones(target.pattern)
-    t = re.sub(r"'","[’']",t)
+    if isinstance(target,RawRegex):
+        t=target.pattern
+    else:
+        t = modify_regex_include_homophones(target.pattern)
+        t = re.sub(r"'","[’']",t)
     print(f't: {t}')
     target = re.compile(t, re.IGNORECASE)
     
@@ -196,6 +242,11 @@ def modify_regex_include_homophones(t: str):
 
 ctx = Context()
 
+ctx.lists["user.article"] = {
+    "indefinite article" : " a | an ",
+    "definite article": " the "
+    }
+
 def win_dyn_nav_trg(search_dir: str) -> str:
     use_winax = settings.get("user.winax_text")
     if use_winax:
@@ -261,10 +312,10 @@ def phony_text(m) -> str:
     t=allow_phones(t)
     return t        
 
-@mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | capital [letter] <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | country [name] {user.country} | city [name] {user.city} | river [name] {user.river} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font}")
+@mod.capture(rule="[(character)] <user.any_alphanumeric_key> | letter <user.letter> | capital [letter] <user.letter> | {user.delimiter_pair} | (abbreviate|abbreviation|brief) {user.abbreviation} | number <user.real_number> | variable <user.extended_variable> | person [name] {user.person} | student [name] {user.student} | place [name] {user.place} | country [name] {user.country} | city [name] {user.city} | river [name] {user.river} | module [name] {user.module} | function [name] {user.function} | keyword {user.keyword} | app [name] {user.app} | font [name] {user.font} | {user.article}")
 def coded_text(m) -> str:
     """Creates text from letters, characters, numbers or other user defined spoken forms. From 'variable' onwards are personal lists and captures that I have made that are not public. So you can remove these or else create your own lists/captures with the same name."""
-    print(f'm: {m}')
+    print(f'coded_text: m: {m}')
     if hasattr(m,"real_number"):
         x = int(m.real_number)
         y = float(m.real_number)
@@ -274,6 +325,8 @@ def coded_text(m) -> str:
             t=getattr(m,"letter").upper()
         else:
             t=getattr(m,"letter")
+    elif hasattr(m,'article'):
+        t=RawRegex(getattr(m,'article'))
     else:
         cls_list = ["any_alphanumeric_key","letter","delimiter_pair","abbreviation","real_number","extended_variable","person","student","place","country","city",'river',"module","function","keyword","app","font"]
         for cls in cls_list:
@@ -293,7 +346,9 @@ def explicit_target(m) -> str:
     if hasattr(m,"phony_text"):
         return str(m)
     else:
-        t = str(m)
+        t = m.coded_text # str(m)
+        if isinstance(t, RawRegex):
+            return t
         if t in ["( )","{ }","[ ]","< >","' '",'" "']:
             q = re.escape(t)
             t = q.replace(f"\ ","[^(\\" + t[-1] + "|\\" + t[0] + ")]*")
@@ -318,7 +373,10 @@ def win_nav_target(m) -> tuple:
     """combination of dynamic and fixed navigation targets (is under testing)"""
     direction_dict={'previous':'UP','next':'DOWN','inside':'INSIDE','outside':'BOTH'}
     scope_dir=direction_dict[str(m[0])]
-    trg=str(m[1])
+    if isinstance(m,RawRegex):
+        trg=m
+    else:
+        trg=str(m[1])
     print(f'win_nav_target trg: |{trg}|')
     return (trg,scope_dir)
 
@@ -333,7 +391,8 @@ class Actions:
             scope_dir=trg_and_dir[1]
             if expand_to_unit == '':
                 expand_to_unit = None
-            regex = re.compile(trg.replace(" ",".{,3}"), re.IGNORECASE)
+            pattern=trg if isinstance(trg, RawRegex) else trg.replace(" ",".{,3}")
+            regex = re.compile(pattern, re.IGNORECASE)
             use_winax = settings.get("user.winax_text")
             if use_winax:
                 el = actions.user.safe_focused_element(time_limit=3)
@@ -341,6 +400,7 @@ class Actions:
                     pattern_list=actions.user.el_prop_val(el,'patterns')
                     if "Text" in pattern_list:
                         try:
+                            print(f'regex: {regex}')
                             r = find_target(regex,get_scope(el,scope_dir),search_dir = scope_dir,ordinal = ordinal)
                             if r != None:
                                 r.select()
