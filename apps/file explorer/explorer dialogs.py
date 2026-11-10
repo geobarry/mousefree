@@ -25,6 +25,9 @@ class Actions:
         actions.key("alt-n")
         prop_list = [("name","File name:"),("class_name","Edit"),("automation_id","1001")]
         el = actions.user.wait_for_element(prop_list)
+        # if keyboards orkut didn't work try using tab key
+        if not el:
+            el=actions.user.key_to_matching_element("tab",prop_list)
         if el:
             txt = actions.edit.selected_text()
             print(f'txt: {txt}')

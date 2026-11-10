@@ -63,7 +63,7 @@ class RawRegex(str):
 
 # def apply_anchors(pattern: str, left='any', right='any') -> str:
     # return f"{_EDGE[left]}(?:{pattern}){_EDGE[right]}"   pass
-
+ 
 def precise_target_and_position(target: re.Pattern, 
                 text_range: ax.TextRange,
                 search_dir: str = "DOWN",

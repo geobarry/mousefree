@@ -28,6 +28,12 @@ and mode: user.zen
 # e.g. "SELECT previous 'hippopotamus'"
 [{user.text_search_unit}] select [<user.ordinals>] <user.win_nav_target>: user.winax_select(win_nav_target,ordinals or 1,text_search_unit or '')
 
+# e.g. "LINE COPY next 'information'"
+[{user.text_search_unit}] copy [<user.ordinals>] <user.win_nav_target>: 
+	user.winax_select(win_nav_target,ordinals or 1,text_search_unit or '')
+	sleep(0.1)
+	key(ctrl-c)
+
 # SELECT FROM...TO... e.g. "select from previous 'hippopotamus' to phrase 'charging at me'"
 #	Note that second target must be explicitly prefixed, we cannot have two dynamic targets at once
 [{user.text_search_unit}] select from [<user.ordinals>] <user.win_nav_target> to [<user.ordinals>] <user.explicit_target>:

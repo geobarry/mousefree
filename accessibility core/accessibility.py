@@ -563,7 +563,9 @@ class Actions:
         if el != None:
             actions.user.act_on_element(el,action)
     # use keyboard to navigate to a specific element
-    
+    def key_to_matching_ancestor(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, verbose: bool = False):
+        """presses key until parent matches property list"""
+        return actions.user.key_to_matching_element(key,prop_list,ordinal,limit,escape_key,delay,sec_lim,avoid_cycles,mod_func,el_func,"ancestor",verbose)
     # name should be changed to key_to_el_by_prop_list
     # new function key_to_matching_element should be created to take prop_str directly from talon files
     def key_to_matching_element(key: str, prop_list: list, ordinal: int=1, limit: int=30, escape_key: str=None, delay: float = 0.03, sec_lim: float = 5, avoid_cycles: bool = False,mod_func: Callable = None, el_func: Callable = actions.user.safe_focused_element, match_type: str = "element", verbose: bool = False):

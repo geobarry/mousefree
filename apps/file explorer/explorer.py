@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import itertools
 import shutil
+from win32com.shell import shell
+import winreg
 
 # from ..utilities.spoken_form_utils import text_to_spoken_forms
 mod = Module()
@@ -22,6 +24,36 @@ mod.list("explorer_app_bar_item",desc = "Commands available from the application
 
 ctx = Context()
 
+def resolve_from_shell(display_path):
+    try:
+        pidl, _ = shell.SHParseDisplayName(display_path, 0)
+        return shell.SHGetPathFromIDList(pidl).decode() \
+            if isinstance(shell.SHGetPathFromIDList(pidl), bytes) \
+            else shell.SHGetPathFromIDList(pidl)
+    except Exception:
+        return None
+
+
+def resolve_from_registry(display_name):
+    base = r"Software\Classes\CLSID"
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, base) as root:
+        i = 0
+        while True:
+            try:
+                clsid = winreg.EnumKey(root, i); i += 1
+            except OSError:
+                break
+            try:
+                with winreg.OpenKey(root, clsid) as k:
+                    name, _ = winreg.QueryValueEx(k, "")
+                if name.lower() != display_name.lower():
+                    continue
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    rf"{base}\{clsid}\Instance\InitPropertyBag") as pb:
+                    return winreg.QueryValueEx(pb, "TargetFolderPath")[0]
+            except OSError:
+                continue
 def explorer_window():
     """Gets root window, whether in main application or dialog"""
     root = actions.user.window_root()
@@ -61,10 +93,21 @@ def retrieve_item(name: str, item_type: str = "file"):
 def current_folder_from_title():
     path = actions.user.file_manager_current_path()
     path = path.replace(" - File Explorer","")
+    print(f'folder from title: {path}')
     if os.path.isdir(path):
         return path
     else:
-        return None
+        path_mod=resolve_from_shell(path)
+        print(f'path resolved from shell: {path_mod}')
+        if path_mod:
+            return path_mod
+        else:
+            path_mod=resolve_from_registry(path)
+            print(f'resolved from registry: {path_mod}')
+            if path_mod:
+                return path_mod
+            else:
+                return None
 def current_folder_from_menu():
     # This is still inconsistent, and sometimes doesn't return anything
     # and sometimes operates on selected item but sometimes on containing folder
@@ -78,6 +121,7 @@ def current_folder_from_menu():
         [("name","Items View"),("class_name","UIItemsView")],
     ]
     el = actions.user.find_el_by_prop_seq(prop_seq,root,verbose = False)
+    print(f'file items panel el: {el}')
     if el:
         selection = actions.user.el_prop_val(el,"selection")
         if not selection:
@@ -108,6 +152,12 @@ def current_folder_from_menu():
                 actions.user.act_on_element(el,'invoke')
                 actions.sleep(0.2)
                 path = clip.text()
+                attempts_n=0
+                while attempts_n < 10 and not os.path.isdir(path):
+                    actions.sleep(0.2)
+                    path=clip.text()
+                    attempts_n += 1
+                    print(f'attempts_n: {attempts_n}')
                 print(f'path: {path}')
                 # path is to item, so get parent folder
                 if path:
@@ -159,6 +209,8 @@ def current_folder(path_type: str = "directory"):
     else:
         print("****MAIN EXPLORER WINDOW")
         folder = current_folder_from_title()
+        print(f'folder from title: {folder}')
+
         if folder:
             print("...got folder from window title")
             return folder
@@ -166,11 +218,14 @@ def current_folder(path_type: str = "directory"):
             # User has not selected option to place path in window title
             # We're going to have to do this the hard way
             # Try menu button
-            folder = current_folder_from_menu()
+            # folder = current_folder_from_menu()
+            # print(f'folder from menu: {folder}')
             if folder:
+                print("...got folder from menu")
                 return folder
             else:
                 # If that fails, maybe we are in a dialog after all
+                print("****MAYBE IN A DIALOG?")
                 return current_folder_from_dialog()
 def app_bar_button(button_name: str):        
     root = actions.user.window_root()
@@ -196,12 +251,24 @@ def app_bar_button(button_name: str):
         # print(f'button: {button}')
         if button:
             actions.user.act_on_element(button,'invoke')
+
 def retrieve_item_list(item_type: str = "file", ext: str = ""):
     """Returns a list of spoken forms for each file or folder in items view"""
     # value cannot be trusted without pressing keyboard shortcut
     global current_folder_items
+    # obtain folder
     folder = current_folder("directory")
-    print(f'folder: {folder}')
+    if not os.path.isdir(folder):
+        folder_mod=resolve_from_shell(folder)
+        if folder_mod and os.path.isdir(folder_mod):
+            folder=folder_mod
+        else:
+            folder_mod=resolve_from_registry(folder)
+            if folder_mod and os.path.isdir(folder_mod):
+                folder=folder_mod
+            else:
+                print("unable to resolve folder")
+                return
     if folder:
         # catch situation where folder cannot be found
         if folder == "" or folder is None:
@@ -250,6 +317,7 @@ class Actions:
     def explorer_process_item(name: str = "", item_type: str = "file",action: str = "select"):
         """Attempts to open the item with a given name and type (file over folder), or else the currently selected item"""
         if name == "":
+            print("explorer_process_item: polling focused element")
             el = actions.user.safe_focused_element()
             name = actions.user.el_prop_val(el,'name')
         else:
@@ -328,6 +396,8 @@ class Actions:
             [("class_name","UIItemsView")]
         ]        
         el = actions.user.find_el_by_prop_seq(prop_seq,root = root,verbose = False)
+        actions.user.act_on_element(el,'select')
+        return
         # make sure that all items are selected
         if el:
             el_list = el.selection_pattern.selection
@@ -411,11 +481,17 @@ class Actions:
             while not stopper.over():
                 actions.sleep(0.05)
                 cur_folder = actions.user.explorer_current_folder()
+                print(f'cur_folder: {cur_folder}')
+                print(f'dest_folder: {dest_folder}')
                 if cur_folder.lower() == dest_folder.lower():
                     stopper.stop()
             if cur_folder.lower() == dest_folder.lower():
+                print("attempting paste.......")
+                actions.user.explorer_select_items_panel()
                 # paste item
                 actions.key("ctrl-v")
+                
+
                 # return to original folder
                 if movement == 'stash':
                     # wait until user has time to visually confirm
@@ -527,7 +603,13 @@ class Actions:
         print(f"FUNCTION: explore_context_action({action_name})")
         # OPEN CONTEXT MENU WITH KEYBOARD
         actions.key("menu")
+        prop_list=[("control_type","MenuItem")]
+        el=actions.user.wait_for_element(prop_list)
+        if not el:
+            print("explore_context_action: timed out waiting for context menu menu item")
+            return
         # PRESS KEYS TO GET TO ACTION
+        actions.sleep(0.3)
         prop_list = [("name",action_name),("class_name","AppBarButton")]
         actions.user.key_to_matching_element("down",prop_list,delay = 0.1)
         el = actions.user.wait_for_element(prop_list)

@@ -4,7 +4,11 @@ and win.title: /(Open|Save|Publish|Insert|Load|Export|Choose|Rename).*/
 os: windows
 and app.name: Claude
 and win.title: /blob.*/
-
+os: windows
+and app.name: KeePass
+and win.title: Create New Database
+os: windows
+and tag: user.file_manager
 -
 # SUBSET OF COMMON COMMANDS FROM MAIN EXPLORER APPLICATION,
 # FOR APPLICATIONS THAT USE STANDARD FILE SELECTION DIALOG
@@ -20,14 +24,12 @@ dialog okay: user.explorer_dialog_button("OK",true)
 dialog open: user.explorer_dialog_button("Open",true)
 dialog save: user.explorer_dialog_button("Save.*",true)
 dialog cancel: user.explorer_dialog_button("Cancel",true)
+dialog insert: user.explorer_dialog_button("Insert",true)
 
 button okay: user.explorer_dialog_button("OK",false)
 button open: user.explorer_dialog_button("Open",false)
 button save: user.explorer_dialog_button("Save.*",false)
 button cancel: user.explorer_dialog_button("Cancel",false)
-
-
-
 
 # DIRECTORY NAVIGATION
 go <user.system_path>$: user.explorer_navigate_to_folder(system_path)

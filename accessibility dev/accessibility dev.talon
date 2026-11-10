@@ -21,6 +21,7 @@ report mouse location: user.report_mouse_location()
 ^copy focused element parent [level <number>] descendants$: user.copy_element_descendants("focused",1,number or 5)
 ^copy focused element grandparent [level <number>] descendants$: user.copy_element_descendants("focused",2,number or 5)
 ^copy focused element great grandparent [level <number>] descendants$: user.copy_element_descendants("focused",3,number or 5)
+^copy focused element <user.ordinals> ancestor [level <number>] descendants$: user.copy_element_descendants("focused",ordinals,number or 5)
 ^copy focused element siblings$: user.copy_element_descendants("focused",1,1)
 
 ^copy mouse element [level <number>] descendants: user.copy_element_descendants("mouse",0,number or 5)

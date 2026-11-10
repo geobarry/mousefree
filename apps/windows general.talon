@@ -33,7 +33,7 @@ focus explorer: user.focus_explorer()
 system tray$: user.invoke_system_tray_item("")
 close system tray: 
 	# take the lazy route for now, could be handled in python to avoid closing then opening then closing again
-	user.invoke_taskbar_item("")
+	user.invoke_system_tray_item("")
 	key("esc:5")
 	user.switcher_focus_last()
 safely remove hardware: user.invoke_system_tray_item("Safely Remove Hardware.*")

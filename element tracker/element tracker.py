@@ -5,13 +5,12 @@ from talon.skia import  Paint
 from typing import Callable
 from contextlib import contextmanager
 
+import threading
 import time
 import inspect
 
 
 mod = Module()
-
-#mod.tag("Text_pattern","Focused element has wfindows accessibility text pattern")
 
 # list for tracking a set of clickable points
 marked_elements = []
@@ -19,9 +18,183 @@ marked_elements = []
 black_list = [] # ["Microsoft Excel"]
 prior_state = (True,False)
 
-
 # TRACKING
 _pause_count = 0
+
+"""
+REDESIGN OF THE FOCUS-HIGHLIGHT POLLING  (sketch, not yet tested inside Talon)
+
+THE BIG IDEA, IN PLAIN LANGUAGE
+-------------------------------
+Think of two people working in an office:
+
+  * THE MANAGER  = Talon's main thread. It runs your update_highlight()
+    every tick. If the manager gets stuck waiting on something, ALL of Talon
+    freezes (voice commands, everything).
+
+  * THE ASSISTANT = a helper thread we create below. Its only job is to go
+    ask Windows/Excel "what is focused, and where is it on screen?"
+    Excel sometimes takes forever to answer. That is fine, because only the
+    assistant waits, not the manager.
+
+The rules of the office:
+  1. The manager NEVER waits for the assistant. Each tick, the manager just
+     looks in the "inbox" to see if an answer has arrived. If not, it moves on.
+  2. The assistant only works on ONE question at a time. If it is still
+     stuck on the last question, the manager does not hand it another one.
+     (The old code kept piling up questions, which is why Excel took so long
+     to recover.)
+  3. The assistant hands back plain numbers and text (a rectangle and a name),
+     never the Windows "element" object itself. Those objects can go stale
+     or hang if touched later from the wrong place.
+  4. If Excel keeps failing, the manager asks less and less often
+     (0.2s, 0.4s, 0.8s ... up to 5s), and goes back to normal speed the moment
+     an answer succeeds.
+"""
+
+
+# ----------------------------------------------------------------------
+# SETTINGS you can tune. Times are in seconds.
+# ----------------------------------------------------------------------
+BASE_DELAY = 0.1       # starting wait after a failure; doubles with each failure
+MAX_DELAY = 5.0        # never wait longer than this between questions
+MAX_FAILS = 10         # stops the doubling from growing without limit
+STALL_HIDE_AFTER = 0.3 # if the assistant has been stuck this long, hide the
+                       # (probably out of date) highlight box
+
+
+# ======================================================================
+# THE ASSISTANT
+# ======================================================================
+class UIAPoller:
+    """
+    The assistant. It lives on its own background thread and answers one
+    question at a time: "what is focused right now, where is it, and
+    (optionally) what is it called?"
+    """
+
+    def __init__(self):
+        # A "lock" is like a key to a small cabinet. Only one person can hold
+        # the key at a time. We use it so the manager and assistant never
+        # read/write the shared notes (busy flag, answer inbox) at the same
+        # instant, which could garble them.
+        self._lock = threading.Lock()
+
+        # An "event" is like a doorbell. The manager rings it to wake the
+        # assistant up when there is a new question. The assistant sleeps
+        # (using no CPU) until the bell rings.
+        self._wake = threading.Event()
+
+        # --- shared notes (always accessed while holding the lock) ---
+        self._busy = False          # True while the assistant is working on a question
+        self._busy_since = 0.0      # when it started the current question
+        self._want_name = False     # does the manager want the element's name too?
+        self._request_app = None    # which app was in front when the question was asked
+        self._uia_lock = None # global lock to prevent conflicts with other uia calls
+        self._result = None         # the INBOX: holds the latest answer, or None if empty
+
+        # Start the assistant. daemon=True means "if Talon shuts down, don't
+        # wait for this thread" so a hung Excel call cannot stop Talon exiting.
+        thread = threading.Thread(target=self._run, daemon=True, name="uia-poller")
+        thread.start()
+
+    # ------------------------------------------------------------------
+    # Called by the MANAGER
+    # ------------------------------------------------------------------
+    def request(self, want_name, app_key, lock):
+        """
+        The manager says: "please go find out what is focused."
+
+        This returns immediately (it never waits).
+          - Returns True  if the assistant accepted the question.
+          - Returns False if the assistant is still busy with the last
+            question. In that case nothing happens, and the manager simply
+            tries again on a later tick.
+
+        want_name: also fetch the element's name (only needed for labels).
+        app_key:   a tag for which app is in front, so we can throw away
+                   answers that arrive after the user switched apps.
+        """
+
+		# use the lock associated with current class/object
+        with self._lock:
+            if self._busy:
+                return False  # still working on the last one, don't pile up
+            self._busy = True
+            self._busy_since = time.monotonic()
+            self._want_name = want_name
+            self._request_app = app_key
+            self._uia_lock = lock
+        self._wake.set()  # ring the doorbell (alerts the assistant to stop waiting)
+        return True
+
+    def take(self):
+        """
+        The manager checks the inbox.
+
+        Returns the newest answer as (app_key, rect, name), or None if
+        nothing new has arrived. Reading it also EMPTIES the inbox, so the
+        same answer is never processed twice.
+        """
+        with self._lock:
+            answer = self._result
+            self._result = None
+        return answer
+
+    def stalled_for(self):
+        """
+        The manager asks: "how long has the assistant been stuck on the
+        current question?"  Returns 0.0 if it is not busy.
+        Used to decide when to hide a highlight that may be out of date.
+        """
+        with self._lock:
+            if not self._busy:
+                return 0.0
+            return time.monotonic() - self._busy_since
+
+    # ------------------------------------------------------------------
+    # Runs on the ASSISTANT's own thread (the manager never calls this)
+    # ------------------------------------------------------------------
+    def _run(self):
+        """
+        The assistant's daily routine, repeated forever:
+          1. Sleep until the doorbell rings.
+          2. Read the question details.
+          3. Ask Windows what is focused, its rectangle, and maybe its name.
+             (THIS is the part that can hang in Excel. Only this thread
+             suffers when it does.)
+          4. Put the answer in the inbox and mark itself as free again.
+        """
+        while True:
+            self._wake.wait()   # sleep until the manager rings the bell
+            self._wake.clear()  # reset the bell for next time
+
+            # lock 1: read the notes, then let go of the poller's lock immediately
+            with self._lock:
+                want_name = self._want_name
+                app_key = self._request_app
+            try:
+                # lock 2: block other automation calls
+                with self._uia_lock:
+                    el = ui.focused_element()
+                    rect = el.rect if el else None
+                    name = ""
+                    # Only ask for the name if wanted AND we got a rectangle.
+                    # Every extra question to Excel is another chance to hang.
+
+                    if el and rect and want_name:
+                        name = el.name or ""
+                    answer = (app_key, rect, name)
+            except Exception as error:
+                print(f"poller error: {type(error).__name__}: {error}")
+                answer = (app_key, None, "")
+            # Drop the answer in the inbox and say "I'm free now".
+            # If step 3 hung for 30 seconds, we simply reach this point
+            # 30 seconds later; nothing else was waiting on us.
+            with self._lock:
+                self._result = answer
+                self._busy = False
+
 
 class element_tracker:
     def __init__(self):        
@@ -38,11 +211,17 @@ class element_tracker:
         self.focused_rect = None
         self.focused_label = ""
         self.traversal_count = 0
-        self.interval = 300
+        self.interval = 200
         self.skip_trg = 1
         self.skip_n = 1
         self.app_prev = None
         self.job = None
+        # Polling Manager's Notes:
+        self.poller = UIAPoller()   # hire the assistant (create ONE, once)
+        self.fail_count = 0         # how many failures in a row
+        self.next_attempt = 0.0     # earliest time we're allowed to ask again
+        self.app_key = None         # which app was in front last tick
+
         self.init_cron()
     def add_element(self,rect,label = ''):
         self.rectangles.append(rect)
@@ -109,22 +288,115 @@ class element_tracker:
             if isinstance(obj,cron.Cron):
                 with obj.cond:
                     job_list=[job for job in obj.jobs if job not in obj.cancelled]
-
     def update_highlight(self):
+        """
+        Runs every tick (from Talon's cron timer). Must be FAST. It never waits
+        for Windows. Each tick it does three things:
+          A. Read any answer waiting in the inbox and update the highlight.
+          B. If the assistant has been stuck a while, hide the old highlight.
+          C. If enough time has passed, ask the assistant a new question.
+        """
+
+        # Do nothing if tracking is paused, or if both features are switched
+        # off (nothing to draw, so no reason to bother Excel).
+        if _pause_count > 0 or not (self.auto_highlight or self.auto_label):
+            return
+
+        now = time.monotonic()  # a clock that is not affected by changing system time
+
+        # Work out which app is in front. (name, pid) is a more reliable
+        # fingerprint than turning the whole app object into text.
+        app = ui.active_app()
+        app_key = (app.name, app.pid) if app else None
+
+        # If the user switched apps, forget our failure history. The new app
+        # deserves a fresh start at full speed, and the old highlight box
+        # does not belong on the new app.
+        if app_key != self.app_key:
+            self.app_key = app_key
+            self.fail_count = 0
+            self.next_attempt = 0.0
+            self._set_highlight(None, "")
+
+        # ---- A. check the inbox ----
+        answer = self.poller.take()
+
+        if answer:
+            answered_app, rect, name = answer
+
+            # Ignore answers about an app that is no longer in front.
+            if answered_app == self.app_key:
+                if rect:
+                    # Success: go back to full speed and show the highlight.
+                    self.fail_count = 0
+                    self.next_attempt = 0.0
+                    self._set_highlight(rect, name if self.auto_label else "")
+                else:
+                    # The assistant came back empty-handed: slow down.
+                    self._register_failure(now)
+
+        # ---- B. hide a possibly out-of-date highlight while stuck ----
+        # If Excel is not answering, the box on screen may no longer match the
+        # real focus. Better to show nothing than to show the wrong thing.
+        elif self.poller.stalled_for() > STALL_HIDE_AFTER:
+            self._set_highlight(None, "")
+
+        # ---- C. ask a new question if it is allowed ----
+        # request() quietly does nothing if the assistant is still busy, so this
+        # can never create a pile-up.
+        if now >= self.next_attempt:    		
+            # use existing uia_lock obtained from talon action
+            lock = actions.user.uia_lock(entry_timeout=30)   # wait up to 30s for the lock
+            self.poller.request(self.auto_label, self.app_key, lock)
+
+    def _register_failure(self, now):
+        """
+        Called when the assistant could not find a focused element.
+        Increase the failure count and set how long to wait before asking again.
+        The wait doubles each time: 0.2s, 0.4s, 0.8s, 1.6s ... capped at MAX_DELAY.
+        Also hides the highlight, since we no longer know where focus is.
+        """
+        self.fail_count = min(self.fail_count + 1, MAX_FAILS)
+        delay = min(MAX_DELAY, BASE_DELAY * (2 ** self.fail_count))
+        self.next_attempt = now + delay
+        self._set_highlight(None, "")
+
+
+    def _set_highlight(self, rect, label):
+        """
+        Update what is drawn on screen, but ONLY if something actually changed.
+        (Redrawing every tick wastes effort; this skips redundant redraws.)
+        rect = None and label = "" means "draw nothing".
+        """
+        if rect != self.focused_rect or label != self.focused_label:
+            self.focused_rect = rect
+            self.focused_label = label
+            self.canvas.freeze()  # tells Talon to redraw the highlight canvas
+
+    # If above continues to work well for a couple weeks (i.e. by second week of November)
+    # go ahead and delete the following old version
+    def OLD_update_highlight(self):
         """Updates the focused element using windows accessibility"""
         if _pause_count > 0:
             print(f"tracking paused (_pause_count={_pause_count}), skipping highlight update...")
             return 
         else:
             try:
+
                 # handle safety valve to slowed down for unresponsive apps
                 app_cur=str(ui.active_app())
+                if app_cur != self.app_prev:
+                    # We're in a new app, so we should be able to turn off safety valve
+                    self.skip_trg = 1
+                    self.skip_n = 1
+                    self.app_prev=app_cur
                 if self.skip_trg > self.skip_n:
                     self.skip_n += 1
+                    print(f"skip_n: {self.skip_n}")
                     return
                 time_limit=((self.interval/1000) * (0.9*self.skip_n))
-
                 el=actions.user.safe_focused_element(time_limit=time_limit)
+                
                 rectangle_found = False
                 if el:
                     if self.auto_highlight or self.auto_label:
@@ -146,14 +418,14 @@ class element_tracker:
                         # turn off safety valve
                         self.skip_trg = 1
                         self.skip_n = 1
-                        app_prev=app_cur
+                        self.app_prev=app_cur
                     else:
                         self.focused_rect = None
                         self.focused_label = ""
                     self.canvas.freeze()
                 # turn up safety valve
                 if not el or not rectangle_found:
-                    self.skip_trg *= 2
+                    self.skip_trg += 25 # because talon sets the timer at 20
                     self.skip_n += 1
             except Exception as error:
                 print(f'FUNCTION update_highlight - error: {error}')
